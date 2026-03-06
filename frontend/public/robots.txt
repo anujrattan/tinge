@@ -1,0 +1,15 @@
+# robots.txt for Luxe Threads
+
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /checkout
+Disallow: /cart
+Disallow: /payment-callback
+
+# Sitemap location
+Sitemap: https://luxethreads.com/sitemap.xml
+
+# Crawl-delay (optional, helps prevent server overload)
+Crawl-delay: 1

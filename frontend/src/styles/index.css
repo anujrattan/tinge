@@ -1,0 +1,200 @@
+/* Global styles */
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+/* Tailwind directives will be added by PostCSS */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Theme-aware base styles using CSS variables */
+@layer base {
+  /* Prevent horizontal scroll */
+  html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
+  /* Light theme - default when no .dark class */
+  html {
+    --color-bg: #FAF8FF; /* Subtle lavender tinge */
+    --color-surface: #F5F3FF; /* Lighter purple tint */
+    --color-primary: #111827;
+    --color-secondary: #4B5563;
+    --color-accent: #9333EA;
+    --color-accent-hover: #7C3AED;
+    --color-card-bg: #FFFFFF; /* Keep cards pure white for contrast */
+    --color-card-border: #E9D5FF; /* Light purple border */
+    --color-hero-text: #FFFFFF;
+  }
+  
+  /* Dark theme - when .dark class is present */
+  html.dark {
+    --color-bg: #0D091F;
+    --color-surface: #191333;
+    --color-primary: #FFFFFF;
+    --color-secondary: #A9A2C2;
+    --color-accent: #C056F0;
+    --color-accent-hover: #a845d0;
+    --color-card-bg: #191333;
+    --color-card-border: rgba(255, 255, 255, 0.1);
+    --color-hero-text: #FFFFFF;
+  }
+
+  /* Subtle gradient background for light theme */
+  html:not(.dark) body {
+    background: linear-gradient(135deg, #FAF8FF 0%, #FEF9FF 50%, #F9F8FF 100%);
+    background-attachment: fixed;
+  }
+}
+
+/* Override Tailwind classes to use CSS variables */
+@layer utilities {
+  .bg-brand-bg {
+    background-color: var(--color-bg) !important;
+  }
+  .bg-brand-surface {
+    background-color: var(--color-surface) !important;
+  }
+  .text-brand-primary {
+    color: var(--color-primary) !important;
+  }
+  .text-brand-secondary {
+    color: var(--color-secondary) !important;
+  }
+  .text-brand-accent {
+    color: var(--color-accent) !important;
+  }
+  .border-brand-surface {
+    border-color: var(--color-surface) !important;
+  }
+}
+
+/* Theme-aware utility classes */
+@layer utilities {
+  /* Navigation active state - better contrast in light theme */
+  html:not(.dark) .text-yellow-400 {
+    color: #9333EA !important; /* Purple instead of yellow */
+  }
+  html:not(.dark) .bg-yellow-400\/20 {
+    background-color: rgba(147, 51, 234, 0.2) !important; /* Purple tint */
+  }
+  
+  /* Product card borders for light theme */
+  html:not(.dark) .border-gray-200\/50 {
+    border-color: #D1D5DB !important;
+    border-width: 1px;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  }
+  
+  /* Section backgrounds for better contrast */
+  html:not(.dark) .bg-brand-surface {
+    background-color: #F9FAFB !important; /* Matches color system */
+  }
+}
+
+/* Custom animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes popIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes cartBump {
+  0%, 100% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(0.9);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+}
+
+@keyframes heartbeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  10% {
+    transform: scale(1.2);
+  }
+  20% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.2);
+  }
+  40% {
+    transform: scale(1);
+  }
+}
+
+@keyframes blink {
+  0%, 50% {
+    opacity: 1;
+  }
+  51%, 100% {
+    opacity: 0;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease-in-out forwards;
+}
+
+.animate-popIn {
+  animation: popIn 0.3s ease-out forwards;
+}
+
+.animate-cartBump {
+  animation: cartBump 0.4s ease-in-out;
+}
+
+.animate-heartbeat {
+  animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+.animate-blink {
+  animation: blink 1s step-end infinite;
+}
+
+.animate-slideInUp {
+  animation: slideInUp 0.5s ease-out forwards;
+}
+
+.card-3d-hover {
+  transition: transform 0.3s ease-out, box-shadow 0.3s ease-out;
+}
+
+.card-3d-hover:hover {
+  transform: perspective(1000px) rotateX(7deg) rotateY(-7deg) scale(1.05);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 8px 20px rgba(192, 86, 240, 0.2);
+}
+
