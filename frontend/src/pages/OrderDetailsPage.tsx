@@ -1,10 +1,11 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, Input } from '../components/ui';
 import { RateProductModal } from '../components/RateProductModal';
 import { StarRating } from '../components/StarRating';
 import api from '../services/api';
 import { useApp } from '../context/AppContext';
+import { useToast } from '../context/ToastContext';
 
 const GUEST_CHECKOUT_STORAGE_KEY = 'guestCheckoutAddress';
 
@@ -23,7 +24,8 @@ export const OrderDetailsPage: React.FC = () => {
   const { orderNumber: orderNumberParam } = useParams<{ orderNumber: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { isAuthenticated } = useApp();
+  const { isAuthenticated, user } = useApp();
+  const { showToast } = useToast();
   const [order, setOrder] = useState<any>(null);
   const [products, setProducts] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
@@ -34,13 +36,15 @@ export const OrderDetailsPage: React.FC = () => {
   const [userRatings, setUserRatings] = useState<Record<string, number>>({});
   const [ratingModalOpen, setRatingModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<{ id: string; name: string; imageUrl?: string } | null>(null);
+  const [isRetryingPayment, setIsRetryingPayment] = useState(false);
+  const cancellationHandledRef = useRef(false);
 
   const resolveEmail = useCallback(() => {
     const fromQuery = searchParams.get('email');
     if (fromQuery?.trim()) return fromQuery.trim();
-    if (isAuthenticated) return null;
+    if (isAuthenticated) return user?.email?.trim() || null;
     return getGuestEmailFromStorage();
-  }, [searchParams, isAuthenticated]);
+  }, [searchParams, isAuthenticated, user?.email]);
 
   const fetchOrderDetails = useCallback(async (orderNumber: string, email?: string | null) => {
     try {
@@ -50,7 +54,16 @@ export const OrderDetailsPage: React.FC = () => {
 
       let response;
       if (isAuthenticated) {
-        response = await api.getOrderByNumber(orderNumber);
+        try {
+          response = await api.getOrderByNumber(orderNumber);
+        } catch (authErr: any) {
+          // Fallback: if auth-user mapping fails, try guest-style lookup by email.
+          if (email && /403|Access denied/i.test(authErr?.message || '')) {
+            response = await api.getOrderByNumber(orderNumber, email);
+          } else {
+            throw authErr;
+          }
+        }
       } else if (email) {
         response = await api.getOrderByNumber(orderNumber, email);
       } else {
@@ -128,6 +141,17 @@ export const OrderDetailsPage: React.FC = () => {
     fetchOrderDetails(orderNumber, email || undefined);
   }, [orderNumberParam, isAuthenticated, resolveEmail, fetchOrderDetails]);
 
+  useEffect(() => {
+    const cancelled = searchParams.get('cancelled') === 'true';
+    if (!cancelled || cancellationHandledRef.current) return;
+    cancellationHandledRef.current = true;
+    showToast('Payment was cancelled. You can retry payment below.', 'error');
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('cancelled');
+    setSearchParams(nextParams, { replace: true });
+  }, [searchParams, setSearchParams, showToast]);
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-IN', {
       year: 'numeric',
@@ -153,6 +177,57 @@ export const OrderDetailsPage: React.FC = () => {
       await api.downloadInvoice(order.order_number, email);
     } catch (err: any) {
       alert(err.message || 'Failed to download invoice. Please try again.');
+    }
+  };
+
+  const handleRetryPayment = async () => {
+    if (!order?.id || !order?.order_number) return;
+    try {
+      setIsRetryingPayment(true);
+      const amount = Number(order.total_amount || 0);
+      const razorpayResponse = await api.createRazorpayOrder(order.id, order.order_number, amount);
+      if (!razorpayResponse.success || !razorpayResponse.razorpay) {
+        throw new Error('Failed to create Razorpay order');
+      }
+
+      const { orderId: razorpayOrderId, keyId, amount: amountInPaise } = razorpayResponse.razorpay;
+      const apiBase = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:3001/api';
+      const callbackUrl = `${apiBase}/payments/callback`;
+      const email = !isAuthenticated ? (searchParams.get('email') || '') : '';
+      const cancelSuffix = email
+        ? `?email=${encodeURIComponent(email)}&cancelled=true`
+        : '?cancelled=true';
+      const cancelUrl = `${window.location.origin}/order-details/${encodeURIComponent(order.order_number)}${cancelSuffix}`;
+
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = 'https://api.razorpay.com/v1/checkout/embedded';
+      form.style.display = 'none';
+
+      const fields = {
+        key_id: keyId,
+        amount: amountInPaise.toString(),
+        order_id: razorpayOrderId,
+        name: 'Tinge Clothing',
+        description: `Order #${order.order_number}`,
+        callback_url: callbackUrl,
+        cancel_url: cancelUrl,
+      };
+
+      Object.entries(fields).forEach(([key, value]) => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = key;
+        input.value = value;
+        form.appendChild(input);
+      });
+
+      document.body.appendChild(form);
+      form.submit();
+    } catch (err: any) {
+      console.error('Retry payment failed:', err);
+      showToast(err.message || 'Unable to retry payment right now. Please try again.', 'error');
+      setIsRetryingPayment(false);
     }
   };
 
@@ -298,6 +373,15 @@ export const OrderDetailsPage: React.FC = () => {
           {order.status === 'delivered' && (
             <Button variant="secondary" onClick={handleDownloadInvoice} className="shrink-0">
               Download Invoice (PDF)
+            </Button>
+          )}
+          {order.gateway === 'Prepaid' && order.payment_status !== 'paid' && (
+            <Button
+              onClick={handleRetryPayment}
+              className="shrink-0"
+              disabled={isRetryingPayment}
+            >
+              {isRetryingPayment ? 'Redirecting...' : 'Retry Payment'}
             </Button>
           )}
         </div>

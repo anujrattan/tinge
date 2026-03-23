@@ -22,14 +22,17 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({ children }
     if (trackingConsentGranted && trackingConfig.gtmContainerId) {
       initGtm(trackingConfig.gtmContainerId);
       setTrackingAllowed(true);
-      pushToDataLayer({
-        event: 'consent_update',
-        consent_analytics: analyticsAllowed,
-        consent_marketing: marketingAllowed,
-      });
     } else {
       setTrackingAllowed(false);
     }
+
+    // Always inform GTM about consent changes once GTM is present.
+    // `pushToDataLayer` allows `consent_update` even when tracking is not allowed.
+    pushToDataLayer({
+      event: 'consent_update',
+      consent_analytics: analyticsAllowed,
+      consent_marketing: marketingAllowed,
+    });
   }, [trackingConsentGranted, analyticsAllowed, marketingAllowed]);
 
   return <>{children}</>;

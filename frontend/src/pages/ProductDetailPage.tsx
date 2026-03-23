@@ -144,11 +144,28 @@ export const ProductDetailPage: React.FC = () => {
 
   const handleAddToCart = () => {
     if (product) {
+      const color = (product.color || '').trim();
+      const needsExplicitSizeSelection =
+        availableSizes.length > 0 &&
+        availableSizes[0] !== 'One Size' &&
+        availableSizes[0] !== '11oz';
+      const size = (selectedSize || availableSizes[0] || '').trim();
+
+      if (needsExplicitSizeSelection && !size) {
+        showToast('Please select a size before adding to cart.', 'error');
+        return;
+      }
+
+      if (!color) {
+        showToast('This product is missing color configuration. Please contact support.', 'error');
+        return;
+      }
+
       addToCart({
         ...product,
         quantity: 1,
-        selectedSize,
-        selectedColor: product.color || '',
+        selectedSize: size || 'One Size',
+        selectedColor: color,
       });
       setAddedToCart(true);
       setTimeout(() => setAddedToCart(false), 2000);

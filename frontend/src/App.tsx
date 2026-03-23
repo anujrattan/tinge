@@ -42,7 +42,7 @@ import { ReturnPolicyPage } from "./pages/ReturnPolicyPage";
 import { CookiePolicyPage } from "./pages/CookiePolicyPage";
 import { OrderSuccessPage } from "./pages/OrderSuccessPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
-import { CookieConsentProvider } from "./context/CookieConsentContext";
+import { CookieConsentProvider, useCookieConsent } from "./context/CookieConsentContext";
 import { CookieConsent } from "./components/CookieConsent";
 import { AnalyticsProvider } from "./context/AnalyticsProvider";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -67,13 +67,18 @@ const AppLayout: React.FC = () => {
   const { cartItemCount, cartAnimationKey, isAdmin } = useApp();
   const { toasts, removeToast } = useToast();
   const location = useLocation();
+  const { isAllowed } = useCookieConsent();
+  const analyticsAllowed = isAllowed('analytics');
+  const marketingAllowed = isAllowed('marketing');
+  const trackingConsentGranted = analyticsAllowed || marketingAllowed;
 
   // SPA page view tracking for GTM/GA4/Meta
   useEffect(() => {
+    if (!trackingConsentGranted) return;
     const pagePath = location.pathname + location.search;
     const pageTitle = document.title || `Luxe Threads - ${location.pathname.slice(1) || "Home"}`;
     trackPageView({ path: pagePath, title: pageTitle });
-  }, [location.pathname, location.search]);
+  }, [location.pathname, location.search, trackingConsentGranted]);
 
   // Determine current page for header highlighting
   const currentPage = location.pathname.split("/")[1] || "home";

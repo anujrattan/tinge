@@ -91,55 +91,113 @@ router.post(
         });
       }
 
-      // Create Razorpay order
-      console.log(`[PAYMENT] [${new Date().toISOString()}] Step 4: Creating Razorpay order`);
-      console.log(`[PAYMENT] [${new Date().toISOString()}] Razorpay order params:`, {
-        amount: amount,
-        amountInPaise: Math.round(amount * 100),
-        currency: "INR",
-        receipt: orderNumber,
-        notes: { order_id: orderId, order_number: orderNumber },
-      });
-      
-      const razorpayOrder = await createRazorpayOrder(
-        amount,
-        orderNumber,
-        orderId
-      );
-
-      console.log(`[PAYMENT] [${new Date().toISOString()}] ✅ Razorpay order created successfully`);
-      console.log(`[PAYMENT] [${new Date().toISOString()}] Razorpay order response:`, {
-        id: razorpayOrder.id,
-        entity: razorpayOrder.entity,
-        amount: razorpayOrder.amount,
-        amount_paid: razorpayOrder.amount_paid,
-        amount_due: razorpayOrder.amount_due,
-        currency: razorpayOrder.currency,
-        receipt: razorpayOrder.receipt,
-        status: razorpayOrder.status,
-        created_at: razorpayOrder.created_at,
-        notes: razorpayOrder.notes,
-      });
-
-      // Store Razorpay order ID in payments table
-      console.log(`[PAYMENT] [${new Date().toISOString()}] Step 5: Creating payment record in database`);
-      const { data: payment, error: paymentError } = await supabaseAdmin
+      // Idempotent retry handling:
+      // Reuse existing payment + razorpay_order_id when available,
+      // so retries don't generate new internal payment IDs/order IDs.
+      console.log(`[PAYMENT] [${new Date().toISOString()}] Step 4: Checking existing payment record for this order`);
+      const { data: existingPayment } = await supabaseAdmin
         .from("payments")
-        .insert({
-          order_id: orderId,
-          razorpay_order_id: razorpayOrder.id,
-          amount: amount,
-          currency: "INR",
-          status: "created",
-          gateway: "Prepaid",
-        })
-        .select()
-        .single();
+        .select("id, razorpay_order_id, amount, currency, status, gateway, created_at")
+        .eq("order_id", orderId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-      if (paymentError) {
-        console.error(`[PAYMENT] [${new Date().toISOString()}] ❌ Error creating payment record:`, paymentError);
-        // Don't fail the request, but log the error
+      let payment = existingPayment || null;
+      let razorpayOrderId: string | null = null;
+      let razorpayAmountInPaise = Math.round(amount * 100);
+
+      if (
+        existingPayment &&
+        existingPayment.gateway === "Prepaid" &&
+        existingPayment.status === "created" &&
+        existingPayment.razorpay_order_id
+      ) {
+        // Reuse the already-created Razorpay order for this unpaid order.
+        console.log(`[PAYMENT] [${new Date().toISOString()}] ✅ Reusing existing payment + Razorpay order`, {
+          payment_id: existingPayment.id,
+          razorpay_order_id: existingPayment.razorpay_order_id,
+        });
+        razorpayOrderId = existingPayment.razorpay_order_id;
+        razorpayAmountInPaise = Math.round(Number(existingPayment.amount || amount) * 100);
       } else {
+        // Create a new Razorpay order only when no reusable pending order exists.
+        console.log(`[PAYMENT] [${new Date().toISOString()}] Step 5: Creating Razorpay order`);
+        console.log(`[PAYMENT] [${new Date().toISOString()}] Razorpay order params:`, {
+          amount: amount,
+          amountInPaise: Math.round(amount * 100),
+          currency: "INR",
+          receipt: orderNumber,
+          notes: { order_id: orderId, order_number: orderNumber },
+        });
+
+        const razorpayOrder = await createRazorpayOrder(amount, orderNumber, orderId);
+        razorpayOrderId = razorpayOrder.id;
+        razorpayAmountInPaise = razorpayOrder.amount;
+
+        console.log(`[PAYMENT] [${new Date().toISOString()}] ✅ Razorpay order created successfully`);
+        console.log(`[PAYMENT] [${new Date().toISOString()}] Razorpay order response:`, {
+          id: razorpayOrder.id,
+          entity: razorpayOrder.entity,
+          amount: razorpayOrder.amount,
+          amount_paid: razorpayOrder.amount_paid,
+          amount_due: razorpayOrder.amount_due,
+          currency: razorpayOrder.currency,
+          receipt: razorpayOrder.receipt,
+          status: razorpayOrder.status,
+          created_at: razorpayOrder.created_at,
+          notes: razorpayOrder.notes,
+        });
+
+        // Upsert behavior without changing payment ID when one already exists.
+        if (existingPayment) {
+          console.log(`[PAYMENT] [${new Date().toISOString()}] Step 6: Updating existing payment record`);
+          const { data: updatedPayment, error: updateError } = await supabaseAdmin
+            .from("payments")
+            .update({
+              razorpay_order_id: razorpayOrderId,
+              amount: amount,
+              currency: "INR",
+              status: "created",
+              gateway: "Prepaid",
+              razorpay_payment_id: null,
+              razorpay_signature: null,
+              payment_method: null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", existingPayment.id)
+            .select()
+            .single();
+
+          if (updateError) {
+            console.error(`[PAYMENT] [${new Date().toISOString()}] ❌ Error updating payment record:`, updateError);
+          } else {
+            payment = updatedPayment;
+          }
+        } else {
+          console.log(`[PAYMENT] [${new Date().toISOString()}] Step 6: Creating payment record in database`);
+          const { data: createdPayment, error: paymentError } = await supabaseAdmin
+            .from("payments")
+            .insert({
+              order_id: orderId,
+              razorpay_order_id: razorpayOrderId,
+              amount: amount,
+              currency: "INR",
+              status: "created",
+              gateway: "Prepaid",
+            })
+            .select()
+            .single();
+
+          if (paymentError) {
+            console.error(`[PAYMENT] [${new Date().toISOString()}] ❌ Error creating payment record:`, paymentError);
+          } else {
+            payment = createdPayment;
+          }
+        }
+      }
+
+      if (payment) {
         console.log(`[PAYMENT] [${new Date().toISOString()}] ✅ Payment record created:`, {
           id: payment.id,
           order_id: payment.order_id,
@@ -153,9 +211,9 @@ router.post(
       const response = {
         success: true,
         razorpay: {
-          orderId: razorpayOrder.id,
-          amount: razorpayOrder.amount,
-          currency: razorpayOrder.currency,
+          orderId: razorpayOrderId,
+          amount: razorpayAmountInPaise,
+          currency: "INR",
           keyId: config.razorpay.keyId, // Public key for frontend
         },
         payment: payment || null,

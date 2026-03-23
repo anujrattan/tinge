@@ -15,12 +15,43 @@ const CONSENT_KEY = 'tinge-cookie-consent';
 const CURRENT_VERSION = '1.0';
 const CONSENT_EXPIRY_DAYS = 365; // 1 year
 
+const getCookie = (name: string): string | null => {
+  if (typeof document === 'undefined') return null;
+  const match = document.cookie.match(
+    new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()[\]\\/+^])/g, '\\$1') + '=([^;]*)')
+  );
+  return match ? decodeURIComponent(match[1]) : null;
+};
+
+const setCookie = (name: string, value: string, maxAgeDays: number): void => {
+  if (typeof document === 'undefined') return;
+  const maxAgeSeconds = Math.floor(maxAgeDays * 24 * 60 * 60);
+  const secure = window.location.protocol === 'https:';
+  document.cookie =
+    `${name}=${encodeURIComponent(value)}; ` +
+    `Max-Age=${maxAgeSeconds}; Path=/; SameSite=Lax;` +
+    (secure ? ' Secure;' : '');
+};
+
+const clearCookie = (name: string): void => {
+  if (typeof document === 'undefined') return;
+  document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax;`;
+};
+
 /**
  * Get current cookie consent from localStorage
  */
 export const getCookieConsent = (): CookieConsent | null => {
   try {
-    const stored = localStorage.getItem(CONSENT_KEY);
+    // Prefer cookie (DPDP/GDPR-friendly: survives some storage-clearing scenarios),
+    // fallback to localStorage for backward compatibility.
+    let stored: string | null = null;
+    try {
+      stored = getCookie(CONSENT_KEY);
+    } catch (_) {}
+    if (!stored) {
+      stored = localStorage.getItem(CONSENT_KEY);
+    }
     if (!stored) return null;
 
     const consent: CookieConsent = JSON.parse(stored);
@@ -62,6 +93,7 @@ export const setCookieConsent = (preferences: Omit<CookieConsent, 'timestamp' | 
     };
 
     localStorage.setItem(CONSENT_KEY, JSON.stringify(consent));
+    setCookie(CONSENT_KEY, JSON.stringify(consent), CONSENT_EXPIRY_DAYS);
   } catch (error) {
     console.error('Error setting cookie consent:', error);
   }
@@ -97,6 +129,10 @@ export const clearCookieConsent = (): void => {
   } catch (error) {
     console.error('Error clearing cookie consent:', error);
   }
+
+  try {
+    clearCookie(CONSENT_KEY);
+  } catch (_) {}
 };
 
 /**

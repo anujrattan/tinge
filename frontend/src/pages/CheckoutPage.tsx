@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Button, Input, Select } from '../components/ui';
 import { PaymentMethodSelector } from '../components/PaymentMethodSelector';
 import { UserIcon, MailIcon, SmartphoneIcon, MapPinIcon } from '../components/icons';
+import { useToast } from '../context/ToastContext';
 import api from '../services/api';
 import { useApp } from '../context/AppContext';
 import { formatCurrency } from '../utils/currency';
@@ -21,6 +22,7 @@ const CheckoutForm: React.FC<{
   currency: any;
   codFee: number;
 }> = ({ onSubmit, paymentMethod, onPaymentMethodChange, initialData, onAddressSaved, isGuest, currency, codFee }) => {
+  const { showToast } = useToast();
   // For guest users, try to load from localStorage first
   const getInitialData = () => {
     if (isGuest && !initialData) {
@@ -132,7 +134,7 @@ const CheckoutForm: React.FC<{
         setIsEditing(false);
       } catch (error) {
         console.error('Error saving address:', error);
-        alert('Failed to save address. Please try again.');
+        showToast('Failed to save address. Please try again.', 'error');
       } finally {
         setIsSaving(false);
       }
@@ -458,6 +460,7 @@ const CheckoutForm: React.FC<{
 export const CheckoutPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { showToast } = useToast();
   const { cart, clearCart, currency, isAuthenticated, user } = useApp();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'COD' | 'Prepaid'>('Prepaid');
@@ -465,6 +468,7 @@ export const CheckoutPage: React.FC = () => {
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
   const [useNewAddress, setUseNewAddress] = useState(false);
   const [loadingAddresses, setLoadingAddresses] = useState(false);
+  const cancellationHandledRef = useRef(false);
   const subtotal = cart.reduce((acc, item) => acc + item.price * item.quantity, 0);
   const shippingCost = 0;
   const COD_FEE = 99;
@@ -513,10 +517,21 @@ export const CheckoutPage: React.FC = () => {
   // Check if user was redirected back after cancelling payment
   useEffect(() => {
     const params = new URLSearchParams(location.search);
-    if (params.get('cancelled') === 'true') {
+    const isCancelled = params.get('cancelled') === 'true';
+    if (isCancelled && !cancellationHandledRef.current) {
+      cancellationHandledRef.current = true;
       setIsSubmitting(false);
+      const cancelledOrderNumber = params.get('orderNumber') || params.get('order_number');
+      showToast(
+        cancelledOrderNumber
+          ? `Payment was cancelled for order ${cancelledOrderNumber}. You can retry payment from your orders.`
+          : 'Payment was cancelled. You can retry whenever you are ready.',
+        'error'
+      );
+      // Clean query params so refresh/back doesn't keep showing the cancellation toast.
+      navigate('/checkout', { replace: true });
     }
-  }, [location]);
+  }, [location.search, navigate, showToast]);
 
   const initiateCheckoutFiredRef = useRef(false);
   useEffect(() => {
@@ -551,6 +566,38 @@ export const CheckoutPage: React.FC = () => {
     setIsSubmitting(true);
     
     try {
+      // Guard against invalid legacy cart items before sending to backend.
+      const invalidItems = cart
+        .map((item, index) => ({
+          index,
+          title: item.name || item.title || `Item ${index + 1}`,
+          missingSize: !String(item.selectedSize || '').trim(),
+          missingColor: !String(item.selectedColor || '').trim(),
+        }))
+        .filter((item) => item.missingSize || item.missingColor);
+
+      if (invalidItems.length > 0) {
+        const details = invalidItems
+          .slice(0, 3)
+          .map((item) => {
+            const missing = [
+              item.missingSize ? 'size' : '',
+              item.missingColor ? 'color' : '',
+            ]
+              .filter(Boolean)
+              .join(' & ');
+            return `${item.title} (missing ${missing})`;
+          })
+          .join(', ');
+
+        showToast(
+          `Some cart items are missing required options (${details}). Please update your cart and try again.`,
+          'error'
+        );
+        setIsSubmitting(false);
+        return;
+      }
+
       // Use selected address if available and not using new address, otherwise use form data
       let addressData;
       if (!useNewAddress && selectedAddress) {
@@ -587,7 +634,7 @@ export const CheckoutPage: React.FC = () => {
       const result = await api.submitOrder(orderDetails, gateway);
       
       if (!result.success) {
-        alert(result.message || 'There was an issue placing your order. Please try again.');
+        showToast(result.message || 'There was an issue placing your order. Please try again.', 'error');
         setIsSubmitting(false);
         return;
       }
@@ -609,7 +656,7 @@ export const CheckoutPage: React.FC = () => {
         navigate(`/order-success?orderNumber=${result.orderNumber}&gateway=COD`);
       } else if (gateway === 'Prepaid') {
         if (!result.orderId || !result.orderNumber) {
-          alert('Order created but payment initialization failed. Please contact support.');
+          showToast('Order created but payment initialization failed. Please contact support.', 'error');
           setIsSubmitting(false);
           return;
         }
@@ -639,7 +686,10 @@ export const CheckoutPage: React.FC = () => {
 
           const { orderId: razorpayOrderId, keyId, amount } = razorpayResponse.razorpay;
           const callbackUrl = `${process.env.VITE_API_BASE_URL || 'http://localhost:3001'}/api/payments/callback`;
-          const cancelUrl = `${window.location.origin}/checkout?cancelled=true`;
+          const emailParam = addressData.email
+            ? `email=${encodeURIComponent(addressData.email)}&`
+            : '';
+          const cancelUrl = `${window.location.origin}/order-details/${encodeURIComponent(result.orderNumber)}?${emailParam}cancelled=true`;
 
           const form = document.createElement('form');
           form.method = 'POST';
@@ -673,13 +723,13 @@ export const CheckoutPage: React.FC = () => {
           form.submit();
         } catch (error: any) {
           console.error('Error initializing payment:', error);
-          alert('Failed to initialize payment. Please try again or choose Cash on Delivery.');
+          showToast('Failed to initialize payment. Please try again or choose Cash on Delivery.', 'error');
           setIsSubmitting(false);
         }
       }
     } catch (error: any) {
       console.error('Error placing order:', error);
-      alert('There was an issue placing your order. Please try again.');
+      showToast('There was an issue placing your order. Please try again.', 'error');
       setIsSubmitting(false);
     }
   };

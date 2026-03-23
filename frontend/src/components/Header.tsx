@@ -555,10 +555,14 @@ export const Header: React.FC<HeaderProps> = ({
                 key={cartAnimationKey}
                 className={cartAnimationKey > 0 ? "animate-cartBump" : ""}
               >
-                <ShoppingBagIcon className="h-5 w-5" />
+                <ShoppingBagIcon
+                  className={`h-5 w-5 ${
+                    cartItemCount > 0 ? "text-pink-500" : ""
+                  }`}
+                />
               </div>
               {cartItemCount > 0 && (
-                <span className="absolute top-0 right-0 block h-4 w-4 rounded-full bg-pink-500 text-white text-[10px] font-medium flex items-center justify-center transform translate-x-1/3 -translate-y-1/3">
+                <span className="absolute top-0 right-0 block h-4 w-4 rounded-full bg-pink-500 text-white text-[10px] font-medium flex items-center justify-center transform translate-x-1/3 -translate-y-1/3 animate-heartbeat shadow-lg">
                   {cartItemCount}
                 </span>
               )}

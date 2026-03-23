@@ -40,7 +40,9 @@ export function initGtm(containerId: string): void {
 export function pushToDataLayer(event: Record<string, unknown>): void {
   if (typeof window === 'undefined') return;
   if (!window.dataLayer) return;
-  if (!trackingAllowed) return;
+  const eventName = typeof event.event === 'string' ? event.event : '';
+  // Allow consent updates even after the user revokes analytics/marketing.
+  if (!trackingAllowed && eventName !== 'consent_update') return;
   window.dataLayer.push(event);
 }
 

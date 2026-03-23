@@ -8,6 +8,18 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 3000,
       host: '0.0.0.0',
+      // Proxy API calls back to the local backend so we only need one tunnel.
+      // Client should call `/api/*` (set VITE_API_BASE_URL=/api).
+      proxy: {
+        '/api': {
+          target: 'http://localhost:3001',
+          changeOrigin: true,
+        },
+      },
+      // Allow ngrok host headers during local testing.
+      // This prevents "Blocked request ... is not allowed" errors.
+      // Vite expects `string[] | true` for this option.
+      allowedHosts: ['.ngrok-free.app'],
     },
     plugins: [react()],
     define: {
