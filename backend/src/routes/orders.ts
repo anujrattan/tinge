@@ -15,6 +15,7 @@ import path from "path";
 import fs from "fs";
 import PDFDocument from "pdfkit";
 import { fileURLToPath } from "url";
+import { normalizeSizeLabel, normalizeSizeList } from "../utils/sizeNormalization.js";
 
 // In ESM modules, __dirname is not available by default, so we reconstruct it.
 const __filename = fileURLToPath(import.meta.url);
@@ -394,9 +395,10 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
       }
       
       const variants = product.variants || { sizes: [] };
-      const availableSizes = variants.sizes || [];
-      
-      if (!availableSizes.includes(item.size)) {
+      const availableSizes = normalizeSizeList(variants.sizes || []);
+      const requestedSize = normalizeSizeLabel(item.size || "");
+
+      if (!availableSizes.includes(requestedSize)) {
         return res.status(400).json({
           success: false,
           message: `Size ${item.size} is not available for product ${product.title}. Available sizes: ${availableSizes.join(', ')}`,
@@ -523,7 +525,7 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
         order_id: order.id,
         product_id: item.productId,
         product_name: productMap.get(item.productId) || "Unknown Product",
-        size: item.size,
+        size: normalizeSizeLabel(item.size || ""),
         color: item.color,
         quantity: item.quantity,
         unit_price: item.price,

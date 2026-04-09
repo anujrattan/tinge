@@ -6,7 +6,7 @@ import { ProductCard } from '../components/ProductCard';
 import { useApp } from '../context/AppContext';
 import { formatCurrency } from '../utils/currency';
 import api from '../services/api';
-import { getComplementSlugsForCategories } from '../utils/recommendationCategories';
+import { buildComplementMap, getComplementSlugsForCategories } from '../utils/recommendationCategories';
 import type { Product } from '../types';
 
 const RECOMMENDATIONS_LIMIT = 4;
@@ -20,16 +20,9 @@ export const CartPage: React.FC = () => {
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   const [loadingWishlist, setLoadingWishlist] = useState(false);
 
-  // Fetch upsell recommendations from complement categories (exclude cart items)
+  // Fetch upsell recommendations — uses DB complement_slugs per category, falls back to static map
   useEffect(() => {
     if (cart.length === 0) {
-      setRecommendedProducts([]);
-      return;
-    }
-    const cartIds = new Set(cart.map(item => item.id));
-    const categorySlugs = [...new Set(cart.map(item => item.category).filter(Boolean))] as string[];
-    const complementSlugs = getComplementSlugsForCategories(categorySlugs);
-    if (complementSlugs.length === 0) {
       setRecommendedProducts([]);
       return;
     }
@@ -37,6 +30,19 @@ export const CartPage: React.FC = () => {
     setLoadingRecommendations(true);
     (async () => {
       try {
+        // Fetch live categories to get DB-managed complement_slugs
+        const categories = await api.getCategories();
+        const complementMap = buildComplementMap(categories);
+
+        const cartIds = new Set(cart.map(item => item.id));
+        const categorySlugs = [...new Set(cart.map(item => item.category).filter(Boolean))] as string[];
+        const complementSlugs = getComplementSlugsForCategories(categorySlugs, complementMap);
+
+        if (complementSlugs.length === 0) {
+          if (!cancelled) setRecommendedProducts([]);
+          return;
+        }
+
         const results = await Promise.all(complementSlugs.map(slug => api.getProducts(slug)));
         const merged = results.flat();
         const seen = new Set<string>();
@@ -117,7 +123,7 @@ export const CartPage: React.FC = () => {
                   <div>
                     <div className="flex justify-between text-base font-medium text-brand-primary">
                       <h3>{item.name}</h3>
-                      <p className="ml-4">{formatCurrency(item.price * item.quantity, currency)}</p>
+                      <p className="ml-4">{formatCurrency(item.price * item.quantity, currency, { showDecimals: false })}</p>
                     </div>
                     <p className="mt-1 text-sm text-brand-secondary">{item.selectedColor} / {item.selectedSize}</p>
                   </div>
@@ -151,14 +157,14 @@ export const CartPage: React.FC = () => {
             <div className="mt-6 space-y-4">
               <div className="flex items-center justify-between">
                 <p className="text-sm text-brand-secondary">Subtotal</p>
-                <p className="text-sm font-medium text-brand-primary">{formatCurrency(subtotal, currency)}</p>
+                <p className="text-sm font-medium text-brand-primary">{formatCurrency(subtotal, currency, { showDecimals: false })}</p>
               </div>
               <p className="text-xs text-brand-secondary">
                 Prices shown are inclusive of all applicable GST.
               </p>
               <div className="flex items-center justify-between border-t border-white/10 pt-4">
                 <p className="text-base font-medium text-brand-primary">Order total</p>
-                <p className="text-base font-medium text-brand-primary">{formatCurrency(total, currency)}</p>
+                <p className="text-base font-medium text-brand-primary">{formatCurrency(total, currency, { showDecimals: false })}</p>
               </div>
             </div>
             <Button onClick={() => navigate('/checkout')} className="w-full mt-6">
@@ -168,12 +174,13 @@ export const CartPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Recommendations (complement categories, exclude cart) */}
+      {/* Cross-sell: complement categories */}
       {(loadingRecommendations || recommendedProducts.length > 0) && (
         <div className="mt-16 border-t border-white/10 pt-12">
           <h2 className="text-2xl font-display font-bold tracking-tight text-brand-primary">
-            You may also like
+            Complete the look
           </h2>
+          <p className="mt-1 text-sm text-brand-secondary">You might also love these</p>
           {loadingRecommendations ? (
             <p className="mt-4 text-brand-secondary">Loading recommendations...</p>
           ) : (

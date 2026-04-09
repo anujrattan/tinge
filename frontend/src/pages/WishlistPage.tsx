@@ -8,6 +8,7 @@ import { Button } from '../components/ui';
 import { HeartIcon, ShoppingBagIcon, TrashIcon, LinkIcon } from '../components/icons';
 import { formatCurrency } from '../utils/currency';
 import { getCssColorValue, getColorName } from '../utils/colorUtils';
+import { calculateFinalPrice, toAnchoredDisplayPrice } from '../utils/pricing';
 
 export const WishlistPage: React.FC = () => {
   const navigate = useNavigate();
@@ -202,14 +203,9 @@ export const WishlistPage: React.FC = () => {
           const onSale = product.on_sale === true;
           const saleDiscountPercentage = onSale && product.sale_discount_percentage ? parseFloat(String(product.sale_discount_percentage)) : 0;
           
-          // Calculate final price
-          let finalPrice = sellingPrice;
-          if (discountPercentage > 0) {
-            finalPrice = finalPrice * (1 - discountPercentage / 100);
-          }
-          if (saleDiscountPercentage > 0) {
-            finalPrice = finalPrice * (1 - saleDiscountPercentage / 100);
-          }
+          const finalPrice = calculateFinalPrice(sellingPrice, discountPercentage, onSale, saleDiscountPercentage);
+          const displayFinalPrice = toAnchoredDisplayPrice(finalPrice);
+          const displaySellingPrice = toAnchoredDisplayPrice(sellingPrice);
           
           const hasDiscount = discountPercentage > 0 || saleDiscountPercentage > 0;
           const isRemoving = removingItems.has(product.id);
@@ -252,11 +248,11 @@ export const WishlistPage: React.FC = () => {
                 {/* Price */}
                 <div className="mt-2">
                   <p className="text-xl font-bold text-pink-500">
-                    {formatCurrency(finalPrice, currency)}
+                    {formatCurrency(displayFinalPrice, currency, { showDecimals: false })}
                   </p>
                   {hasDiscount && (
                     <p className="text-sm text-brand-secondary line-through">
-                      {formatCurrency(sellingPrice, currency)}
+                      {formatCurrency(displaySellingPrice, currency, { showDecimals: false })}
                     </p>
                   )}
                 </div>

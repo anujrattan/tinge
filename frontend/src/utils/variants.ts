@@ -3,17 +3,19 @@
  * Shared utilities for extracting and processing product variants
  */
 
+import { normalizeSizeLabel, PREFERRED_SIZES } from './sizeSystem';
+
 // Size validation regex pattern
-export const SIZE_PATTERN = /^(XS|S|M|L|XL|XXL|XXXL|2XL|3XL|4XL|5XL|\d+)$/i;
+export const SIZE_PATTERN = /^(S|M|L|XL|XXL|3XL|\d+)$/i;
 
 // Size order for sorting
-export const SIZE_ORDER = ['xs', 's', 'm', 'l', 'xl', 'xxl', 'xxxl', '2xl', '3xl', '4xl', '5xl'];
+export const SIZE_ORDER = PREFERRED_SIZES.map((size) => size.toLowerCase());
 
 /**
  * Check if a string looks like a size
  */
 export const isValidSize = (value: string): boolean => {
-  return SIZE_PATTERN.test(value);
+  return SIZE_PATTERN.test(normalizeSizeLabel(value));
 };
 
 /**
@@ -21,12 +23,14 @@ export const isValidSize = (value: string): boolean => {
  */
 export const sortSizes = (sizes: string[]): string[] => {
   return sizes.sort((a, b) => {
-    const aIndex = SIZE_ORDER.findIndex(s => a.toLowerCase() === s);
-    const bIndex = SIZE_ORDER.findIndex(s => b.toLowerCase() === s);
+    const normalizedA = normalizeSizeLabel(a);
+    const normalizedB = normalizeSizeLabel(b);
+    const aIndex = SIZE_ORDER.findIndex(s => normalizedA.toLowerCase() === s);
+    const bIndex = SIZE_ORDER.findIndex(s => normalizedB.toLowerCase() === s);
     if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
     if (aIndex !== -1) return -1;
     if (bIndex !== -1) return 1;
-    return a.localeCompare(b);
+    return normalizedA.localeCompare(normalizedB);
   });
 };
 
@@ -50,7 +54,7 @@ export const extractSizesAndColors = (variants: any[]): { sizes: string[]; color
         const optionValue = (option.value || '').trim();
 
         if (optionName === 'size' && optionValue) {
-          sizes.add(optionValue);
+          sizes.add(normalizeSizeLabel(optionValue));
           sizeFound = true;
         }
         if ((optionName === 'color' || optionName === 'colour') && optionValue) {
@@ -71,7 +75,7 @@ export const extractSizesAndColors = (variants: any[]): { sizes: string[]; color
         const possibleSize = parts[1];
         // Validate it looks like a size (contains common size patterns)
         if (isValidSize(possibleSize)) {
-          sizes.add(possibleSize);
+          sizes.add(normalizeSizeLabel(possibleSize));
         }
       }
 

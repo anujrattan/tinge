@@ -4,6 +4,8 @@ export interface Category {
   slug: string;
   imageUrl: string;
   isActive?: boolean;
+  /** Slugs of categories to cross-sell when this category is in the cart */
+  complementSlugs?: string[];
 }
 
 export interface Collection {
@@ -57,6 +59,8 @@ export interface Product {
   discount?: string; // computed: "Save $X" (cumulative discount)
   fulfillment_partner?: string | null;
   partner_product_id?: string | null;
+  size_chart_profile?: string | null;
+  design_family?: string | null;
 }
 
 export interface CartItem extends Product {

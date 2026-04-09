@@ -217,7 +217,7 @@ router.post("/", authenticateOrGuest, async (req: Request, res: Response, next: 
     }
 
     const wishlistKey = getWishlistKey(authReq);
-    
+
     // Check if product exists and is active
     const { data: product, error: productError } = await supabaseAdmin
       .from("products")
@@ -239,9 +239,30 @@ router.post("/", authenticateOrGuest, async (req: Request, res: Response, next: 
       });
     }
 
-    // Get current wishlist from Redis
+    // For authenticated users: resolve DB user ID BEFORE touching Redis
+    // so a missing profile doesn't leave Redis in an inconsistent state.
+    let dbUserId: string | null = null;
+    if (!authReq.isGuest && authReq.userId) {
+      const { data: user } = await supabaseAdmin
+        .from("users")
+        .select("id")
+        .eq("auth_user_id", authReq.userId)
+        .single();
+
+      if (user) {
+        dbUserId = user.id;
+      } else {
+        // Auth user exists but has no profile row yet (e.g. admin accounts).
+        // Proceed with Redis-only storage — consistent with how GET handles this case.
+        console.warn(
+          `[WISHLIST] No users row for auth_user_id ${authReq.userId} — using Redis-only storage`
+        );
+      }
+    }
+
+    // Check current Redis state
     const currentWishlist = await wishlistCache.getWishlistFromCache(wishlistKey) || [];
-    
+
     // Check if already in wishlist
     if (currentWishlist.includes(product_id)) {
       return res.status(400).json({
@@ -262,32 +283,14 @@ router.post("/", authenticateOrGuest, async (req: Request, res: Response, next: 
     // Add to Redis
     await wishlistCache.addToWishlistCache(wishlistKey, product_id);
 
-    // For authenticated users: Also save to DB
-    if (!authReq.isGuest && authReq.userId) {
-      // Get user record
-      const { data: user, error: userError } = await supabaseAdmin
-        .from("users")
-        .select("id")
-        .eq("auth_user_id", authReq.userId)
-        .single();
-
-      if (userError || !user) {
-        return res.status(404).json({
-          success: false,
-          message: "User not found",
-        });
-      }
-
-      // Add to DB
+    // Add to DB only when we have a valid profile row
+    if (dbUserId) {
       const { error: insertError } = await supabaseAdmin
         .from("wishlists")
-        .insert({
-          user_id: user.id,
-          product_id: product_id,
-        });
+        .insert({ user_id: dbUserId, product_id });
 
       if (insertError && insertError.code !== "23505") {
-        // Ignore duplicate constraint violations
+        // Ignore duplicate constraint violations; surface everything else
         throw insertError;
       }
     }
@@ -312,31 +315,29 @@ router.delete("/:productId", authenticateOrGuest, async (req: Request, res: Resp
 
     const wishlistKey = getWishlistKey(authReq);
 
-    // Remove from Redis
+    // Remove from Redis first (always safe to do)
     await wishlistCache.removeFromWishlistCache(wishlistKey, productId);
 
-    // For authenticated users: Also remove from DB
+    // For authenticated users: also remove from DB
     if (!authReq.isGuest && authReq.userId) {
-      // Get user record
-      const { data: user, error: userError } = await supabaseAdmin
+      const { data: user } = await supabaseAdmin
         .from("users")
         .select("id")
         .eq("auth_user_id", authReq.userId)
         .single();
 
-      if (userError || !user) {
-        return res.status(404).json({
-          success: false,
-          message: "User not found",
-        });
+      if (user) {
+        await supabaseAdmin
+          .from("wishlists")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("product_id", productId);
+      } else {
+        // No profile row (e.g. admin accounts) — Redis-only removal is sufficient
+        console.warn(
+          `[WISHLIST] No users row for auth_user_id ${authReq.userId} — Redis-only removal`
+        );
       }
-
-      // Delete from DB
-      await supabaseAdmin
-        .from("wishlists")
-        .delete()
-        .eq("user_id", user.id)
-        .eq("product_id", productId);
     }
 
     res.json({

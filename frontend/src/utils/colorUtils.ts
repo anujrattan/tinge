@@ -8,6 +8,27 @@ interface ColorMapping {
   aliases?: string[];
 }
 
+export interface ColorProfile {
+  name: string;
+  hex: string;
+}
+
+// Runtime-loaded canonical profiles from backend (DB + Redis cached).
+// These override the static COLOR_MAP when present.
+let DYNAMIC_COLOR_PROFILES: Map<string, string> | null = null;
+
+export const setDynamicColorProfiles = (profiles: ColorProfile[]) => {
+  const map = new Map<string, string>();
+  for (const p of profiles || []) {
+    const name = String(p?.name || '').trim();
+    const hex = String(p?.hex || '').trim().toUpperCase();
+    if (!name) continue;
+    if (!/^#[0-9A-F]{6}$/.test(hex)) continue;
+    map.set(name.toLowerCase(), hex);
+  }
+  DYNAMIC_COLOR_PROFILES = map;
+};
+
 // Common color mappings
 const COLOR_MAP: ColorMapping[] = [
   { name: 'Black', hex: '#000000', aliases: ['#000', '#1a1a1a', '#0f172a'] },
@@ -119,6 +140,12 @@ export const getColorHex = (color: string): string => {
   // If it's already a hex code, return it
   if (color.startsWith('#')) {
     return color;
+  }
+
+  // Prefer canonical profiles loaded from backend if available
+  if (DYNAMIC_COLOR_PROFILES) {
+    const dynamic = DYNAMIC_COLOR_PROFILES.get(color.toLowerCase());
+    if (dynamic) return dynamic;
   }
   
   // Try to find the color name in our mapping

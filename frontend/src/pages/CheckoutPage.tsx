@@ -886,7 +886,7 @@ export const CheckoutPage: React.FC = () => {
                       <h3 className="text-sm font-medium text-brand-primary">{item.name || item.title}</h3>
                       <p className="text-sm text-brand-secondary">Qty: {item.quantity}</p>
                     </div>
-                    <p className="text-sm font-medium text-brand-primary">{formatCurrency(item.price * item.quantity, currency)}</p>
+                    <p className="text-sm font-medium text-brand-primary">{formatCurrency(item.price * item.quantity, currency, { showDecimals: false })}</p>
                   </li>
                 ))}
               </ul>
@@ -895,38 +895,38 @@ export const CheckoutPage: React.FC = () => {
                   <>
                     <div className="flex justify-between text-sm text-brand-secondary">
                       <span>Subtotal</span>
-                      <span className="line-through text-brand-secondary/80">{formatCurrency(subtotal, currency)}</span>
+                      <span className="line-through text-brand-secondary/80">{formatCurrency(subtotal, currency, { showDecimals: false })}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-emerald-600 dark:text-emerald-400 font-medium">Extra 5% off (Prepaid)</span>
-                      <span className="text-emerald-600 dark:text-emerald-400 font-medium">-{formatCurrency(prepaidSavings, currency)}</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-medium">-{formatCurrency(prepaidSavings, currency, { showDecimals: false })}</span>
                     </div>
                     <div className="flex justify-between text-sm text-brand-secondary">
                       <span>Price after discount</span>
-                      <span className="text-brand-primary font-medium">{formatCurrency(discountedSubtotal, currency)}</span>
+                      <span className="text-brand-primary font-medium">{formatCurrency(discountedSubtotal, currency, { showDecimals: false })}</span>
                     </div>
                   </>
                 ) : (
                   <div className="flex justify-between text-sm text-brand-secondary">
                     <span>Subtotal</span>
-                    <span className="text-brand-primary">{formatCurrency(subtotal, currency)}</span>
+                    <span className="text-brand-primary">{formatCurrency(subtotal, currency, { showDecimals: false })}</span>
                   </div>
                 )}
                 {paymentMethod === 'COD' && (
                   <div className="flex justify-between text-sm text-brand-secondary">
                     <span>COD Handling Fee</span>
-                    <span className="text-brand-primary">{formatCurrency(COD_FEE, currency)}</span>
+                    <span className="text-brand-primary">{formatCurrency(COD_FEE, currency, { showDecimals: false })}</span>
                   </div>
                 )}
                 {shippingCost > 0 && (
                   <div className="flex justify-between text-sm text-brand-secondary">
                     <span>Shipping</span>
-                    <span className="text-brand-primary">{formatCurrency(shippingCost, currency)}</span>
+                    <span className="text-brand-primary">{formatCurrency(shippingCost, currency, { showDecimals: false })}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-base font-medium text-brand-primary pt-2 border-t border-white/10">
                   <span>Total</span>
-                  <span>{formatCurrency(total, currency)}</span>
+                  <span>{formatCurrency(total, currency, { showDecimals: false })}</span>
                 </div>
                 <p className="text-xs text-brand-secondary">
                   Prices are inclusive of all applicable GST.
@@ -948,7 +948,7 @@ export const CheckoutPage: React.FC = () => {
                       <h3 className="text-sm font-medium text-brand-primary">{item.name || item.title}</h3>
                       <p className="text-sm text-brand-secondary">Qty: {item.quantity}</p>
                     </div>
-                    <p className="text-sm font-medium text-brand-primary">{formatCurrency(item.price * item.quantity, currency)}</p>
+                    <p className="text-sm font-medium text-brand-primary">{formatCurrency(item.price * item.quantity, currency, { showDecimals: false })}</p>
                   </li>
                 ))}
               </ul>
@@ -957,38 +957,38 @@ export const CheckoutPage: React.FC = () => {
                   <>
                     <div className="flex justify-between text-sm text-brand-secondary">
                       <span>Subtotal</span>
-                      <span className="line-through text-brand-secondary/80">{formatCurrency(subtotal, currency)}</span>
+                      <span className="line-through text-brand-secondary/80">{formatCurrency(subtotal, currency, { showDecimals: false })}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-emerald-600 dark:text-emerald-400 font-medium">Extra 5% off (Prepaid)</span>
-                      <span className="text-emerald-600 dark:text-emerald-400 font-medium">-{formatCurrency(prepaidSavings, currency)}</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-medium">-{formatCurrency(prepaidSavings, currency, { showDecimals: false })}</span>
                     </div>
                     <div className="flex justify-between text-sm text-brand-secondary">
                       <span>Price after discount</span>
-                      <span className="text-brand-primary font-medium">{formatCurrency(discountedSubtotal, currency)}</span>
+                      <span className="text-brand-primary font-medium">{formatCurrency(discountedSubtotal, currency, { showDecimals: false })}</span>
                     </div>
                   </>
                 ) : (
                   <div className="flex justify-between text-sm text-brand-secondary">
                     <span>Subtotal</span>
-                    <span className="text-brand-primary">{formatCurrency(subtotal, currency)}</span>
+                    <span className="text-brand-primary">{formatCurrency(subtotal, currency, { showDecimals: false })}</span>
                   </div>
                 )}
                 {paymentMethod === 'COD' && (
                   <div className="flex justify-between text-sm text-brand-secondary">
                     <span>COD Handling Fee</span>
-                    <span className="text-brand-primary">{formatCurrency(COD_FEE, currency)}</span>
+                    <span className="text-brand-primary">{formatCurrency(COD_FEE, currency, { showDecimals: false })}</span>
                   </div>
                 )}
                 {shippingCost > 0 && (
                   <div className="flex justify-between text-sm text-brand-secondary">
                     <span>Shipping</span>
-                    <span className="text-brand-primary">{formatCurrency(shippingCost, currency)}</span>
+                    <span className="text-brand-primary">{formatCurrency(shippingCost, currency, { showDecimals: false })}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-base font-medium text-brand-primary pt-2 border-t border-white/10">
                   <span>Total</span>
-                  <span>{formatCurrency(total, currency)}</span>
+                  <span>{formatCurrency(total, currency, { showDecimals: false })}</span>
                 </div>
                 <p className="text-xs text-brand-secondary">
                   Prices are inclusive of all applicable GST.

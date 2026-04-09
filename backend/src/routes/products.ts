@@ -7,6 +7,8 @@ import { authenticateToken, requireAdmin, AuthRequest } from '../middleware/auth
 import { supabase, supabaseAdmin } from '../services/supabase.js';
 import { uploadProductImage, extractFilePathFromUrl, deleteFile } from '../services/storage.js';
 import { cache, cacheKeys } from '../services/redis.js';
+import { createPricingValidationSnapshot, pricingPayloadMatches, PricingValidationPayload } from '../utils/pricing.js';
+import { normalizeSizeList } from '../utils/sizeNormalization.js';
 
 const router = Router();
 
@@ -15,6 +17,16 @@ const router = Router();
 // This means cache will only refresh from DB ~4 times per day on cache misses
 // But since we upsert on writes, cache stays in sync regardless of TTL
 const CACHE_TTL = 6 * 60 * 60; // 6 hours
+
+const isValidPricingValidationPayload = (value: any): value is PricingValidationPayload => {
+  return (
+    value &&
+    typeof value === 'object' &&
+    Number.isFinite(Number(value.suggested_price)) &&
+    Number.isFinite(Number(value.discounted_price)) &&
+    Number.isFinite(Number(value.final_price))
+  );
+};
 
 // Helper function to transform database product to API format
 const transformProduct = (dbProduct: any, category?: any) => {
@@ -101,6 +113,8 @@ const transformProduct = (dbProduct: any, category?: any) => {
     target_margin_percent: dbProduct.target_margin_percent || undefined,
     fulfillment_partner: dbProduct.fulfillment_partner || undefined,
     partner_product_id: dbProduct.partner_product_id || undefined,
+    size_chart_profile: dbProduct.size_chart_profile || undefined,
+    design_family: dbProduct.design_family || undefined,
   };
 };
 
@@ -109,7 +123,7 @@ const extractVariantsFromDb = (variants: any) => {
   if (!variants || typeof variants !== 'object') {
     return { sizes: [] };
   }
-  const sizes = Array.isArray(variants.sizes) ? variants.sizes : [];
+  const sizes = Array.isArray(variants.sizes) ? normalizeSizeList(variants.sizes) : [];
   return { sizes };
 };
 
@@ -491,6 +505,52 @@ router.get('/new-arrivals', async (req: Request, res: Response, next: NextFuncti
   }
 });
 
+// Get distinct design family values for admin autocomplete
+router.get(
+  '/design-families',
+  authenticateToken,
+  requireAdmin,
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const q = typeof req.query.q === 'string' ? req.query.q.trim() : '';
+      const limitRaw = parseInt(String(req.query.limit || '10'), 10);
+      const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(limitRaw, 1), 50) : 10;
+
+      let query = supabaseAdmin
+        .from('products')
+        .select('design_family')
+        .not('design_family', 'is', null)
+        .neq('design_family', '');
+
+      if (q) {
+        query = query.ilike('design_family', `%${q}%`);
+      }
+
+      const { data, error } = await query
+        .order('updated_at', { ascending: false })
+        .limit(200);
+
+      if (error) throw error;
+
+      const seen = new Set<string>();
+      const families: string[] = [];
+      for (const row of data || []) {
+        const value = typeof row.design_family === 'string' ? row.design_family.trim() : '';
+        if (!value) continue;
+        const key = value.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        families.push(value);
+        if (families.length >= limit) break;
+      }
+
+      res.json({ families });
+    } catch (error: any) {
+      next(error);
+    }
+  },
+);
+
 // Get product by ID (public) - with caching
 router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -564,9 +624,12 @@ router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res: 
       vendor_base_cost,
       vendor_shipping_cost,
       target_margin_percent,
+      pricing_validation,
+      size_chart_profile,
+      design_family,
     } = req.body;
     
-    const sizesArray = Array.isArray(sizes) ? sizes : (sizes ? [sizes] : []);
+    const sizesArray = normalizeSizeList(Array.isArray(sizes) ? sizes : (sizes ? [sizes] : []));
     
     console.log('📝 Creating product with data:', { title, sizes: sizesArray, color: color || null });
     
@@ -602,6 +665,56 @@ router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res: 
       });
     }
     
+    const parsedVendorBaseCost =
+      vendor_base_cost !== undefined && vendor_base_cost !== null && vendor_base_cost !== ''
+        ? parseFloat(vendor_base_cost)
+        : 0;
+    const parsedVendorShippingCost =
+      vendor_shipping_cost !== undefined && vendor_shipping_cost !== null && vendor_shipping_cost !== ''
+        ? parseFloat(vendor_shipping_cost)
+        : 0;
+    const parsedTargetMarginPercent =
+      target_margin_percent !== undefined && target_margin_percent !== null && target_margin_percent !== ''
+        ? parseFloat(target_margin_percent)
+        : 100;
+    const parsedDiscountPercentage =
+      discount_percentage !== undefined && discount_percentage !== null && discount_percentage !== ''
+        ? parseFloat(discount_percentage)
+        : 0;
+    const parsedOnSale = Boolean(on_sale);
+    const parsedSaleDiscountPercentage =
+      sale_discount_percentage !== undefined && sale_discount_percentage !== null && sale_discount_percentage !== ''
+        ? parseFloat(sale_discount_percentage)
+        : 0;
+
+    if (
+      !isValidPricingValidationPayload(pricing_validation) ||
+      pricing_validation.suggested_price < 0 ||
+      pricing_validation.discounted_price < 0 ||
+      pricing_validation.final_price < 0
+    ) {
+      return res.status(400).json({
+        error: 'Missing or invalid pricing_validation payload from frontend.',
+      });
+    }
+
+    const expectedPricing = createPricingValidationSnapshot({
+      vendorBaseCost: parsedVendorBaseCost,
+      vendorShippingCost: parsedVendorShippingCost,
+      targetMarginPercent: parsedTargetMarginPercent,
+      sellingPrice: parsedSellingPrice,
+      discountPercentage: parsedDiscountPercentage,
+      onSale: parsedOnSale,
+      saleDiscountPercentage: parsedSaleDiscountPercentage,
+    });
+
+    if (!pricingPayloadMatches(pricing_validation, expectedPricing)) {
+      return res.status(409).json({
+        error: 'Pricing mismatch between frontend and backend calculations. Please retry.',
+        expected: expectedPricing,
+      });
+    }
+
     const productData: any = {
       category_id,
       collection_id: collection_id || null,
@@ -611,16 +724,18 @@ router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res: 
       main_image_url: finalMainImageUrl,
       variants: { sizes: sizesArray },
       color: color && String(color).trim() ? String(color).trim() : null,
+      size_chart_profile: size_chart_profile || null,
+      design_family: design_family && String(design_family).trim() ? String(design_family).trim() : null,
     };
     
     if (discount_percentage !== undefined && discount_percentage !== null) {
-      productData.discount_percentage = parseFloat(discount_percentage);
+      productData.discount_percentage = parsedDiscountPercentage;
     }
     if (on_sale !== undefined) {
-      productData.on_sale = Boolean(on_sale);
+      productData.on_sale = parsedOnSale;
     }
     if (sale_discount_percentage !== undefined && sale_discount_percentage !== null) {
-      productData.sale_discount_percentage = parseFloat(sale_discount_percentage);
+      productData.sale_discount_percentage = parsedSaleDiscountPercentage;
     }
     if (usp_tag) productData.usp_tag = usp_tag;
     if (rating !== undefined) productData.rating = parseFloat(rating);
@@ -628,21 +743,18 @@ router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res: 
     if (fulfillment_partner) productData.fulfillment_partner = fulfillment_partner;
     if (partner_product_id) productData.partner_product_id = partner_product_id;
     if (vendor_base_cost !== undefined && vendor_base_cost !== null && vendor_base_cost !== '') {
-      const parsed = parseFloat(vendor_base_cost);
-      if (!isNaN(parsed) && parsed >= 0) {
-        productData.vendor_base_cost = parsed;
+      if (!isNaN(parsedVendorBaseCost) && parsedVendorBaseCost >= 0) {
+        productData.vendor_base_cost = parsedVendorBaseCost;
       }
     }
     if (vendor_shipping_cost !== undefined && vendor_shipping_cost !== null && vendor_shipping_cost !== '') {
-      const parsed = parseFloat(vendor_shipping_cost);
-      if (!isNaN(parsed) && parsed >= 0) {
-        productData.vendor_shipping_cost = parsed;
+      if (!isNaN(parsedVendorShippingCost) && parsedVendorShippingCost >= 0) {
+        productData.vendor_shipping_cost = parsedVendorShippingCost;
       }
     }
     if (target_margin_percent !== undefined && target_margin_percent !== null && target_margin_percent !== '') {
-      const parsed = parseFloat(target_margin_percent);
-      if (!isNaN(parsed) && parsed >= 0) {
-        productData.target_margin_percent = parsed;
+      if (!isNaN(parsedTargetMarginPercent) && parsedTargetMarginPercent >= 0) {
+        productData.target_margin_percent = parsedTargetMarginPercent;
       }
     }
     
@@ -758,9 +870,12 @@ router.put('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res
       vendor_base_cost,
       vendor_shipping_cost,
       target_margin_percent,
+      pricing_validation,
+      size_chart_profile,
+      design_family,
     } = req.body;
     
-    const sizesArray = Array.isArray(sizes) ? sizes : (sizes ? [sizes] : []);
+    const sizesArray = normalizeSizeList(Array.isArray(sizes) ? sizes : (sizes ? [sizes] : []));
     console.log('🔄 Updating product with data:', { id, sizes: sizesArray, color: color ?? null });
     
     const productSlug = title?.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || id.substring(0, 8);
@@ -819,6 +934,10 @@ router.put('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res
     }
     if (fulfillment_partner !== undefined) productData.fulfillment_partner = fulfillment_partner || null;
     if (partner_product_id !== undefined) productData.partner_product_id = partner_product_id || null;
+    if (size_chart_profile !== undefined) productData.size_chart_profile = size_chart_profile || null;
+    if (design_family !== undefined) {
+      productData.design_family = design_family && String(design_family).trim() ? String(design_family).trim() : null;
+    }
     if (vendor_base_cost !== undefined) {
       if (vendor_base_cost === null || vendor_base_cost === '') {
         productData.vendor_base_cost = null;
@@ -857,6 +976,62 @@ router.put('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res
         }
         productData.target_margin_percent = parsed;
       }
+    }
+
+    // Validate pricing computations from frontend against backend snapshot
+    if (
+      !isValidPricingValidationPayload(pricing_validation) ||
+      pricing_validation.suggested_price < 0 ||
+      pricing_validation.discounted_price < 0 ||
+      pricing_validation.final_price < 0
+    ) {
+      return res.status(400).json({
+        error: 'Missing or invalid pricing_validation payload from frontend.',
+      });
+    }
+
+    const effectiveVendorBaseCost =
+      productData.vendor_base_cost !== undefined
+        ? (productData.vendor_base_cost ?? 0)
+        : Number(oldProduct?.vendor_base_cost || 0);
+    const effectiveVendorShippingCost =
+      productData.vendor_shipping_cost !== undefined
+        ? (productData.vendor_shipping_cost ?? 0)
+        : Number(oldProduct?.vendor_shipping_cost || 0);
+    const effectiveTargetMarginPercent =
+      productData.target_margin_percent !== undefined
+        ? (productData.target_margin_percent ?? 100)
+        : Number(oldProduct?.target_margin_percent ?? 100);
+    const effectiveSellingPrice =
+      productData.selling_price !== undefined
+        ? Number(productData.selling_price)
+        : Number(oldProduct?.selling_price || 0);
+    const effectiveDiscountPercentage =
+      productData.discount_percentage !== undefined
+        ? Number(productData.discount_percentage || 0)
+        : Number(oldProduct?.discount_percentage || 0);
+    const effectiveOnSale =
+      productData.on_sale !== undefined ? Boolean(productData.on_sale) : Boolean(oldProduct?.on_sale);
+    const effectiveSaleDiscountPercentage =
+      productData.sale_discount_percentage !== undefined
+        ? Number(productData.sale_discount_percentage || 0)
+        : Number(oldProduct?.sale_discount_percentage || 0);
+
+    const expectedPricing = createPricingValidationSnapshot({
+      vendorBaseCost: effectiveVendorBaseCost,
+      vendorShippingCost: effectiveVendorShippingCost,
+      targetMarginPercent: effectiveTargetMarginPercent,
+      sellingPrice: effectiveSellingPrice,
+      discountPercentage: effectiveDiscountPercentage,
+      onSale: effectiveOnSale,
+      saleDiscountPercentage: effectiveSaleDiscountPercentage,
+    });
+
+    if (!pricingPayloadMatches(pricing_validation, expectedPricing)) {
+      return res.status(409).json({
+        error: 'Pricing mismatch between frontend and backend calculations. Please retry.',
+        expected: expectedPricing,
+      });
     }
     
     const { data, error } = await supabaseAdmin

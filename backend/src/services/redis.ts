@@ -162,5 +162,6 @@ export const cacheKeys = {
   categories: 'categories:all',
   categoriesActive: 'categories:active',
   category: (slug: string) => `category:${slug}`,
+  colorProfiles: 'colors:profiles',
 };
 

@@ -8,6 +8,7 @@ import { formatCurrency } from '../utils/currency';
 import { useApp } from '../context/AppContext';
 import { getCssColorValue, getColorName } from '../utils/colorUtils';
 import { useToast } from '../context/ToastContext';
+import { calculateFinalPrice, toAnchoredDisplayPrice } from '../utils/pricing';
 
 interface ProductCardProps {
   product: Product;
@@ -28,14 +29,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const onSale = product.on_sale === true;
   const saleDiscountPercentage = onSale && product.sale_discount_percentage ? parseFloat(String(product.sale_discount_percentage)) : 0;
   
-  // Calculate final price with multiplicative stacking
-  let finalPrice = sellingPrice;
-  if (discountPercentage > 0) {
-    finalPrice = finalPrice * (1 - discountPercentage / 100);
-  }
-  if (saleDiscountPercentage > 0) {
-    finalPrice = finalPrice * (1 - saleDiscountPercentage / 100);
-  }
+  const finalPrice = calculateFinalPrice(sellingPrice, discountPercentage, onSale, saleDiscountPercentage);
+  const displayFinalPrice = toAnchoredDisplayPrice(finalPrice);
+  const displaySellingPrice = toAnchoredDisplayPrice(sellingPrice);
   
   const hasAnyDiscount = discountPercentage > 0 || saleDiscountPercentage > 0;
   const totalSavings = sellingPrice - finalPrice;
@@ -158,16 +154,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </p>
         )}
         
-        <div className="mt-1">
-          <p className="text-base sm:text-lg font-extrabold text-pink-500 truncate">
-            {formatCurrency(finalPrice, currency)}
+        <div className="mt-1 flex items-baseline gap-1.5 flex-nowrap overflow-hidden">
+          <p className="text-base sm:text-lg font-extrabold text-pink-500 whitespace-nowrap">
+            {formatCurrency(displayFinalPrice, currency, { showDecimals: false })}
           </p>
           {hasAnyDiscount && (
-            <div className="flex items-center gap-1 flex-wrap mt-0.5">
+            <div className="flex items-baseline gap-1 whitespace-nowrap min-w-0">
               <p className="text-[10px] sm:text-xs text-card-light-text-secondary line-through">
-                {formatCurrency(sellingPrice, currency)}
+                {formatCurrency(displaySellingPrice, currency, { showDecimals: false })}
               </p>
-              <span className="text-[10px] sm:text-xs font-semibold text-pink-500 whitespace-nowrap">
+              <span className="text-[10px] sm:text-xs font-semibold text-pink-500">
                 ({effectiveDiscount.toFixed(0)}% off)
               </span>
             </div>

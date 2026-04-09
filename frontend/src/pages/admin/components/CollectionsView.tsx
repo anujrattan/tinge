@@ -99,7 +99,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
         return (
           <Card
             key={collection.id}
-            className="group overflow-hidden hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] border-white/10"
+            className="group overflow-visible hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] border-white/10"
           >
             <div className="relative h-48 overflow-hidden">
               {shouldShowImage ? (
@@ -124,7 +124,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
                 </p>
               </div>
             </div>
-            <div className="p-6">
+            <div className="p-6 space-y-3">
               <h3 className="text-xl font-display font-bold text-brand-primary mb-1">
                 {collection.name}
               </h3>
@@ -133,12 +133,12 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
                   {collection.description}
                 </p>
               )}
-              <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/10">
-                <span className="text-xs text-brand-secondary font-mono">
+              <div className="pt-4 border-t border-white/10 space-y-3">
+                <span className="block text-xs text-brand-secondary font-mono break-words">
                   {collection.slug}
                 </span>
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 min-w-0">
                     <span className="text-xs text-brand-secondary">Active</span>
                     <Toggle
                       checked={collection.isActive !== false}
@@ -147,11 +147,11 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
                       label={`Toggle ${collection.name} active status`}
                     />
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex items-center gap-2 shrink-0">
                     <Button
                       variant="ghost"
                       onClick={() => onEdit(collection)}
-                      className="p-2 hover:bg-purple-500/10"
+                      className="p-2 hover:bg-purple-500/10 rounded-md"
                       aria-label="Edit collection"
                     >
                       <EditIcon className="w-4 h-4 text-brand-secondary hover:text-purple-400" />
@@ -159,7 +159,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
                     <Button
                       variant="ghost"
                       onClick={() => onDelete(collection.id)}
-                      className="p-2 hover:bg-red-500/10"
+                      className="p-2 hover:bg-red-500/10 rounded-md"
                       aria-label="Delete collection"
                     >
                       <TrashIcon className="w-4 h-4 text-brand-secondary hover:text-red-400" />

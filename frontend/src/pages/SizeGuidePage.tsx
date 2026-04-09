@@ -10,6 +10,8 @@ export const SizeGuidePage: React.FC = () => {
       { size: 'M', chest: '40-42"', length: '28"', sleeve: '9"' },
       { size: 'L', chest: '44-46"', length: '29"', sleeve: '9.5"' },
       { size: 'XL', chest: '48-50"', length: '30"', sleeve: '10"' },
+      { size: 'XXL', chest: '52-54"', length: '31"', sleeve: '10.5"' },
+      { size: '3XL', chest: '56-58"', length: '32"', sleeve: '11"' },
     ],
     'Accessories': [
       { size: 'One Size', description: 'Fits most head sizes (21-24 inches)' },

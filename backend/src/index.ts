@@ -24,6 +24,7 @@ import faqRoutes from "./routes/faqs.js";
 import userRoutes from "./routes/users.js";
 import wishlistRoutes from "./routes/wishlists.js";
 import ratingsRoutes from "./routes/ratings.js";
+import colorRoutes from "./routes/colors.js";
 
 const app = express();
 
@@ -56,6 +57,7 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/wishlists", wishlistRoutes);
 app.use("/api/ratings", ratingsRoutes);
+app.use("/api/colors", colorRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/blog", blogRoutes);
 app.use("/api/faqs", faqRoutes);

@@ -102,6 +102,7 @@ const transformCategory = (dbCategory: any) => ({
   slug: dbCategory.slug,
   imageUrl: dbCategory.image_url || dbCategory.imageUrl,
   isActive: dbCategory.is_active !== undefined ? dbCategory.is_active : true,
+  complementSlugs: Array.isArray(dbCategory.complement_slugs) ? dbCategory.complement_slugs : [],
 });
 
 // Get all categories (public) - only returns active categories
@@ -208,7 +209,7 @@ router.get('/:slug', async (req, res, next) => {
 // Create category (admin only)
 router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res, next) => {
   try {
-    const { name, slug, imageUrl, imageFile } = req.body;
+    const { name, slug, imageUrl, imageFile, complementSlugs } = req.body;
     
     let finalImageUrl: string;
     
@@ -250,6 +251,7 @@ router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res, 
       slug,
       image_url: finalImageUrl,
       is_active: true, // New categories are active by default
+      complement_slugs: Array.isArray(complementSlugs) ? complementSlugs : [],
     };
     
     const { data, error } = await supabase
@@ -275,7 +277,7 @@ router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res, 
 router.put('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res, next) => {
   try {
     const { id } = req.params;
-    const { name, slug, imageUrl, imageFile } = req.body;
+    const { name, slug, imageUrl, imageFile, complementSlugs } = req.body;
     
     // Get existing category to check for old image
     const { data: existingCategory } = await supabase
@@ -287,6 +289,7 @@ router.put('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res
     const categoryData: any = {};
     if (name) categoryData.name = name;
     if (slug) categoryData.slug = slug;
+    if (Array.isArray(complementSlugs)) categoryData.complement_slugs = complementSlugs;
     
     // Handle image URL or file upload
     if (imageFile && !imageUrl) {

@@ -3,6 +3,7 @@ import { Product, Category } from '../../../types';
 import { Button, Card } from '../../../components/ui';
 import { PackageIcon, PlusIcon, EditIcon, TrashIcon, TagIcon, SearchIcon } from '../../../components/icons';
 import { formatCurrency, CurrencyCode } from '../../../utils/currency';
+import { toAnchoredDisplayPrice } from '../../../utils/pricing';
 
 interface ProductsViewProps {
   products: Product[];
@@ -177,10 +178,12 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                 </td>
                 <td className="px-6 py-4 text-left">
                   <div className="flex items-baseline justify-start gap-2">
-                    <span className="text-lg font-bold text-pink-500">{formatCurrency(product.price, currency)}</span>
+                    <span className="text-lg font-bold text-pink-500">
+                      {formatCurrency(toAnchoredDisplayPrice(product.price ?? 0), currency, { showDecimals: false })}
+                    </span>
                     {product.originalPrice && (
                       <span className="text-xs text-brand-secondary line-through">
-                        {formatCurrency(product.originalPrice, currency)}
+                        {formatCurrency(toAnchoredDisplayPrice(product.originalPrice), currency, { showDecimals: false })}
                       </span>
                     )}
                   </div>

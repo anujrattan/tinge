@@ -73,6 +73,28 @@ const api = {
     return await apiCall(`/products/${id}`);
   },
 
+  getDesignFamilies: async (q?: string, limit: number = 10): Promise<string[]> => {
+    const params = new URLSearchParams();
+    if (q && q.trim()) params.append('q', q.trim());
+    params.append('limit', String(limit));
+    const query = params.toString();
+    const response = await apiCall(`/products/design-families${query ? `?${query}` : ''}`);
+    return Array.isArray(response?.families) ? response.families : [];
+  },
+
+  getColorProfiles: async (): Promise<{ name: string; hex: string }[]> => {
+    const response = await apiCall('/colors');
+    return Array.isArray(response?.profiles) ? response.profiles : [];
+  },
+
+  upsertColorProfile: async (name: string, hex: string): Promise<{ name: string; hex: string }> => {
+    const response = await apiCall('/colors', {
+      method: 'POST',
+      body: JSON.stringify({ name, hex }),
+    });
+    return response?.profile || { name, hex };
+  },
+
   createProduct: async (productData: Omit<Product, 'id'>): Promise<Product> => {
     return apiCall('/products', {
       method: 'POST',

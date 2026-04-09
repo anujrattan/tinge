@@ -13,6 +13,8 @@ import { CurrencyCode, getStoredCurrency, saveCurrencyPreference } from '../util
 import { isCategoryAllowed } from '../utils/cookieConsent';
 import { clearGuestSession } from '../utils/guestSession';
 import { trackAddToCart, cartToTrackingItems } from '../utils/gtm';
+import { getDisplayPrice } from '../utils/pricing';
+import { setDynamicColorProfiles } from '../utils/colorUtils';
 
 type Theme = 'dark' | 'light';
 const THEME_STORAGE_KEY = 'luxe-threads-theme';
@@ -141,7 +143,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   }, []);
 
   const addToWishlist = React.useCallback(async (productId: string) => {
-    // Check if already in wishlist
+    // Already tracked locally — nothing to do
     if (wishlist.includes(productId)) {
       return;
     }
@@ -152,15 +154,21 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
 
     try {
-      // Call API (works for both guest and authenticated users via hybrid auth)
-      // Backend handles Redis + DB storage
       await api.addToWishlist(productId);
-      
-      // Update local state + localStorage (fast cache)
+
+      // Update local state + localStorage
       const updatedWishlist = [...wishlist, productId];
       setWishlist(updatedWishlist);
       localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(updatedWishlist));
     } catch (error: any) {
+      // Backend says it's already there but our local state didn't know — self-heal
+      // so the icon shows the correct filled state without surfacing an error.
+      if (/already in your wishlist/i.test(error.message || '')) {
+        const updatedWishlist = [...wishlist, productId];
+        setWishlist(updatedWishlist);
+        localStorage.setItem(WISHLIST_STORAGE_KEY, JSON.stringify(updatedWishlist));
+        return;
+      }
       throw new Error(error.message || 'Failed to add to wishlist');
     }
   }, [wishlist]);
@@ -215,6 +223,26 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     };
     loadUser();
   }, [loadWishlist, clearGuestSessionAfterAuth]);
+
+  // Load canonical color profiles (DB-backed, Redis-cached) for accurate swatches
+  useEffect(() => {
+    let cancelled = false;
+    const loadColorProfiles = async () => {
+      try {
+        const profiles = await api.getColorProfiles();
+        if (!cancelled && Array.isArray(profiles) && profiles.length > 0) {
+          setDynamicColorProfiles(profiles);
+        }
+      } catch (error) {
+        // Non-fatal: fall back to static mappings.
+        console.warn('Failed to load color profiles:', error);
+      }
+    };
+    loadColorProfiles();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Check token expiration every minute
   useEffect(() => {
@@ -285,27 +313,37 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   }, []);
 
   const addToCart = (itemToAdd: CartItem) => {
+    // Anchor the price at cart-add time so cart, checkout and order totals
+    // all use the same clean display price without decimal artifacts.
+    const anchoredPrice = getDisplayPrice(
+      itemToAdd.selling_price ?? itemToAdd.price ?? 0,
+      itemToAdd.discount_percentage,
+      itemToAdd.on_sale,
+      itemToAdd.sale_discount_percentage,
+    );
+    const normalizedItem: CartItem = { ...itemToAdd, price: anchoredPrice };
+
     setCart(prevCart => {
       const existingItem = prevCart.find(item =>
-        item.id === itemToAdd.id &&
-        item.selectedColor === itemToAdd.selectedColor &&
-        item.selectedSize === itemToAdd.selectedSize
+        item.id === normalizedItem.id &&
+        item.selectedColor === normalizedItem.selectedColor &&
+        item.selectedSize === normalizedItem.selectedSize
       );
       if (existingItem) {
         return prevCart.map(item =>
-          item.id === itemToAdd.id && item.selectedColor === itemToAdd.selectedColor && item.selectedSize === itemToAdd.selectedSize
+          item.id === normalizedItem.id && item.selectedColor === normalizedItem.selectedColor && item.selectedSize === normalizedItem.selectedSize
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
       }
-      return [...prevCart, itemToAdd];
+      return [...prevCart, normalizedItem];
     });
     setCartAnimationKey(prev => prev + 1);
-    const price = (itemToAdd.selling_price ?? itemToAdd.price ?? 0) * itemToAdd.quantity;
+    const trackingPrice = anchoredPrice * normalizedItem.quantity;
     trackAddToCart({
       currency,
-      value: price,
-      items: cartToTrackingItems([itemToAdd]),
+      value: trackingPrice,
+      items: cartToTrackingItems([normalizedItem]),
     });
   };
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, KeyboardEvent } from 'react';
 import { Category } from '../../../types';
 import api from '../../../services/api';
 import { Button, Card, Input } from '../../../components/ui';
@@ -10,6 +10,11 @@ export const CategoryForm: React.FC<{ category?: Category | null, onSave: () => 
     slug: category?.slug || '',
     imageUrl: category?.imageUrl || '',
   });
+  const [complementSlugs, setComplementSlugs] = useState<string[]>(
+    category?.complementSlugs ?? []
+  );
+  const [complementInput, setComplementInput] = useState('');
+  const complementInputRef = useRef<HTMLInputElement>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(category?.imageUrl || null);
   const [useUrl, setUseUrl] = useState(!!category?.imageUrl && !category?.imageUrl.includes('supabase.co'));
@@ -18,6 +23,26 @@ export const CategoryForm: React.FC<{ category?: Category | null, onSave: () => 
 
   const generateSlug = (name: string): string => {
     return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  };
+
+  const addComplementSlug = (raw: string) => {
+    const slug = generateSlug(raw.trim());
+    if (!slug || complementSlugs.includes(slug)) return;
+    setComplementSlugs((prev) => [...prev, slug]);
+    setComplementInput('');
+  };
+
+  const removeComplementSlug = (slug: string) => {
+    setComplementSlugs((prev) => prev.filter((s) => s !== slug));
+  };
+
+  const handleComplementKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      addComplementSlug(complementInput);
+    } else if (e.key === 'Backspace' && complementInput === '' && complementSlugs.length > 0) {
+      setComplementSlugs((prev) => prev.slice(0, -1));
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -111,6 +136,7 @@ export const CategoryForm: React.FC<{ category?: Category | null, onSave: () => 
       let categoryData: any = {
         name: formData.name,
         slug: formData.slug,
+        complementSlugs,
       };
 
       // If file is selected, convert to base64 and send as imageFile
@@ -170,6 +196,52 @@ export const CategoryForm: React.FC<{ category?: Category | null, onSave: () => 
             className="w-full"
           />
           <p className="mt-1 text-xs text-brand-secondary">URL-friendly identifier (auto-generated from name)</p>
+        </div>
+
+        {/* Cross-sell complement categories */}
+        <div>
+          <label className="block text-sm font-semibold text-brand-primary mb-1">
+            Cross-sell Categories
+          </label>
+          <p className="text-xs text-brand-secondary mb-3">
+            When a product from <strong className="text-brand-primary">{formData.name || 'this category'}</strong> is in the cart, show products from these categories. Type a slug and press <kbd className="px-1 py-0.5 bg-white/10 rounded text-[10px]">Enter</kbd> or <kbd className="px-1 py-0.5 bg-white/10 rounded text-[10px]">,</kbd> to add.
+          </p>
+          <div
+            className="min-h-[44px] flex flex-wrap gap-2 items-center px-3 py-2 rounded-lg border border-white/20 bg-brand-surface focus-within:border-purple-500/60 transition-colors cursor-text"
+            onClick={() => complementInputRef.current?.focus()}
+          >
+            {complementSlugs.map((slug) => (
+              <span
+                key={slug}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-500/15 border border-purple-500/30 text-xs font-medium text-purple-300"
+              >
+                {slug}
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); removeComplementSlug(slug); }}
+                  className="hover:text-white transition-colors"
+                  aria-label={`Remove ${slug}`}
+                >
+                  <XIcon className="w-3 h-3" />
+                </button>
+              </span>
+            ))}
+            <input
+              ref={complementInputRef}
+              type="text"
+              value={complementInput}
+              onChange={(e) => setComplementInput(e.target.value)}
+              onKeyDown={handleComplementKeyDown}
+              onBlur={() => { if (complementInput.trim()) addComplementSlug(complementInput); }}
+              placeholder={complementSlugs.length === 0 ? 'e.g. stickers, tote-bags, wall-art' : ''}
+              className="flex-1 min-w-[160px] bg-transparent outline-none text-sm text-brand-primary placeholder:text-brand-secondary/50"
+            />
+          </div>
+          {complementSlugs.length > 0 && (
+            <p className="mt-1.5 text-xs text-brand-secondary">
+              {complementSlugs.length} complement{complementSlugs.length > 1 ? 's' : ''} set. Remember to also add <strong className="text-brand-primary">{formData.slug || 'this slug'}</strong> to those categories if you want the cross-sell to be bidirectional.
+            </p>
+          )}
         </div>
 
         {/* Image Section */}
