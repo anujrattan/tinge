@@ -11,7 +11,7 @@ export const useAdminData = () => {
   const fetchProducts = async () => {
     setProductsLoading(true);
     try {
-      const data = await api.getProducts();
+      const data = await api.getAdminProducts();
       setProducts(data);
     } catch (error) {
       console.error('Failed to fetch products:', error);

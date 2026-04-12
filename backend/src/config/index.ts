@@ -52,7 +52,7 @@ export const config = {
 
   // Redis configuration
   redis: {
-    url: process.env.REDIS_URL || "redis://localhost:6379",
+    url: process.env._URL || "redis://localhost:6379",
   },
 
   // Qikink API configuration
@@ -60,6 +60,13 @@ export const config = {
     clientId: process.env.QIKINK_CLIENT_ID || "",
     clientSecret: process.env.QIKINK_CLIENT_SECRET || "",
     sandboxUrl: process.env.QIKINK_SANDBOX_URL || "",
+  },
+
+  // Printrove API configuration
+  printrove: {
+    baseUrl: process.env.PRINTROVE_BASE_URL || "https://api.printrove.com",
+    email: process.env.PRINTROVE_EMAIL || "rattan.anuj@gmail.com",
+    password: process.env.PRINTROVE_PASSWORD || "Nov@2025",
   },
 
   // Razorpay configuration
@@ -81,8 +88,7 @@ export const config = {
     apiKey: process.env.RESEND_API_KEY || "",
     // For testing, you can use Resend's default onboarding sender
     // or set RESEND_FROM_EMAIL in your .env to a verified sender.
-    fromEmail:
-      process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
+    fromEmail: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
     adminEmail: process.env.RESEND_ADMIN_EMAIL || "",
   },
 };

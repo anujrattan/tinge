@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Input, Select } from '../../../components/ui';
-import { XIcon, DownloadIcon, MapPinIcon, PackageIcon, ReceiptIcon, UserIcon } from '../../../components/icons';
+import { XIcon, DownloadIcon, MapPinIcon, PackageIcon, ReceiptIcon, UserIcon, TruckIcon } from '../../../components/icons';
 import { formatCurrency, CurrencyCode } from '../../../utils/currency';
+import { normalizeSizeLabel } from '../../../utils/sizeSystem';
 import api from '../../../services/api';
 
 interface OrderDetailViewProps {
@@ -31,6 +32,29 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
   onSave,
   isSaving,
 }) => {
+  const normalizeSize = (value: any): string =>
+    normalizeSizeLabel(String(value || '').trim()).replace(/\s+/g, '');
+
+  const getPartnerVariantIdForItem = (item: any, product: any): string => {
+    if (!product || !Array.isArray(product.partner_variants)) return '';
+    const itemSize = normalizeSize(item?.size);
+    if (!itemSize) return '';
+
+    const match = product.partner_variants.find((variant: any) => {
+      const variantSize = normalizeSize(variant?.size);
+      return variantSize === itemSize;
+    });
+
+    if (match?.partner_variant_id) return String(match.partner_variant_id);
+
+    // Fallback: if only one partner variant is available, use it.
+    if (product.partner_variants.length === 1) {
+      return String(product.partner_variants[0]?.partner_variant_id || '');
+    }
+
+    return '';
+  };
+
   // Original values (from server) - used to detect changes and for cancel
   const [originalValues, setOriginalValues] = useState({
     status: order.status || 'pending',
@@ -60,13 +84,6 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
 
   // Detect unsaved changes
   const hasUnsavedChanges = JSON.stringify(originalValues) !== JSON.stringify(currentValues);
-
-  // Show tracking fields when status is "shipped" or "delivered" (current or original)
-  const showTrackingFields = 
-    currentValues.status === 'shipped' || 
-    currentValues.status === 'delivered' ||
-    originalValues.status === 'shipped' ||
-    originalValues.status === 'delivered';
 
   // Handle status change (local state only)
   const handleStatusChange = (newStatus: string) => {
@@ -117,6 +134,48 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
     });
   };
 
+  // ── Serviceability state ──────────────────────────────────────────────────
+  const [couriers, setCouriers] = useState<Array<{ id: number; name: string; cost: number }>>([]);
+  const [serviceabilityLoading, setServiceabilityLoading] = useState(false);
+  const [serviceabilityError, setServiceabilityError] = useState<string | null>(null);
+  const [serviceabilityChecked, setServiceabilityChecked] = useState(false);
+
+  const orderPincode = order.users?.zip || '';
+  const isCod = order.gateway === 'COD';
+
+  const checkServiceability = async () => {
+    if (!orderPincode) {
+      setServiceabilityError("No pincode found for this order's shipping address.");
+      return;
+    }
+    setServiceabilityLoading(true);
+    setServiceabilityError(null);
+    setCouriers([]);
+    setServiceabilityChecked(false);
+    try {
+      const result = await api.checkPrintroveServiceability({
+        country: 'India',
+        pincode: orderPincode,
+        weight: '500',
+        cod: isCod ? 'true' : 'false',
+      });
+      if (result?.success && Array.isArray(result?.data?.couriers)) {
+        setCouriers(result.data.couriers);
+        setServiceabilityChecked(true);
+      } else {
+        setServiceabilityError(
+          result?.data?.message || result?.data?.errors
+            ? JSON.stringify(result?.data?.errors)
+            : 'Unable to fetch shipping options. Please try again.'
+        );
+      }
+    } catch (err: any) {
+      setServiceabilityError(err.message || 'Failed to check serviceability.');
+    } finally {
+      setServiceabilityLoading(false);
+    }
+  };
+
   // Cancel - revert to original values
   const handleCancel = () => {
     setCurrentValues(originalValues);
@@ -136,24 +195,16 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
     // Group 1: Status + Tracking Info
     if (statusChanged) {
       changes.status = currentValues.status;
-      
-      // If status changed to "shipped" or "delivered", include tracking info (even if unchanged)
-      if (currentValues.status === 'shipped' || currentValues.status === 'delivered') {
-        changes.shipping_partner = currentValues.shipping_partner;
-        changes.tracking_number = currentValues.tracking_number;
-        changes.tracking_url = currentValues.tracking_url;
-      }
+      // Always include tracking info when status changes (backend handles it)
+      changes.shipping_partner = currentValues.shipping_partner;
+      changes.tracking_number = currentValues.tracking_number;
+      changes.tracking_url = currentValues.tracking_url;
     } else if (trackingChanged) {
-      // Tracking info changed - include it if status is "shipped" or "delivered"
-      // Always include the current status so backend knows which status to update tracking for
-      if (currentValues.status === 'shipped' || currentValues.status === 'delivered' ||
-          originalValues.status === 'shipped' || originalValues.status === 'delivered') {
-        // Include status to ensure backend processes the update
-        changes.status = currentValues.status;
-        changes.shipping_partner = currentValues.shipping_partner;
-        changes.tracking_number = currentValues.tracking_number;
-        changes.tracking_url = currentValues.tracking_url;
-      }
+      // Tracking changed without status change — include current status so backend processes it
+      changes.status = currentValues.status;
+      changes.shipping_partner = currentValues.shipping_partner;
+      changes.tracking_number = currentValues.tracking_number;
+      changes.tracking_url = currentValues.tracking_url;
     }
 
     // Group 2: Fulfillment Partner + Partner Order ID
@@ -224,60 +275,8 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
               value={currentValues.status}
               onChange={handleStatusChange}
               disabled={isSaving}
-              className="min-w-[180px]"
+              className="min-w-[180px] border-2 border-gray-300 dark:border-white/30 rounded-lg"
             />
-            {/* Tracking Information - Show when status is "shipped" or "delivered" */}
-            {showTrackingFields && (
-              <div className="mt-4 p-4 bg-brand-bg/50 rounded-lg border border-white/10 space-y-3">
-                <p className="text-sm font-medium text-brand-primary mb-3">Shipping Information</p>
-                
-                <div>
-                  <label className="block text-xs text-brand-secondary mb-1">
-                    Shipping Partner
-                  </label>
-                  <Input
-                    type="text"
-                    value={currentValues.shipping_partner || ''}
-                    onChange={(e) => handleShippingPartnerChange(e.target.value)}
-                    placeholder="e.g., FedEx, DHL, BlueDart, Delhivery"
-                    className="w-full"
-                    disabled={isSaving}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs text-brand-secondary mb-1">
-                    Tracking Number
-                  </label>
-                  <Input
-                    type="text"
-                    value={currentValues.tracking_number || ''}
-                    onChange={(e) => handleTrackingNumberChange(e.target.value)}
-                    placeholder="Enter tracking number"
-                    className="w-full"
-                    disabled={isSaving}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs text-brand-secondary mb-1">
-                    Tracking URL
-                  </label>
-                  <Input
-                    type="url"
-                    value={currentValues.tracking_url || ''}
-                    onChange={(e) => handleTrackingUrlChange(e.target.value)}
-                    placeholder="https://tracking.example.com/..."
-                    className="w-full"
-                    disabled={isSaving}
-                  />
-                </div>
-
-                <p className="text-xs text-brand-secondary mt-2">
-                  * At least one field (Shipping Partner, Tracking Number, or Tracking URL) is required when status is "Shipped"
-                </p>
-              </div>
-            )}
           </div>
           <div>
             <p className="text-sm text-brand-secondary mb-1">Payment Status</p>
@@ -300,11 +299,36 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
               value={currentValues.fulfillment_partner || ''}
               onChange={handleFulfillmentPartnerChange}
               disabled={isSaving}
-              className="min-w-[180px]"
+              className="min-w-[180px] border-2 border-gray-300 dark:border-white/30 rounded-lg"
             />
-            {/* Partner Order ID Input - shown when fulfillment partner is selected */}
-            {currentValues.fulfillment_partner && (
-              <div className="mt-3">
+          </div>
+          {currentValues.fulfillment_partner && (
+            <div className="md:col-span-2 mt-1 grid grid-cols-1 md:grid-cols-2 gap-3">
+              {/* Left: Partner Variant IDs (read-only) */}
+              <div className="p-3 rounded-lg border-2 border-gray-300 dark:border-white/30">
+                <p className="text-xs font-medium text-brand-primary mb-2">
+                  Printrove Partner Variant IDs (read-only)
+                </p>
+                <div className="space-y-1.5 max-h-36 overflow-auto">
+                  {(order.items || []).map((item: any, idx: number) => {
+                    const product = orderProducts[item.product_id];
+                    const partnerVariantId = getPartnerVariantIdForItem(item, product);
+                    return (
+                      <div key={`${item.product_id}-${item.size}-${idx}`} className="text-xs">
+                        <span className="text-brand-secondary">
+                          {item.product_name} · {item.size} · {item.color}
+                        </span>
+                        <div className="mt-0.5 px-2 py-1 rounded-md border-2 border-gray-300 dark:border-white/30 font-mono text-brand-primary break-all">
+                          {partnerVariantId || 'Not mapped'}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Right: Partner Order ID input */}
+              <div>
                 <p className="text-sm text-brand-secondary mb-2">
                   {currentValues.fulfillment_partner} Order ID
                 </p>
@@ -314,11 +338,11 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
                   onChange={(e) => handlePartnerOrderIdChange(e.target.value)}
                   placeholder={`Enter ${currentValues.fulfillment_partner} order ID`}
                   disabled={isSaving}
-                  className="w-full"
+                  className="w-full border-2 border-gray-300 dark:border-white/30 rounded-lg"
                 />
               </div>
-            )}
-          </div>
+            </div>
+          )}
           <div>
             <p className="text-sm text-brand-secondary mb-1">Date</p>
             <p className="text-sm text-brand-primary">
@@ -476,6 +500,142 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
               <span className="text-brand-secondary">Payment Gateway</span>
               <span className="text-brand-primary">{order.gateway || 'COD'}</span>
             </div>
+          </div>
+        </div>
+
+        {/* Shipping Details */}
+        <div className="border-t-2 border-purple-500/30 pt-6">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="p-2 rounded-lg border border-cyan-500/30 bg-cyan-500/10">
+              <TruckIcon className="w-5 h-5 text-cyan-400" />
+            </div>
+            <h4 className="text-lg font-semibold text-brand-primary">Shipping Details</h4>
+          </div>
+          <div className="p-4 rounded-lg border-2 border-purple-500/30 shadow-lg space-y-4">
+
+            {/* Meta row: pincode, weight, COD + Check button */}
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap gap-3 text-xs text-brand-secondary flex-1">
+                <span>
+                  Pincode:&nbsp;
+                  <span className="font-mono font-semibold text-brand-primary">
+                    {orderPincode || <span className="text-red-400">Not found</span>}
+                  </span>
+                </span>
+                <span>
+                  Weight:&nbsp;
+                  <span className="font-mono font-semibold text-brand-primary">500g</span>
+                </span>
+                <span>
+                  COD:&nbsp;
+                  <span className="font-mono font-semibold text-brand-primary">{isCod ? 'Yes' : 'No'}</span>
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={checkServiceability}
+                disabled={serviceabilityLoading || !orderPincode || isSaving}
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-1.5"
+              >
+                {serviceabilityLoading ? (
+                  <>
+                    <span className="w-3 h-3 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                    Checking…
+                  </>
+                ) : serviceabilityChecked ? 'Refresh Options' : 'Check Shipping Options'}
+              </button>
+            </div>
+
+            {/* Error */}
+            {serviceabilityError && (
+              <p className="text-xs text-red-500 dark:text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+                {serviceabilityError}
+              </p>
+            )}
+
+            {/* Courier dropdown — shown when live options loaded OR when a saved value exists */}
+            {(serviceabilityChecked || currentValues.shipping_partner) && (
+              <div>
+                <label className="block text-xs text-brand-secondary mb-1.5">Courier</label>
+                <Select
+                  options={
+                    serviceabilityChecked && couriers.length > 0
+                      ? [
+                          { value: '', label: 'Select a courier…' },
+                          ...couriers.map((c) => ({
+                            value: c.name,
+                            label: `${c.name}  ·  ₹${c.cost}`,
+                          })),
+                        ]
+                      : [
+                          { value: '', label: 'Select a courier…' },
+                          // Keep saved value as the only option until a live check is run
+                          ...(currentValues.shipping_partner
+                            ? [{ value: currentValues.shipping_partner, label: currentValues.shipping_partner }]
+                            : []),
+                        ]
+                  }
+                  value={currentValues.shipping_partner || ''}
+                  onChange={handleShippingPartnerChange}
+                  disabled={isSaving}
+                  className="border-2 border-gray-300 dark:border-white/30 rounded-lg"
+                />
+                {!serviceabilityChecked && currentValues.shipping_partner && (
+                  <p className="text-xs text-brand-secondary mt-1">
+                    Pre-filled from saved data. Click &ldquo;Check Shipping Options&rdquo; to see all available couriers.
+                  </p>
+                )}
+                {currentValues.shipping_partner && currentValues.shipping_partner !== originalValues.shipping_partner && (
+                  <p className="text-xs text-yellow-500 mt-1.5">
+                    ✓ Changed to <span className="font-medium">{currentValues.shipping_partner}</span> — click &ldquo;Save Changes&rdquo; to persist.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* No couriers available after a check */}
+            {serviceabilityChecked && couriers.length === 0 && !currentValues.shipping_partner && (
+              <p className="text-xs text-brand-secondary">
+                No courier options available for this pincode.
+              </p>
+            )}
+
+            {/* Tracking Number + URL — read-only, populated by Printrove after order creation */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-white/10">
+              <div>
+                <label className="block text-xs text-brand-secondary mb-1">Tracking Number</label>
+                <div className="w-full px-3 py-2 rounded-lg border-2 border-gray-300 dark:border-white/30 bg-gray-50 dark:bg-white/5 text-sm font-mono text-brand-primary min-h-[38px]">
+                  {currentValues.tracking_number || (
+                    <span className="text-gray-400 text-xs font-sans">Populated after Printrove order is created</span>
+                  )}
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs text-brand-secondary mb-1">Tracking URL</label>
+                {currentValues.tracking_url ? (
+                  <a
+                    href={currentValues.tracking_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 w-full px-3 py-2 rounded-lg border-2 border-cyan-500/40 bg-cyan-500/5 text-sm text-cyan-500 hover:text-cyan-400 hover:border-cyan-500/60 transition-colors truncate"
+                  >
+                    <span className="truncate">{currentValues.tracking_url}</span>
+                    <span className="flex-shrink-0 text-[10px]">↗</span>
+                  </a>
+                ) : (
+                  <div className="w-full px-3 py-2 rounded-lg border-2 border-gray-300 dark:border-white/30 bg-gray-50 dark:bg-white/5 text-sm min-h-[38px]">
+                    <span className="text-gray-400 text-xs">Populated after Printrove order is created</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            {(currentValues.status === 'shipped' || currentValues.status === 'delivered') &&
+              !currentValues.shipping_partner && !currentValues.tracking_number && !currentValues.tracking_url && (
+              <p className="text-xs text-amber-500">
+                ⚠ Select a courier before marking the order as Shipped.
+              </p>
+            )}
+
           </div>
         </div>
 

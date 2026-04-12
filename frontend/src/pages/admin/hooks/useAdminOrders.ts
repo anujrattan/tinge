@@ -92,58 +92,41 @@ export const useAdminOrders = () => {
         const newStatus = changes.status !== undefined 
           ? changes.status 
           : selectedOrder?.status || 'pending';
-        
-        // Validate: If status is "shipped", require at least one tracking field
+
+        // Build final tracking values (new values override existing)
+        const finalShippingPartner = changes.shipping_partner !== undefined
+          ? changes.shipping_partner
+          : selectedOrder?.shipping_partner || null;
+        const finalTrackingNumber = changes.tracking_number !== undefined
+          ? changes.tracking_number
+          : selectedOrder?.tracking_number || null;
+        const finalTrackingUrl = changes.tracking_url !== undefined
+          ? changes.tracking_url
+          : selectedOrder?.tracking_url || null;
+
+        // Validate: If transitioning TO "shipped", require at least one tracking field
         if (newStatus === 'shipped') {
-          // Get final tracking values (new or existing)
-          const finalShippingPartner = changes.shipping_partner !== undefined 
-            ? changes.shipping_partner 
-            : selectedOrder?.shipping_partner || null;
-          const finalTrackingNumber = changes.tracking_number !== undefined 
-            ? changes.tracking_number 
-            : selectedOrder?.tracking_number || null;
-          const finalTrackingUrl = changes.tracking_url !== undefined 
-            ? changes.tracking_url 
-            : selectedOrder?.tracking_url || null;
-
-          const hasTrackingInfo = 
-            finalShippingPartner ||
-            finalTrackingNumber ||
-            finalTrackingUrl;
-
+          const hasTrackingInfo = finalShippingPartner || finalTrackingNumber || finalTrackingUrl;
           if (!hasTrackingInfo) {
             return {
               success: false,
               message: 'At least one tracking field (Shipping Partner, Tracking Number, or Tracking URL) is required when status is "shipped"',
             };
           }
-
-          // Prepare tracking info for "shipped" status
-          const trackingInfo = {
-            shipping_partner: finalShippingPartner,
-            tracking_number: finalTrackingNumber,
-            tracking_url: finalTrackingUrl,
-          };
-
-          updates.push(
-            api.updateOrderStatus(orderNumber, newStatus, undefined, trackingInfo)
-              .catch((error: any) => {
-                errors.push(`Failed to update status: ${error.message || 'Unknown error'}`);
-                throw error;
-              })
-          );
-        } else {
-          // Status changed but not to "shipped" - just update status
-          if (statusChanged) {
-            updates.push(
-              api.updateOrderStatus(orderNumber, newStatus, undefined, undefined)
-                .catch((error: any) => {
-                  errors.push(`Failed to update status: ${error.message || 'Unknown error'}`);
-                  throw error;
-                })
-            );
-          }
         }
+
+        // Always include tracking info if any tracking field changed, regardless of status
+        const trackingPayload = trackingChanged
+          ? { shipping_partner: finalShippingPartner, tracking_number: finalTrackingNumber, tracking_url: finalTrackingUrl }
+          : undefined;
+
+        updates.push(
+          api.updateOrderStatus(orderNumber, newStatus, undefined, trackingPayload)
+            .catch((error: any) => {
+              errors.push(`Failed to update status: ${error.message || 'Unknown error'}`);
+              throw error;
+            })
+        );
       }
 
       // Group 2: Update Fulfillment Partner + Partner Order ID (if either changed)

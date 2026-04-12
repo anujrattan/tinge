@@ -65,6 +65,28 @@ const api = {
     return await apiCall(endpoint);
   },
 
+  getAdminProducts: async (): Promise<Product[]> => {
+    return await apiCall('/products/admin-list');
+  },
+
+  bulkDraftImport: async (
+    items: Array<{
+      title: string;
+      color?: string;
+      sizes?: string[];
+      main_image_url?: string;
+      mockup_images?: string[];
+      partner_product_id?: string;
+      partner_variants?: any[];
+      fulfillment_partner?: string;
+    }>,
+  ): Promise<{ created: any[]; failed: any[]; summary: { total: number; created: number; failed: number } }> => {
+    return await apiCall('/products/bulk-draft-import', {
+      method: 'POST',
+      body: JSON.stringify({ items }),
+    });
+  },
+
   getProductsByCollection: async (collectionSlug: string): Promise<Product[]> => {
     return await apiCall(`/products?collection=${collectionSlug}`);
   },
@@ -93,6 +115,88 @@ const api = {
       body: JSON.stringify({ name, hex }),
     });
     return response?.profile || { name, hex };
+  },
+
+  getPrintroveHeartbeat: async (): Promise<any> => {
+    return apiCall('/printrove/heartbeat');
+  },
+
+  getPrintroveAuthTest: async (): Promise<any> => {
+    return apiCall('/printrove/auth-test');
+  },
+
+  getPrintroveCatalogCategories: async (): Promise<any> => {
+    return apiCall('/printrove/catalog/categories');
+  },
+
+  getPrintroveCatalogCategoryProducts: async (categoryId: string): Promise<any> => {
+    return apiCall(`/printrove/catalog/categories/${encodeURIComponent(categoryId)}`);
+  },
+
+  getPrintroveCatalogProductVariants: async (categoryId: string, productId: string): Promise<any> => {
+    return apiCall(
+      `/printrove/catalog/categories/${encodeURIComponent(categoryId)}/products/${encodeURIComponent(productId)}`
+    );
+  },
+
+  getPrintroveProducts: async (params?: { page?: number; per_page?: number; name?: string; sku?: string }): Promise<any> => {
+    const qs = new URLSearchParams();
+    if (params?.page) qs.set('page', String(params.page));
+    if (params?.per_page) qs.set('per_page', String(params.per_page));
+    if (params?.name) qs.set('name', params.name);
+    if (params?.sku) qs.set('sku', params.sku);
+    const query = qs.toString();
+    return apiCall(`/printrove/products${query ? `?${query}` : ''}`);
+  },
+
+  getPrintroveProductById: async (productId: string): Promise<any> => {
+    return apiCall(`/printrove/products/${encodeURIComponent(productId)}`);
+  },
+
+  getPrintrovePincodeDetails: async (pincode: string): Promise<any> => {
+    return apiCall(`/printrove/orders/pincode/${encodeURIComponent(pincode)}`);
+  },
+
+  checkPrintroveServiceability: async (params: {
+    country: string;
+    pincode: string;
+    weight: string;
+    cod?: string;
+  }): Promise<any> => {
+    const qs = new URLSearchParams();
+    qs.set('country', params.country);
+    qs.set('pincode', params.pincode);
+    qs.set('weight', params.weight);
+    const codTrue =
+      params.cod === 'true' || params.cod === '1' || String(params.cod).toLowerCase() === 'true';
+    qs.set('cod', codTrue ? 'true' : 'false');
+    return apiCall(`/printrove/orders/serviceability?${qs.toString()}`);
+  },
+
+  listPrintroveOrders: async (params?: {
+    page?: number;
+    per_page?: number;
+    tracking_number?: string;
+    reference_number?: string;
+  }): Promise<any> => {
+    const qs = new URLSearchParams();
+    if (params?.page) qs.set('page', String(params.page));
+    if (params?.per_page) qs.set('per_page', String(params.per_page));
+    if (params?.tracking_number) qs.set('tracking_number', params.tracking_number);
+    if (params?.reference_number) qs.set('reference_number', params.reference_number);
+    const query = qs.toString();
+    return apiCall(`/printrove/orders${query ? `?${query}` : ''}`);
+  },
+
+  getPrintroveOrderById: async (orderId: string): Promise<any> => {
+    return apiCall(`/printrove/orders/${encodeURIComponent(orderId)}`);
+  },
+
+  createPrintroveOrder: async (payload: any): Promise<any> => {
+    return apiCall('/printrove/orders', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
   },
 
   createProduct: async (productData: Omit<Product, 'id'>): Promise<Product> => {

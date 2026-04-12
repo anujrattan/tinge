@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Product, Category } from '../../../types';
 import { Button, Card } from '../../../components/ui';
 import { PackageIcon, PlusIcon, EditIcon, TrashIcon, TagIcon, SearchIcon } from '../../../components/icons';
@@ -15,6 +15,7 @@ interface ProductsViewProps {
   onEdit: (product: Product) => void;
   onDelete: (id: string) => void;
   onAddNew: () => void;
+  onSyncFromPrintrove?: () => void;
   searchQuery?: string;
   onSearchChange?: (value: string) => void;
   selectedIds?: Set<string>;
@@ -33,6 +34,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
   onEdit,
   onDelete,
   onAddNew,
+  onSyncFromPrintrove,
   searchQuery = '',
   onSearchChange,
   selectedIds = new Set(),
@@ -40,8 +42,14 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
   onSelectAll,
   onBulkDelete,
 }) => {
+  const [showDrafts, setShowDrafts] = useState(false);
+
+  const draftProducts = products.filter((p) => p.is_active === false);
+  const activeProducts = products.filter((p) => p.is_active !== false);
+  const displayedProducts = showDrafts ? draftProducts : activeProducts;
+
   const hasSelection = selectedIds.size > 0;
-  const allFilteredSelected = products.length > 0 && products.every((p) => selectedIds.has(p.id));
+  const allFilteredSelected = displayedProducts.length > 0 && displayedProducts.every((p) => selectedIds.has(p.id));
   const isIndeterminate = hasSelection && !allFilteredSelected;
   if (loading) {
     return (
@@ -104,6 +112,33 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
             Delete selected ({selectedIds.size})
           </Button>
         )}
+        {draftProducts.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setShowDrafts((v) => !v)}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold border transition-all flex-shrink-0 ${
+              showDrafts
+                ? 'bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/40'
+                : 'bg-white/5 text-brand-secondary border-white/10 hover:border-amber-500/30 hover:text-amber-500'
+            }`}
+          >
+            <span className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0" />
+            {draftProducts.length} Draft{draftProducts.length !== 1 ? 's' : ''}
+            {showDrafts ? ' (hide)' : ' (show)'}
+          </button>
+        )}
+        {onSyncFromPrintrove && (
+          <Button
+            variant="secondary"
+            onClick={onSyncFromPrintrove}
+            className="bg-indigo-500/15 text-indigo-500 dark:text-indigo-400 hover:bg-indigo-500/25 border border-indigo-500/30 flex-shrink-0"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Sync from Printrove
+          </Button>
+        )}
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-white/10">
@@ -131,12 +166,21 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
             </tr>
           </thead>
           <tbody className="bg-brand-surface divide-y divide-white/10">
-            {products.map((product, index) => (
-              <tr 
-                key={product.id} 
-                className={`hover:bg-white/5 transition-colors group ${selectedIds.has(product.id) ? 'bg-purple-500/10' : ''}`}
-                style={{ animationDelay: `${index * 50}ms` }}
-              >
+            {displayedProducts.length === 0 ? (
+              <tr>
+                <td colSpan={onToggleSelect && onSelectAll ? 6 : 5} className="px-6 py-10 text-center text-sm text-brand-secondary">
+                  {showDrafts
+                    ? 'No draft products found.'
+                    : 'No active products found. Use "Show Drafts" to view imported drafts.'}
+                </td>
+              </tr>
+            ) : (
+              displayedProducts.map((product, index) => (
+                <tr
+                  key={product.id}
+                  className={`hover:bg-white/5 transition-colors group ${selectedIds.has(product.id) ? 'bg-purple-500/10' : ''} ${product.is_active === false ? 'opacity-80 bg-amber-500/5' : ''}`}
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
                 {onToggleSelect && (
                   <td className="px-4 py-4 text-center w-12">
                     <input
@@ -167,11 +211,18 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                       )}
                     </div>
                     <div className="text-left">
-                      <div className="text-sm font-semibold text-brand-primary group-hover:text-purple-400 transition-colors">
-                        {product.name}
+                      <div className="flex items-center gap-2">
+                        <div className="text-sm font-semibold text-brand-primary group-hover:text-purple-400 transition-colors">
+                          {product.name}
+                        </div>
+                        {product.is_active === false && (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 uppercase tracking-wide flex-shrink-0">
+                            Draft
+                          </span>
+                        )}
                       </div>
                       <div className="text-xs text-brand-secondary mt-1 line-clamp-2 max-w-md">
-                        {product.description}
+                        {product.description || (product.is_active === false ? 'No description yet — edit to complete & publish.' : '')}
                       </div>
                     </div>
                   </div>
@@ -221,8 +272,9 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                     </Button>
                   </div>
                 </td>
-              </tr>
-            ))}
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

@@ -25,6 +25,7 @@ import userRoutes from "./routes/users.js";
 import wishlistRoutes from "./routes/wishlists.js";
 import ratingsRoutes from "./routes/ratings.js";
 import colorRoutes from "./routes/colors.js";
+import printroveRoutes from "./routes/printrove.js";
 
 const app = express();
 
@@ -58,6 +59,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/wishlists", wishlistRoutes);
 app.use("/api/ratings", ratingsRoutes);
 app.use("/api/colors", colorRoutes);
+app.use("/api/printrove", printroveRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/blog", blogRoutes);
 app.use("/api/faqs", faqRoutes);

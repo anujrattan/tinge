@@ -76,9 +76,9 @@ const requireAdmin = (req: Request, res: Response, next: NextFunction) => {
 
 /**
  * GET /api/orders
- * Get all orders (for admin panel)
+ * Get all orders (admin only)
  */
-router.get("/", async (req: Request, res: Response, next: NextFunction) => {
+router.get("/", authenticate, requireAdmin, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { status, limit = 50, offset = 0 } = req.query;
 

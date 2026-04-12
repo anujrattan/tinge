@@ -42,6 +42,7 @@ import { ReturnPolicyPage } from "./pages/ReturnPolicyPage";
 import { CookiePolicyPage } from "./pages/CookiePolicyPage";
 import { OrderSuccessPage } from "./pages/OrderSuccessPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
+import { PrintroveTestPage } from "./pages/PrintroveTestPage";
 import { CookieConsentProvider, useCookieConsent } from "./context/CookieConsentContext";
 import { CookieConsent } from "./components/CookieConsent";
 import { AnalyticsProvider } from "./context/AnalyticsProvider";
@@ -143,6 +144,7 @@ const AppLayout: React.FC = () => {
             path="/guest-order-lookup"
             element={<GuestOrderLookupPage />}
           />
+          <Route path="/pt" element={<PrintroveTestPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>

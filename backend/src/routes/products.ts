@@ -113,8 +113,12 @@ const transformProduct = (dbProduct: any, category?: any) => {
     target_margin_percent: dbProduct.target_margin_percent || undefined,
     fulfillment_partner: dbProduct.fulfillment_partner || undefined,
     partner_product_id: dbProduct.partner_product_id || undefined,
+    partner_variants: Array.isArray(dbProduct.partner_variants)
+      ? dbProduct.partner_variants
+      : [],
     size_chart_profile: dbProduct.size_chart_profile || undefined,
     design_family: dbProduct.design_family || undefined,
+    is_active: dbProduct.is_active !== false,
   };
 };
 
@@ -258,11 +262,10 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     
     if (error) throw error;
     
-    // Transform products with category data, filter out products from inactive categories
+    // Transform products with category data, filter out inactive categories and draft products
     const transformed = (data || [])
       .filter((product: any) => {
-        // Only include products from active categories
-        return product.categories?.is_active !== false;
+        return product.categories?.is_active !== false && product.is_active !== false;
       })
       .map((product: any) => {
         const category = product.categories;
@@ -551,6 +554,144 @@ router.get(
   },
 );
 
+// Admin: list all products including drafts (is_active = false)
+router.get(
+  '/admin-list',
+  authenticateToken,
+  requireAdmin,
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const { data, error } = await supabaseAdmin
+        .from('products')
+        .select(`
+          *,
+          categories:category_id (
+            id,
+            slug,
+            name,
+            is_active
+          )
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const transformed = (data || []).map((product: any) => {
+        const category = product.categories;
+        delete product.categories;
+        const variants = extractVariantsFromDb(product.variants);
+        product.variants = variants;
+        return {
+          ...transformProduct(product, category),
+          is_active: product.is_active !== false,
+        };
+      });
+
+      res.json(transformed);
+    } catch (error: any) {
+      next(error);
+    }
+  },
+);
+
+// Admin: bulk import products as drafts from Printrove (is_active = false, no pricing validation)
+router.post(
+  '/bulk-draft-import',
+  authenticateToken,
+  requireAdmin,
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
+    try {
+      const { items } = req.body as {
+        items: Array<{
+          title: string;
+          color?: string;
+          sizes?: string[];
+          main_image_url?: string;
+          mockup_images?: string[];
+          partner_product_id?: string;
+          partner_variants?: any[];
+          fulfillment_partner?: string;
+          category_id?: string;
+        }>;
+      };
+
+      if (!Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ error: 'items array is required and must not be empty.' });
+      }
+
+      const created: any[] = [];
+      const failed: Array<{ title: string; reason: string }> = [];
+
+      for (const item of items) {
+        try {
+          if (!item.title?.trim()) {
+            failed.push({ title: item.title || '(no title)', reason: 'title is required' });
+            continue;
+          }
+
+          const sizesArray = normalizeSizeList(
+            Array.isArray(item.sizes) ? item.sizes : [],
+          );
+
+          const productData: any = {
+            title: item.title.trim(),
+            description: '',
+            selling_price: 0,
+            main_image_url: item.main_image_url?.trim() || '',
+            variants: { sizes: sizesArray },
+            is_active: false,
+            color: item.color?.trim() || null,
+            fulfillment_partner: item.fulfillment_partner?.trim() || 'Printrove',
+            partner_product_id: item.partner_product_id?.trim() || null,
+            partner_variants: Array.isArray(item.partner_variants) ? item.partner_variants : [],
+            mockup_images: Array.isArray(item.mockup_images) ? item.mockup_images : [],
+          };
+
+          // Use first category if none provided — draft can be re-assigned later
+          if (item.category_id) {
+            productData.category_id = item.category_id;
+          } else {
+            const { data: firstCategory } = await supabaseAdmin
+              .from('categories')
+              .select('id')
+              .eq('is_active', true)
+              .order('created_at', { ascending: true })
+              .limit(1)
+              .single();
+            if (!firstCategory) {
+              failed.push({ title: item.title, reason: 'No active category found to assign to draft' });
+              continue;
+            }
+            productData.category_id = firstCategory.id;
+          }
+
+          const { data, error } = await supabaseAdmin
+            .from('products')
+            .insert([productData])
+            .select('id, title, color, is_active')
+            .single();
+
+          if (error) throw error;
+          created.push(data);
+        } catch (itemErr: any) {
+          failed.push({ title: item.title || '(unknown)', reason: itemErr.message || 'Insert failed' });
+        }
+      }
+
+      // Invalidate products cache so admin-list reflects new drafts immediately
+      await cache.del(cacheKeys.products);
+
+      res.status(201).json({
+        created,
+        failed,
+        summary: { total: items.length, created: created.length, failed: failed.length },
+      });
+    } catch (error: any) {
+      next(error);
+    }
+  },
+);
+
 // Get product by ID (public) - with caching
 router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -621,6 +762,7 @@ router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res: 
       color,
       fulfillment_partner,
       partner_product_id,
+      partner_variants,
       vendor_base_cost,
       vendor_shipping_cost,
       target_margin_percent,
@@ -742,6 +884,7 @@ router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res: 
     if (review_count !== undefined) productData.review_count = parseInt(review_count);
     if (fulfillment_partner) productData.fulfillment_partner = fulfillment_partner;
     if (partner_product_id) productData.partner_product_id = partner_product_id;
+    productData.partner_variants = Array.isArray(partner_variants) ? partner_variants : [];
     if (vendor_base_cost !== undefined && vendor_base_cost !== null && vendor_base_cost !== '') {
       if (!isNaN(parsedVendorBaseCost) && parsedVendorBaseCost >= 0) {
         productData.vendor_base_cost = parsedVendorBaseCost;
@@ -867,6 +1010,7 @@ router.put('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res
       color,
       fulfillment_partner,
       partner_product_id,
+      partner_variants,
       vendor_base_cost,
       vendor_shipping_cost,
       target_margin_percent,
@@ -934,6 +1078,13 @@ router.put('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res
     }
     if (fulfillment_partner !== undefined) productData.fulfillment_partner = fulfillment_partner || null;
     if (partner_product_id !== undefined) productData.partner_product_id = partner_product_id || null;
+    if (partner_variants !== undefined) {
+      productData.partner_variants = Array.isArray(partner_variants) ? partner_variants : [];
+    }
+    // Allow publishing a draft: is_active can be set via update
+    if (req.body.is_active !== undefined) {
+      productData.is_active = Boolean(req.body.is_active);
+    }
     if (size_chart_profile !== undefined) productData.size_chart_profile = size_chart_profile || null;
     if (design_family !== undefined) {
       productData.design_family = design_family && String(design_family).trim() ? String(design_family).trim() : null;
@@ -978,60 +1129,68 @@ router.put('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res
       }
     }
 
-    // Validate pricing computations from frontend against backend snapshot
-    if (
-      !isValidPricingValidationPayload(pricing_validation) ||
-      pricing_validation.suggested_price < 0 ||
-      pricing_validation.discounted_price < 0 ||
-      pricing_validation.final_price < 0
-    ) {
-      return res.status(400).json({
-        error: 'Missing or invalid pricing_validation payload from frontend.',
-      });
+    // Skip pricing validation for drafts (is_active = false means it's an unpublished draft)
+    const remainsDraft = productData.is_active === false ||
+      (productData.is_active === undefined && oldProduct?.is_active === false);
+
+    if (!remainsDraft) {
+      // Validate pricing computations from frontend against backend snapshot
+      if (
+        !isValidPricingValidationPayload(pricing_validation) ||
+        pricing_validation.suggested_price < 0 ||
+        pricing_validation.discounted_price < 0 ||
+        pricing_validation.final_price < 0
+      ) {
+        return res.status(400).json({
+          error: 'Missing or invalid pricing_validation payload from frontend.',
+        });
+      }
     }
 
-    const effectiveVendorBaseCost =
-      productData.vendor_base_cost !== undefined
-        ? (productData.vendor_base_cost ?? 0)
-        : Number(oldProduct?.vendor_base_cost || 0);
-    const effectiveVendorShippingCost =
-      productData.vendor_shipping_cost !== undefined
-        ? (productData.vendor_shipping_cost ?? 0)
-        : Number(oldProduct?.vendor_shipping_cost || 0);
-    const effectiveTargetMarginPercent =
-      productData.target_margin_percent !== undefined
-        ? (productData.target_margin_percent ?? 100)
-        : Number(oldProduct?.target_margin_percent ?? 100);
-    const effectiveSellingPrice =
-      productData.selling_price !== undefined
-        ? Number(productData.selling_price)
-        : Number(oldProduct?.selling_price || 0);
-    const effectiveDiscountPercentage =
-      productData.discount_percentage !== undefined
-        ? Number(productData.discount_percentage || 0)
-        : Number(oldProduct?.discount_percentage || 0);
-    const effectiveOnSale =
-      productData.on_sale !== undefined ? Boolean(productData.on_sale) : Boolean(oldProduct?.on_sale);
-    const effectiveSaleDiscountPercentage =
-      productData.sale_discount_percentage !== undefined
-        ? Number(productData.sale_discount_percentage || 0)
-        : Number(oldProduct?.sale_discount_percentage || 0);
+    if (!remainsDraft) {
+      const effectiveVendorBaseCost =
+        productData.vendor_base_cost !== undefined
+          ? (productData.vendor_base_cost ?? 0)
+          : Number(oldProduct?.vendor_base_cost || 0);
+      const effectiveVendorShippingCost =
+        productData.vendor_shipping_cost !== undefined
+          ? (productData.vendor_shipping_cost ?? 0)
+          : Number(oldProduct?.vendor_shipping_cost || 0);
+      const effectiveTargetMarginPercent =
+        productData.target_margin_percent !== undefined
+          ? (productData.target_margin_percent ?? 100)
+          : Number(oldProduct?.target_margin_percent ?? 100);
+      const effectiveSellingPrice =
+        productData.selling_price !== undefined
+          ? Number(productData.selling_price)
+          : Number(oldProduct?.selling_price || 0);
+      const effectiveDiscountPercentage =
+        productData.discount_percentage !== undefined
+          ? Number(productData.discount_percentage || 0)
+          : Number(oldProduct?.discount_percentage || 0);
+      const effectiveOnSale =
+        productData.on_sale !== undefined ? Boolean(productData.on_sale) : Boolean(oldProduct?.on_sale);
+      const effectiveSaleDiscountPercentage =
+        productData.sale_discount_percentage !== undefined
+          ? Number(productData.sale_discount_percentage || 0)
+          : Number(oldProduct?.sale_discount_percentage || 0);
 
-    const expectedPricing = createPricingValidationSnapshot({
-      vendorBaseCost: effectiveVendorBaseCost,
-      vendorShippingCost: effectiveVendorShippingCost,
-      targetMarginPercent: effectiveTargetMarginPercent,
-      sellingPrice: effectiveSellingPrice,
-      discountPercentage: effectiveDiscountPercentage,
-      onSale: effectiveOnSale,
-      saleDiscountPercentage: effectiveSaleDiscountPercentage,
-    });
-
-    if (!pricingPayloadMatches(pricing_validation, expectedPricing)) {
-      return res.status(409).json({
-        error: 'Pricing mismatch between frontend and backend calculations. Please retry.',
-        expected: expectedPricing,
+      const expectedPricing = createPricingValidationSnapshot({
+        vendorBaseCost: effectiveVendorBaseCost,
+        vendorShippingCost: effectiveVendorShippingCost,
+        targetMarginPercent: effectiveTargetMarginPercent,
+        sellingPrice: effectiveSellingPrice,
+        discountPercentage: effectiveDiscountPercentage,
+        onSale: effectiveOnSale,
+        saleDiscountPercentage: effectiveSaleDiscountPercentage,
       });
+
+      if (!pricingPayloadMatches(pricing_validation, expectedPricing)) {
+        return res.status(409).json({
+          error: 'Pricing mismatch between frontend and backend calculations. Please retry.',
+          expected: expectedPricing,
+        });
+      }
     }
     
     const { data, error } = await supabaseAdmin

@@ -57,10 +57,19 @@ export interface Product {
   tags?: string[]; // computed from usp_tag
   reviewCount?: number; // alias for review_count
   discount?: string; // computed: "Save $X" (cumulative discount)
+  is_active?: boolean;
   fulfillment_partner?: string | null;
   partner_product_id?: string | null;
+  /** Per-size Printrove variant details. [{size, partner_variant_id, partner_sku}] */
+  partner_variants?: PartnerVariant[] | null;
   size_chart_profile?: string | null;
   design_family?: string | null;
+}
+
+export interface PartnerVariant {
+  size: string;
+  partner_variant_id: string;
+  partner_sku: string;
 }
 
 export interface CartItem extends Product {

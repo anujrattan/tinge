@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Product, Category, Collection } from '../../../types';
+import { Product, Category, Collection, PartnerVariant } from '../../../types';
+import { PrintrovePrefill } from './PrintroveSyncModal';
 import api from '../../../services/api';
 import { Button, Card, Input } from '../../../components/ui';
 import { UploadCloudIcon, LinkIcon, XIcon, PlusIcon } from '../../../components/icons';
@@ -12,15 +13,16 @@ import { normalizeSizeList, PREFERRED_SIZES } from '../../../utils/sizeSystem';
 
 export const ProductForm: React.FC<{
   product?: Product | null;
+  prefill?: PrintrovePrefill | null;
   onSave: () => void;
   onCancel: () => void;
   categories: Category[];
   collections: Collection[];
-}> = ({ product, onSave, onCancel, categories, collections }) => {
+}> = ({ product, prefill, onSave, onCancel, categories, collections }) => {
   const { currency } = useApp();
   const designFamilyWrapperRef = useRef<HTMLDivElement | null>(null);
   const [formData, setFormData] = useState({
-    title: product?.title || product?.name || '',
+    title: prefill?.title || product?.title || product?.name || '',
     description: product?.description || '',
     selling_price: product?.selling_price || product?.price || 0,
     vendor_base_cost: (product as any)?.vendor_base_cost || '',
@@ -30,15 +32,16 @@ export const ProductForm: React.FC<{
     on_sale: product?.on_sale || false,
     sale_discount_percentage: product?.sale_discount_percentage || 0,
     usp_tag: product?.usp_tag || '',
-    main_image_url: product?.main_image_url || product?.imageUrl || '',
+    main_image_url: prefill?.main_image_url || product?.main_image_url || product?.imageUrl || '',
     category_id: product?.category_id || categories[0]?.id || '',
     collection_id: product?.collection_id || '',
-    mockup_images: product?.mockup_images || [],
+    mockup_images: (prefill?.mockup_images ?? product?.mockup_images) || [],
     mockup_video_url: product?.mockup_video_url || '',
-    sizes: product?.variants?.sizes || [],
-    color: (product as any)?.color ?? '',
-    fulfillment_partner: (product as any)?.fulfillment_partner || '',
-    partner_product_id: (product as any)?.partner_product_id || '',
+    sizes: prefill?.sizes || product?.variants?.sizes || [],
+    color: prefill?.color || (product as any)?.color || '',
+    fulfillment_partner: prefill?.fulfillment_partner || (product as any)?.fulfillment_partner || '',
+    partner_product_id: prefill?.partner_product_id || (product as any)?.partner_product_id || '',
+    partner_variants: (prefill?.partner_variants ?? (product as any)?.partner_variants as PartnerVariant[] | null) ?? [],
     size_chart_profile: (product as any)?.size_chart_profile || '',
     design_family: (product as any)?.design_family || '',
   });
@@ -48,8 +51,11 @@ export const ProductForm: React.FC<{
 
   // File upload states
   const [mainImageFile, setMainImageFile] = useState<File | null>(null);
-  const [mainImagePreview, setMainImagePreview] = useState<string | null>(product?.main_image_url || product?.imageUrl || null);
-  const [useMainImageUrl, setUseMainImageUrl] = useState(!!(product?.main_image_url || product?.imageUrl) && !(product?.main_image_url || product?.imageUrl)?.includes('supabase.co'));
+  const initialImageUrl = prefill?.main_image_url || product?.main_image_url || product?.imageUrl || null;
+  const [mainImagePreview, setMainImagePreview] = useState<string | null>(initialImageUrl);
+  const [useMainImageUrl, setUseMainImageUrl] = useState(
+    !!(prefill?.main_image_url) || (!!(product?.main_image_url || product?.imageUrl) && !(product?.main_image_url || product?.imageUrl)?.includes('supabase.co'))
+  );
   
   // Legacy mockup states (for backward compatibility, will be removed)
   const [mockupImageUrls, setMockupImageUrls] = useState<string[]>(formData.mockup_images || []);
@@ -288,10 +294,14 @@ export const ProductForm: React.FC<{
     });
   };
   
-  const handleSubmit = async (e: React.FormEvent) => {
+  const isDraft = product ? product.is_active === false : false;
+
+  const handleSubmit = async (e: React.FormEvent, publishNow = false) => {
     e.preventDefault();
-    
-    if (formData.sizes.length === 0) {
+
+    const savingAsDraft = isDraft && !publishNow;
+
+    if (!savingAsDraft && formData.sizes.length === 0) {
       alert('Please add at least one size variant');
       return;
     }
@@ -302,7 +312,7 @@ export const ProductForm: React.FC<{
       alert('Please enter a color name for this new hex value.');
       return;
     }
-    
+
     setIsSubmitting(true);
 
     try {
@@ -338,6 +348,8 @@ export const ProductForm: React.FC<{
         }
       }
 
+      const savingAsDraft = isDraft && !publishNow;
+
       const sizesArray = normalizeSizeList(
         Array.isArray(formData.sizes) ? formData.sizes.filter(s => s && s.trim()) : [],
       );
@@ -345,8 +357,8 @@ export const ProductForm: React.FC<{
       const productData: any = {
         category_id: formData.category_id,
         title: formData.title,
-        description: formData.description,
-        selling_price: Number(formData.selling_price),
+        description: formData.description || '',
+        selling_price: Number(formData.selling_price) || 0,
         discount_percentage: formData.discount_percentage > 0 ? Number(formData.discount_percentage) : null,
         on_sale: formData.on_sale || false,
         sale_discount_percentage: formData.on_sale && formData.sale_discount_percentage > 0 ? Number(formData.sale_discount_percentage) : null,
@@ -355,6 +367,9 @@ export const ProductForm: React.FC<{
         color: formData.color && String(formData.color).trim() ? String(formData.color).trim() : null,
         fulfillment_partner: formData.fulfillment_partner || null,
         partner_product_id: formData.partner_product_id || null,
+        partner_variants: Array.isArray((formData as any).partner_variants)
+          ? (formData as any).partner_variants
+          : [],
         size_chart_profile: formData.size_chart_profile || null,
         design_family: (formData as any).design_family?.trim() || null,
         vendor_base_cost: formData.vendor_base_cost !== '' ? Number(formData.vendor_base_cost) : null,
@@ -362,7 +377,11 @@ export const ProductForm: React.FC<{
         target_margin_percent: formData.target_margin_percent !== undefined && formData.target_margin_percent !== null
           ? Number(formData.target_margin_percent)
           : 100,
-        pricing_validation: createPricingValidationPayload({
+      };
+
+      // Only include pricing validation for non-drafts (backend skips it for drafts, but still send it when publishing)
+      if (!savingAsDraft) {
+        productData.pricing_validation = createPricingValidationPayload({
           vendorBaseCost: formData.vendor_base_cost !== '' ? Number(formData.vendor_base_cost) : 0,
           vendorShippingCost: formData.vendor_shipping_cost !== '' ? Number(formData.vendor_shipping_cost) : 0,
           targetMarginPercent:
@@ -373,8 +392,13 @@ export const ProductForm: React.FC<{
           discountPercentage: Number(formData.discount_percentage) || 0,
           onSale: formData.on_sale,
           saleDiscountPercentage: Number(formData.sale_discount_percentage) || 0,
-        }),
-      };
+        });
+      }
+
+      // When publishing a draft, flip is_active to true
+      if (isDraft) {
+        productData.is_active = publishNow ? true : false;
+      }
 
       // Optional single collection assignment
       if (formData.collection_id) {
@@ -510,6 +534,20 @@ export const ProductForm: React.FC<{
       <Card className="p-6 w-full lg:w-[calc(50%-0.5rem)] flex-shrink-0">
         <h3 className="text-lg font-medium mb-4 text-brand-primary">{product ? 'Edit Product' : 'Add New Product'}</h3>
         <form onSubmit={handleSubmit} className="space-y-0">
+          {/* Draft banner */}
+          {isDraft && (
+            <div className="mb-6 flex items-start gap-3 rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3">
+              <span className="mt-0.5 flex-shrink-0 w-5 h-5 text-amber-500">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              </span>
+              <div>
+                <p className="text-sm font-semibold text-amber-600 dark:text-amber-400">This product is a Draft</p>
+                <p className="text-xs text-amber-600/80 dark:text-amber-400/80 mt-0.5">
+                  It is not visible on the storefront. Fill in description, pricing, and category — then click <strong>Save &amp; Publish</strong> to make it live.
+                </p>
+              </div>
+            </div>
+          )}
           {/* Section: Category & Collection */}
           <div className="pb-6 mb-6 border-b border-gray-200 dark:border-white/20">
             <div className="mb-4">
@@ -688,6 +726,38 @@ export const ProductForm: React.FC<{
                 />
                 <p className="text-xs text-brand-secondary mt-1">
                   Enter the product ID or SKU from {formData.fulfillment_partner} platform
+                </p>
+              </div>
+            )}
+
+            {/* Partner Variants — read-only mapping table, shown when populated via Printrove sync */}
+            {Array.isArray((formData as any).partner_variants) && (formData as any).partner_variants.length > 0 && (
+              <div>
+                <label className="block text-sm font-semibold text-brand-primary mb-2">
+                  Printrove Variant Mapping
+                </label>
+                <div className="overflow-auto rounded-lg border border-white/10">
+                  <table className="min-w-full text-xs">
+                    <thead className="bg-indigo-500/10 text-brand-primary">
+                      <tr>
+                        <th className="text-left px-3 py-2 font-semibold">Size</th>
+                        <th className="text-left px-3 py-2 font-semibold">Printrove SKU</th>
+                        <th className="text-left px-3 py-2 font-semibold">Variant ID</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {((formData as any).partner_variants as PartnerVariant[]).map((pv, i) => (
+                        <tr key={`${pv.partner_variant_id}-${i}`} className="border-t border-white/10">
+                          <td className="px-3 py-1.5 font-medium text-brand-primary">{pv.size || '—'}</td>
+                          <td className="px-3 py-1.5 font-mono text-brand-secondary">{pv.partner_sku || '—'}</td>
+                          <td className="px-3 py-1.5 font-mono text-brand-secondary truncate max-w-[180px]">{pv.partner_variant_id || '—'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-[11px] text-brand-secondary mt-1">
+                  Auto-populated from Printrove sync. Used at order time to submit the correct variant to Printrove.
                 </p>
               </div>
             )}
@@ -1443,11 +1513,33 @@ export const ProductForm: React.FC<{
 
 
           {/* Action Buttons */}
-          <div className="flex justify-end space-x-2 pt-6 mt-6 border-t-2 border-gray-200 dark:border-white/20">
+          <div className="flex justify-end gap-2 flex-wrap pt-6 mt-6 border-t-2 border-gray-200 dark:border-white/20">
             <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting}>Cancel</Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Saving...' : 'Save Product'}
-            </Button>
+            {isDraft && (
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={isSubmitting}
+                onClick={(e: React.MouseEvent<HTMLButtonElement>) => handleSubmit(e as any, false)}
+                className="border-amber-500/40 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10"
+              >
+                {isSubmitting ? 'Saving…' : 'Save Draft'}
+              </Button>
+            )}
+            {isDraft ? (
+              <Button
+                type="button"
+                disabled={isSubmitting}
+                onClick={(e: React.MouseEvent<HTMLButtonElement>) => handleSubmit(e as any, true)}
+                className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white border-0"
+              >
+                {isSubmitting ? 'Publishing…' : '✓ Save & Publish'}
+              </Button>
+            ) : (
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? 'Saving...' : 'Save Product'}
+              </Button>
+            )}
           </div>
         </form>
       </Card>
