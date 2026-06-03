@@ -417,8 +417,9 @@ router.get('/best-sellers', async (req: Request, res: Response, next: NextFuncti
       .map(([productId]) => productId);
     
     if (sortedProducts.length === 0) {
-      // No sales data yet, return newest products as fallback
-      console.log('No sales data for best sellers, returning newest products as fallback');
+      // No sales data yet, return live products as fallback (exclude drafts).
+      // Order by updated_at so listings published from draft surface near the top.
+      console.log('No sales data for best sellers, returning newest live products as fallback');
       const { data: fallbackProducts, error: fallbackError } = await supabaseAdmin
         .from('products')
         .select(`
@@ -429,16 +430,20 @@ router.get('/best-sellers', async (req: Request, res: Response, next: NextFuncti
             slug
           )
         `)
+        .eq('is_active', true)
+        .order('updated_at', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(limit);
       
       if (fallbackError) throw fallbackError;
       
-      const transformed = (fallbackProducts || []).map(p => {
-        const transformed = transformProduct(p, p.categories);
-        console.log(`Product: ${transformed.title}, selling_price: ${transformed.selling_price}, price: ${transformed.price}`);
-        return transformed;
-      });
+      const transformed = (fallbackProducts || [])
+        .filter((p: any) => p.categories?.is_active !== false)
+        .map((p) => {
+          const transformed = transformProduct(p, p.categories);
+          console.log(`Product: ${transformed.title}, selling_price: ${transformed.selling_price}, price: ${transformed.price}`);
+          return transformed;
+        });
       return res.json(transformed);
     }
     
@@ -453,15 +458,16 @@ router.get('/best-sellers', async (req: Request, res: Response, next: NextFuncti
           slug
         )
       `)
-      .in('id', sortedProducts);
+      .in('id', sortedProducts)
+      .eq('is_active', true);
     
     if (productsError) throw productsError;
     
     // Sort products by revenue ranking
     const sortedProductDetails = sortedProducts
-      .map(id => products?.find(p => p.id === id))
-      .filter(Boolean)
-      .map(p => {
+      .map((id) => products?.find((p) => p.id === id))
+      .filter((p): p is (typeof products)[number] => Boolean(p && p.categories?.is_active !== false))
+      .map((p) => {
         const transformed = transformProduct(p, p.categories);
         console.log(`Best Seller: ${transformed.title}, selling_price: ${transformed.selling_price}, price: ${transformed.price}`);
         return transformed;
@@ -474,12 +480,11 @@ router.get('/best-sellers', async (req: Request, res: Response, next: NextFuncti
   }
 });
 
-// Get new arrivals (based on created_at)
+// Get new arrivals (live products only; order by updated_at so recently published drafts appear)
 router.get('/new-arrivals', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const limit = parseInt(req.query.limit as string) || 8;
     
-    // Fetch newest products
     const { data: products, error } = await supabaseAdmin
       .from('products')
       .select(`
@@ -490,16 +495,20 @@ router.get('/new-arrivals', async (req: Request, res: Response, next: NextFuncti
           slug
         )
       `)
+      .eq('is_active', true)
+      .order('updated_at', { ascending: false })
       .order('created_at', { ascending: false })
       .limit(limit);
     
     if (error) throw error;
     
-    const transformed = (products || []).map(p => {
-      const transformed = transformProduct(p, p.categories);
-      console.log(`New Arrival: ${transformed.title}, selling_price: ${transformed.selling_price}, price: ${transformed.price}`);
-      return transformed;
-    });
+    const transformed = (products || [])
+      .filter((p: any) => p.categories?.is_active !== false)
+      .map((p) => {
+        const transformed = transformProduct(p, p.categories);
+        console.log(`New Arrival: ${transformed.title}, selling_price: ${transformed.selling_price}, price: ${transformed.price}`);
+        return transformed;
+      });
     
     res.json(transformed);
   } catch (error: any) {
@@ -663,6 +672,26 @@ router.post(
               continue;
             }
             productData.category_id = firstCategory.id;
+          }
+
+          const pid = item.partner_product_id?.trim();
+          const colorRaw = item.color?.trim();
+          if (pid && colorRaw) {
+            const { data: samePartnerRows } = await supabaseAdmin
+              .from('products')
+              .select('id, color')
+              .eq('partner_product_id', pid);
+            const dup = (samePartnerRows || []).some(
+              (row: { color?: string | null }) =>
+                String(row.color || '').trim().toLowerCase() === colorRaw.toLowerCase(),
+            );
+            if (dup) {
+              failed.push({
+                title: item.title,
+                reason: 'Already exists for this Printrove product ID and color.',
+              });
+              continue;
+            }
           }
 
           const { data, error } = await supabaseAdmin

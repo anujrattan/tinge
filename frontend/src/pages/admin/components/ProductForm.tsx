@@ -7,7 +7,7 @@ import { UploadCloudIcon, LinkIcon, XIcon, PlusIcon } from '../../../components/
 import { ProductCardPreview } from '../../../components/ProductCardPreview';
 import { formatCurrency, getCurrencySymbol } from '../../../utils/currency';
 import { useApp } from '../../../context/AppContext';
-import { getCssColorValue, getColorName } from '../../../utils/colorUtils';
+import { getCssColorValue, getColorName, setDynamicColorProfiles } from '../../../utils/colorUtils';
 import { createPricingValidationPayload, toAnchoredDisplayPrice } from '../../../utils/pricing';
 import { normalizeSizeList, PREFERRED_SIZES } from '../../../utils/sizeSystem';
 
@@ -448,14 +448,15 @@ export const ProductForm: React.FC<{
     }
   }, [product]);
 
-  // Load existing color profiles once for hex recognition
+  // Load color profiles for hex recognition and swatches; bypass Redis when admin so DB seeds show up immediately.
   useEffect(() => {
     let cancelled = false;
     const loadColors = async () => {
       try {
-        const profiles = await api.getColorProfiles();
+        const profiles = await api.getColorProfiles({ refresh: true });
         if (!cancelled && Array.isArray(profiles)) {
           setColorProfiles(profiles);
+          setDynamicColorProfiles(profiles);
         }
       } catch (error) {
         console.warn('Failed to load color profiles in ProductForm:', error);
@@ -732,25 +733,39 @@ export const ProductForm: React.FC<{
 
             {/* Partner Variants — read-only mapping table, shown when populated via Printrove sync */}
             {Array.isArray((formData as any).partner_variants) && (formData as any).partner_variants.length > 0 && (
-              <div>
+              <div className="sm:col-span-2 w-full min-w-0">
                 <label className="block text-sm font-semibold text-brand-primary mb-2">
                   Printrove Variant Mapping
                 </label>
-                <div className="overflow-auto rounded-lg border border-white/10">
-                  <table className="min-w-full text-xs">
+                <div className="overflow-hidden rounded-lg border border-white/10">
+                  <table className="w-full table-fixed text-xs sm:text-sm">
+                    <colgroup>
+                      <col style={{ width: '10%' }} />
+                      <col style={{ width: '58%' }} />
+                      <col style={{ width: '32%' }} />
+                    </colgroup>
                     <thead className="bg-indigo-500/10 text-brand-primary">
                       <tr>
-                        <th className="text-left px-3 py-2 font-semibold">Size</th>
-                        <th className="text-left px-3 py-2 font-semibold">Printrove SKU</th>
-                        <th className="text-left px-3 py-2 font-semibold">Variant ID</th>
+                        <th className="text-left px-2 sm:px-3 py-2 font-semibold">Size</th>
+                        <th className="text-left px-2 sm:px-3 py-2 font-semibold">Printrove SKU</th>
+                        <th className="text-left px-2 sm:px-3 py-2 font-semibold">Variant ID</th>
                       </tr>
                     </thead>
                     <tbody>
                       {((formData as any).partner_variants as PartnerVariant[]).map((pv, i) => (
                         <tr key={`${pv.partner_variant_id}-${i}`} className="border-t border-white/10">
-                          <td className="px-3 py-1.5 font-medium text-brand-primary">{pv.size || '—'}</td>
-                          <td className="px-3 py-1.5 font-mono text-brand-secondary">{pv.partner_sku || '—'}</td>
-                          <td className="px-3 py-1.5 font-mono text-brand-secondary truncate max-w-[180px]">{pv.partner_variant_id || '—'}</td>
+                          <td className="px-2 sm:px-3 py-2 align-middle font-medium text-brand-primary whitespace-nowrap">
+                            {pv.size || '—'}
+                          </td>
+                          <td
+                            className="max-w-0 px-2 sm:px-3 py-2 align-middle font-mono text-[11px] sm:text-xs text-brand-secondary truncate"
+                            title={pv.partner_sku || undefined}
+                          >
+                            {pv.partner_sku || '—'}
+                          </td>
+                          <td className="px-2 sm:px-3 py-2 align-middle font-mono text-brand-secondary whitespace-nowrap tabular-nums">
+                            {pv.partner_variant_id || '—'}
+                          </td>
                         </tr>
                       ))}
                     </tbody>

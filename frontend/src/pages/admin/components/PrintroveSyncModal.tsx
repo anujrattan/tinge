@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { PartnerVariant } from '../../../types';
+import { PartnerVariant, Product } from '../../../types';
 import api from '../../../services/api';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -120,10 +120,36 @@ function resolveProduct(payload: any): any {
   );
 }
 
+/** Accepts a URL string or common nested shapes (`{ url }`, Printrove `mockup` objects). */
+function coerceUrl(candidate: any): string {
+  if (candidate == null) return '';
+  if (typeof candidate === 'string') {
+    const v = candidate.trim();
+    return /^https?:\/\//i.test(v) ? v : '';
+  }
+  if (typeof candidate === 'object' && !Array.isArray(candidate)) {
+    const o = candidate as Record<string, unknown>;
+    for (const key of ['front_mockup', 'url', 'src', 'href']) {
+      const inner = coerceUrl(o[key]);
+      if (inner) return inner;
+    }
+    const front = o.front;
+    if (front && typeof front === 'object') {
+      const nested = coerceUrl((front as Record<string, unknown>).url);
+      if (nested) return nested;
+    }
+    if (typeof front === 'string') {
+      const v = coerceUrl(front);
+      if (v) return v;
+    }
+  }
+  return '';
+}
+
 function pickFirstUrl(candidates: any[]): string {
   for (const c of candidates) {
-    const value = String(c || '').trim();
-    if (/^https?:\/\//i.test(value)) return value;
+    const value = coerceUrl(c);
+    if (value) return value;
   }
   return '';
 }
@@ -190,9 +216,15 @@ function buildColorGroups(
       const variantId = String(variant?.id ?? variant?.variant_id ?? '');
       const sku = String(variant?.sku ?? '');
       // IMPORTANT:
-      // Prefer rendered mockup/preview URLs for listing image.
-      // design.front.url is usually the raw print file, not the t-shirt mockup.
+      // Prefer Printrove garment mockups (`data.variants[i].mockup.front_mockup`) over flat assets.
+      // `design.front.url` is usually the raw print file, not the product mockup.
       const frontUrl = pickFirstUrl([
+        variant?.mockup?.front_mockup,
+        variant?.mockup?.front,
+        variantProduct?.mockup?.front_mockup,
+        variantProduct?.mockup?.front,
+        product?.mockup?.front_mockup,
+        product?.mockup?.front,
         variant?.mockup_front_url,
         variant?.mockup_url,
         variant?.preview_front_url,
@@ -217,6 +249,10 @@ function buildColorGroups(
         variant?.front_url,
       ]);
       const backUrl = pickFirstUrl([
+        variant?.mockup?.back_mockup,
+        variant?.mockup?.back,
+        variantProduct?.mockup?.back_mockup,
+        variantProduct?.mockup?.back,
         variant?.mockup_back_url,
         variant?.preview_back_url,
         variantProduct?.mockup_back_url,
@@ -250,11 +286,88 @@ function buildColorGroups(
       if (!group.sizes.includes(size)) group.sizes.push(size);
       if (!group.frontUrl && frontUrl) group.frontUrl = frontUrl;
       if (!group.backUrl && backUrl) group.backUrl = backUrl;
-      group.partner_variants.push({ size, partner_variant_id: variantId, partner_sku: sku });
+      group.partner_variants.push({
+        size,
+        partner_variant_id: variantId,
+        partner_sku: sku,
+        mockup_front_url: frontUrl || undefined,
+      });
     });
   });
 
   return Array.from(map.values());
+}
+
+function normalizeListingColor(color: string | undefined | null): string {
+  return String(color ?? '')
+    .trim()
+    .toLowerCase();
+}
+
+function findStoreProductForPrintroveListing(products: Product[], group: ColorGroup): Product | undefined {
+  const pid = String(group.parentProductId || '').trim();
+  if (!pid) return undefined;
+  const wantColor = normalizeListingColor(group.color);
+  return products.find((p) => {
+    const ppid = p.partner_product_id != null ? String(p.partner_product_id).trim() : '';
+    if (!ppid || ppid !== pid) return false;
+    return normalizeListingColor(p.color) === wantColor;
+  });
+}
+
+export type PrintroveSyncDiffSummary = {
+  printroveTotal: number;
+  skippedAlreadyInStore: number;
+  variantHints: Array<{ title: string; color: string; detail: string }>;
+};
+
+/** Drop Printrove color groups that already exist in the store (same partner product + color); surface new variants on existing listings as hints only. */
+export function filterNewPrintroveGroups(
+  groups: ColorGroup[],
+  storeProducts: Product[],
+): { newGroups: ColorGroup[]; summary: PrintroveSyncDiffSummary } {
+  const newGroups: ColorGroup[] = [];
+  let skippedAlreadyInStore = 0;
+  const variantHints: PrintroveSyncDiffSummary['variantHints'] = [];
+
+  for (const g of groups) {
+    const existing = findStoreProductForPrintroveListing(storeProducts, g);
+    if (!existing) {
+      newGroups.push(g);
+      continue;
+    }
+
+    const existingIds = new Set(
+      (existing.partner_variants || [])
+        .map((v) => String(v.partner_variant_id || '').trim())
+        .filter(Boolean),
+    );
+    const newVariants = g.partner_variants.filter(
+      (v) => !existingIds.has(String(v.partner_variant_id || '').trim()),
+    );
+
+    if (newVariants.length === 0) {
+      skippedAlreadyInStore += 1;
+      continue;
+    }
+
+    const sizeLabels = [...new Set(newVariants.map((v) => v.size).filter(Boolean))];
+    variantHints.push({
+      title: g.parentName,
+      color: g.color,
+      detail: `${newVariants.length} new Printrove variant(s)${sizeLabels.length ? ` (sizes: ${sizeLabels.join(', ')})` : ''} — you already have a listing for this product and color. Open that product and update Printrove variant mapping instead of importing another draft.`,
+    });
+    skippedAlreadyInStore += 1;
+  }
+
+  return {
+    newGroups,
+    summary: {
+      printroveTotal: groups.length,
+      skippedAlreadyInStore,
+      variantHints,
+    },
+  };
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -278,10 +391,13 @@ export const PrintroveSyncModal: React.FC<PrintroveSyncModalProps> = ({ onClose,
   const [fetchProgress, setFetchProgress] = useState({ done: 0, total: 0 });
   const [importProgress, setImportProgress] = useState({ done: 0, total: 0 });
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  const [syncDiffSummary, setSyncDiffSummary] = useState<PrintroveSyncDiffSummary | null>(null);
 
   const fetchAndBuild = useCallback(async () => {
     setStep('loading');
     setErrorMsg('');
+    setSyncDiffSummary(null);
+    setImportResult(null);
     setFetchProgress({ done: 0, total: 0 });
     try {
       const listResp = await api.getPrintroveProducts();
@@ -306,7 +422,12 @@ export const PrintroveSyncModal: React.FC<PrintroveSyncModalProps> = ({ onClose,
           'Fetched product details but could not extract color/size variants. Check the response shape on the /pt page.',
         );
       }
-      setColorGroups(groups);
+
+      const storeProducts = (await api.getAdminProducts().catch(() => [])) as Product[];
+      const safeStore = Array.isArray(storeProducts) ? storeProducts : [];
+      const { newGroups, summary } = filterNewPrintroveGroups(groups, safeStore);
+      setSyncDiffSummary(summary);
+      setColorGroups(newGroups);
       setStep('done');
     } catch (err: any) {
       setErrorMsg(err?.message ?? 'Unknown error');
@@ -354,7 +475,7 @@ export const PrintroveSyncModal: React.FC<PrintroveSyncModalProps> = ({ onClose,
           <div>
             <h2 className="text-lg font-bold text-brand-primary">Sync from Printrove</h2>
             <p className="text-xs text-brand-secondary mt-0.5">
-              Import your Printrove listed products into the Add Product form.
+              Fetch Printrove listings; only <strong className="text-brand-primary">new</strong> product + color rows are offered as drafts (existing catalog is skipped).
             </p>
           </div>
           <button
@@ -382,7 +503,7 @@ export const PrintroveSyncModal: React.FC<PrintroveSyncModalProps> = ({ onClose,
               <div>
                 <p className="text-sm font-semibold text-brand-primary">Ready to sync</p>
                 <p className="text-xs text-brand-secondary mt-1">
-                  This will fetch all products from your Printrove account, group them by color, and let you pre-fill the Add Product form.
+                  Fetches your Printrove catalog and compares it to this store. Listings already imported (same Printrove product ID and color) are skipped so you only see what is new.
                 </p>
               </div>
               <button
@@ -469,19 +590,47 @@ export const PrintroveSyncModal: React.FC<PrintroveSyncModalProps> = ({ onClose,
 
           {step === 'done' && (
             <>
+              {syncDiffSummary && syncDiffSummary.printroveTotal > 0 && (
+                <div className="mb-3 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-brand-secondary space-y-1">
+                  <p>
+                    <span className="font-semibold text-brand-primary">{syncDiffSummary.printroveTotal}</span> color
+                    listing{syncDiffSummary.printroveTotal !== 1 ? 's' : ''} on Printrove.
+                    {syncDiffSummary.skippedAlreadyInStore > 0 && (
+                      <>
+                        {' '}
+                        <span className="font-semibold text-amber-600 dark:text-amber-400">
+                          {syncDiffSummary.skippedAlreadyInStore} skipped
+                        </span>{' '}
+                        (already in your store or only new variants on an existing listing — see notes below).
+                      </>
+                    )}
+                  </p>
+                  {syncDiffSummary.variantHints.length > 0 && (
+                    <ul className="list-disc pl-4 space-y-1 text-[11px] text-amber-700 dark:text-amber-300/95">
+                      {syncDiffSummary.variantHints.map((h, idx) => (
+                        <li key={idx}>
+                          <span className="font-medium text-brand-primary">{h.title}</span> · {h.color}: {h.detail}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+
               <div className="flex items-center justify-between gap-2 mb-4 flex-wrap">
                 <div className="flex items-center gap-2">
                   <span className="px-2 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-xs">
-                    {colorGroups.length} color listing{colorGroups.length !== 1 ? 's' : ''} found
+                    {colorGroups.length} new to import
                   </span>
                   <span className="text-xs text-brand-secondary hidden sm:block">
-                    Each card = 1 color + sizes.
+                    Each card = 1 color + sizes (not already saved for this store).
                   </span>
                 </div>
                 <button
                   type="button"
                   onClick={importAllAsDrafts}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex-shrink-0"
+                  disabled={colorGroups.length === 0}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold flex-shrink-0"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
@@ -489,6 +638,21 @@ export const PrintroveSyncModal: React.FC<PrintroveSyncModalProps> = ({ onClose,
                   Import All as Drafts ({colorGroups.length})
                 </button>
               </div>
+
+              {colorGroups.length === 0 ? (
+                <div className="rounded-xl border border-white/10 bg-white dark:bg-brand-bg px-4 py-8 text-center text-sm text-brand-secondary">
+                  {syncDiffSummary && syncDiffSummary.printroveTotal > 0 ? (
+                    <p>
+                      Nothing new to import — every Printrove color listing is already represented in your catalog
+                      {syncDiffSummary.variantHints.length > 0
+                        ? ', or only has new variants on listings you already have (see notes above).'
+                        : '.'}
+                    </p>
+                  ) : (
+                    <p>No listings to show.</p>
+                  )}
+                </div>
+              ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {colorGroups.map((group, i) => (
                   <article
@@ -569,6 +733,7 @@ export const PrintroveSyncModal: React.FC<PrintroveSyncModalProps> = ({ onClose,
                   </article>
                 ))}
               </div>
+              )}
             </>
           )}
         </div>

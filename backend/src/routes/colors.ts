@@ -5,8 +5,8 @@
  * Backed by DB and cached in Redis for fast retrieval.
  */
 
-import { Router, Request, Response, NextFunction } from 'express';
-import { authenticateToken, requireAdmin, AuthRequest } from '../middleware/auth.js';
+import { Router, Response, NextFunction } from 'express';
+import { authenticateToken, requireAdmin, optionalAuth, AuthRequest } from '../middleware/auth.js';
 import { supabaseAdmin } from '../services/supabase.js';
 import { cache, cacheKeys } from '../services/redis.js';
 
@@ -38,17 +38,22 @@ async function loadColorProfilesFromDb(): Promise<ColorProfile[]> {
     .filter((p: ColorProfile) => p.name && isValidHex(p.hex));
 }
 
-// Public: get all color profiles (cached)
-router.get('/', async (req: Request, res: Response, next: NextFunction) => {
+// Public: get all color profiles (Redis-cached). Admin can pass ?refresh=1 to reload from DB and rewrite cache
+// (e.g. after SQL migrations that seed color_profiles — otherwise swatches miss new names until TTL expires).
+router.get('/', optionalAuth, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const cached = await cache.getJSON<ColorProfile[]>(cacheKeys.colorProfiles);
-    if (cached && Array.isArray(cached) && cached.length > 0) {
-      return res.json({ profiles: cached, source: 'cache' });
+    const forceRefresh = String(req.query.refresh) === '1' && req.userRole === 'admin';
+
+    if (!forceRefresh) {
+      const cached = await cache.getJSON<ColorProfile[]>(cacheKeys.colorProfiles);
+      if (cached && Array.isArray(cached) && cached.length > 0) {
+        return res.json({ profiles: cached, source: 'cache' });
+      }
     }
 
     const profiles = await loadColorProfilesFromDb();
     await cache.setJSON(cacheKeys.colorProfiles, profiles, CACHE_TTL);
-    res.json({ profiles, source: 'db' });
+    res.json({ profiles, source: forceRefresh ? 'db-refresh' : 'db' });
   } catch (error: any) {
     next(error);
   }

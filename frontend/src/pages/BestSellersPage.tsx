@@ -10,7 +10,8 @@ export const BestSellersPage: React.FC = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
-      const data = await api.getBestSellers();
+      // Request enough rows for a full grid; API default limit is 8 (home strip only).
+      const data = await api.getBestSellers(200);
       setProducts(data);
       setLoading(false);
     };

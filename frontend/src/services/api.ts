@@ -104,8 +104,9 @@ const api = {
     return Array.isArray(response?.families) ? response.families : [];
   },
 
-  getColorProfiles: async (): Promise<{ name: string; hex: string }[]> => {
-    const response = await apiCall('/colors');
+  getColorProfiles: async (options?: { refresh?: boolean }): Promise<{ name: string; hex: string }[]> => {
+    const qs = options?.refresh ? '?refresh=1' : '';
+    const response = await apiCall(`/colors${qs}`);
     return Array.isArray(response?.profiles) ? response.profiles : [];
   },
 

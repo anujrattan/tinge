@@ -252,13 +252,13 @@ export const ProductDetailPage: React.FC = () => {
         />
       )}
 
-      {/* ── 50/50 Split Layout ─────────────────────────────────────────────── */}
-      <div className="flex flex-col lg:flex-row min-h-[calc(100vh-64px)]">
+      {/* ── Balanced gallery + purchase layout ─────────────────────────────── */}
+      <div className="flex flex-col lg:grid lg:grid-cols-2 lg:h-[calc(100vh-64px)] lg:min-h-[640px]">
 
-        {/* LEFT — Sticky image panel */}
-        <div className="lg:w-1/2 lg:sticky lg:top-16 lg:h-[calc(100vh-64px)] bg-gray-50 dark:bg-white/5 flex flex-col">
+        {/* LEFT — Selected image with centered thumbnails */}
+        <div className="bg-gray-50 dark:bg-white/5 flex flex-col min-h-[520px] lg:min-h-0 lg:h-full">
           {/* Main image */}
-          <div className="flex-1 relative overflow-hidden">
+          <div className="flex-1 min-h-0 relative overflow-hidden">
             <img
               src={selectedImage || product.main_image_url || product.imageUrl || ''}
               alt={product.name || product.title}
@@ -280,7 +280,7 @@ export const ProductDetailPage: React.FC = () => {
 
           {/* Thumbnail strip — shown only when multiple images */}
           {allImages.length > 1 && (
-            <div className="flex gap-2 p-4 overflow-x-auto scrollbar-hide border-t border-gray-200 dark:border-white/10">
+            <div className="flex justify-center gap-3 px-4 py-4 overflow-x-auto scrollbar-hide border-t border-gray-200 dark:border-white/10">
               {allImages.map((imgUrl, index) => (
                 <button
                   key={index}
@@ -298,9 +298,9 @@ export const ProductDetailPage: React.FC = () => {
           )}
         </div>
 
-        {/* RIGHT — Scrollable details panel */}
-        <div className="lg:w-1/2 overflow-y-auto">
-          <div className="px-6 py-8 lg:px-10 lg:py-12 max-w-lg mx-auto lg:mx-0">
+        {/* RIGHT — Product details panel, height-matched to gallery */}
+        <div className="lg:h-full lg:overflow-y-auto">
+          <div className="px-6 py-8 lg:px-10 lg:py-8 max-w-lg mx-auto lg:mx-0">
 
             {/* Category pill */}
             {product.category_name && (
@@ -474,18 +474,27 @@ export const ProductDetailPage: React.FC = () => {
               </button>
             </div>
 
-            {/* Ratings breakdown */}
-            <div className="mt-8">
-              <div className="h-px bg-gray-200 dark:bg-white/10 mb-6" />
-              <RatingBreakdown productId={product.id} />
-            </div>
           </div>
         </div>
       </div>
 
+      {/* ── Customer Ratings & Reviews ─────────────────────────────────────── */}
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="mb-6">
+          <p className="text-xs font-bold uppercase tracking-widest text-purple-500 mb-2">Customer feedback</p>
+          <h2 className="text-2xl font-display font-extrabold tracking-tight text-brand-primary">
+            Customer Ratings & Reviews
+          </h2>
+          <p className="mt-2 text-sm text-brand-secondary max-w-2xl">
+            Star ratings and customer reviews will appear here as shoppers start sharing feedback.
+          </p>
+        </div>
+        <RatingBreakdown productId={product.id} />
+      </section>
+
       {/* ── You May Also Like ────────────────────────────────────────────────── */}
       {relatedProducts.length > 0 && (
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 pb-16">
           <div className="flex items-center gap-3 mb-8">
             <SparklesIcon className="w-5 h-5 text-purple-500" />
             <h2 className="text-2xl font-display font-extrabold tracking-tight text-brand-primary">You may also like</h2>

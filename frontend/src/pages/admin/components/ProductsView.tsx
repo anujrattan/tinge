@@ -5,6 +5,26 @@ import { PackageIcon, PlusIcon, EditIcon, TrashIcon, TagIcon, SearchIcon } from 
 import { formatCurrency, CurrencyCode } from '../../../utils/currency';
 import { toAnchoredDisplayPrice } from '../../../utils/pricing';
 
+/** Admin list thumb: prefer Printrove mockup URL on partner_variants, then gallery, then main. */
+function adminProductListThumbnailSrc(product: Product & { partner_variants?: unknown }): string | undefined {
+  const pvs = (product as { partner_variants?: Array<Record<string, unknown>> }).partner_variants;
+  if (Array.isArray(pvs)) {
+    for (const pv of pvs) {
+      for (const key of ['mockup_front_url', 'front_mockup'] as const) {
+        const raw = pv?.[key];
+        const u = typeof raw === 'string' ? raw.trim() : '';
+        if (/^https?:\/\//i.test(u)) return u;
+      }
+    }
+  }
+  const gallery0 = Array.isArray(product.mockup_images) ? product.mockup_images[0] : undefined;
+  const g = typeof gallery0 === 'string' ? gallery0.trim() : '';
+  if (/^https?:\/\//i.test(g)) return g;
+  const main = product.imageUrl || product.main_image_url;
+  const m = typeof main === 'string' ? main.trim() : '';
+  return m || undefined;
+}
+
 interface ProductsViewProps {
   products: Product[];
   categories: Category[];
@@ -51,47 +71,9 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
   const hasSelection = selectedIds.size > 0;
   const allFilteredSelected = displayedProducts.length > 0 && displayedProducts.every((p) => selectedIds.has(p.id));
   const isIndeterminate = hasSelection && !allFilteredSelected;
-  if (loading) {
-    return (
-      <Card className="p-8">
-        <div className="space-y-4">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="flex items-center gap-4 animate-pulse">
-              <div className="h-16 w-16 bg-white/10 rounded-lg"></div>
-              <div className="flex-1">
-                <div className="h-4 bg-white/10 rounded w-1/3 mb-2"></div>
-                <div className="h-3 bg-white/10 rounded w-1/4"></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Card>
-    );
-  }
 
-  if (products.length === 0) {
-    return (
-      <Card className="p-12 text-center">
-        <PackageIcon className="w-16 h-16 mx-auto mb-4 text-brand-secondary opacity-50" />
-        <h3 className="text-xl font-semibold text-brand-primary mb-2">
-          {searchQuery.trim() ? 'No products match your search' : 'No Products Yet'}
-        </h3>
-        <p className="text-brand-secondary mb-6">
-          {searchQuery.trim() ? 'Try a different search term.' : 'Add your first product to start selling'}
-        </p>
-        {!searchQuery.trim() && (
-          <Button onClick={onAddNew} className="bg-gradient-to-r from-purple-500 to-pink-500">
-            <PlusIcon className="w-5 h-5 inline mr-2" />
-            Create Product
-          </Button>
-        )}
-      </Card>
-    );
-  }
-
-  return (
-    <Card className="overflow-hidden border-white/10">
-      <div className="p-4 border-b border-white/10 flex flex-col sm:flex-row sm:items-center gap-3">
+  const toolbar = (
+    <div className="p-4 border-b border-white/10 flex flex-col sm:flex-row sm:items-center gap-3">
         <div className="relative flex-1">
           <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-brand-secondary" />
           <input
@@ -139,7 +121,31 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
             Sync from Printrove
           </Button>
         )}
-      </div>
+    </div>
+  );
+
+  if (loading) {
+    return (
+      <Card className="overflow-hidden border-white/10">
+        {toolbar}
+        <div className="p-8 space-y-4">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="flex items-center gap-4 animate-pulse">
+              <div className="h-16 w-16 bg-white/10 rounded-lg"></div>
+              <div className="flex-1">
+                <div className="h-4 bg-white/10 rounded w-1/3 mb-2"></div>
+                <div className="h-3 bg-white/10 rounded w-1/4"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="overflow-hidden border-white/10">
+      {toolbar}
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-white/10">
           <thead className="bg-gradient-to-r from-purple-500/10 to-pink-500/10">
@@ -168,14 +174,36 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
           <tbody className="bg-brand-surface divide-y divide-white/10">
             {displayedProducts.length === 0 ? (
               <tr>
-                <td colSpan={onToggleSelect && onSelectAll ? 6 : 5} className="px-6 py-10 text-center text-sm text-brand-secondary">
-                  {showDrafts
-                    ? 'No draft products found.'
-                    : 'No active products found. Use "Show Drafts" to view imported drafts.'}
+                <td colSpan={onToggleSelect && onSelectAll ? 6 : 5} className="px-6 py-12 text-center text-sm text-brand-secondary">
+                  {products.length === 0 ? (
+                    <div className="max-w-md mx-auto">
+                      <PackageIcon className="w-16 h-16 mx-auto mb-4 text-brand-secondary opacity-50" />
+                      <h3 className="text-xl font-semibold text-brand-primary mb-2">
+                        {searchQuery.trim() ? 'No products match your search' : 'No products yet'}
+                      </h3>
+                      <p className="text-brand-secondary mb-6">
+                        {searchQuery.trim()
+                          ? 'Try a different search term.'
+                          : 'Create a product manually or use Sync from Printrove above to import listings as drafts.'}
+                      </p>
+                      {!searchQuery.trim() && (
+                        <Button onClick={onAddNew} className="bg-gradient-to-r from-purple-500 to-pink-500">
+                          <PlusIcon className="w-5 h-5 inline mr-2" />
+                          Create Product
+                        </Button>
+                      )}
+                    </div>
+                  ) : showDrafts ? (
+                    'No draft products found.'
+                  ) : (
+                    'No active products found. Use "Show Drafts" to view imported drafts.'
+                  )}
                 </td>
               </tr>
             ) : (
-              displayedProducts.map((product, index) => (
+              displayedProducts.map((product, index) => {
+                const thumbSrc = adminProductListThumbnailSrc(product);
+                return (
                 <tr
                   key={product.id}
                   className={`hover:bg-white/5 transition-colors group ${selectedIds.has(product.id) ? 'bg-purple-500/10' : ''} ${product.is_active === false ? 'opacity-80 bg-amber-500/5' : ''}`}
@@ -196,10 +224,10 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                 <td className="px-6 py-4 text-left">
                   <div className="flex items-center justify-start gap-4">
                     <div className="flex-shrink-0 h-16 w-16 rounded-lg overflow-hidden border-2 border-white/10 group-hover:border-purple-500/50 transition-colors">
-                      {product.imageUrl && !failedProductImages.has(product.id) ? (
+                      {thumbSrc && !failedProductImages.has(product.id) ? (
                         <img 
                           className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-300" 
-                          src={product.imageUrl} 
+                          src={thumbSrc} 
                           alt={product.name}
                           onError={() => onImageError(product.id)}
                           loading="lazy"
@@ -273,7 +301,8 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                   </div>
                 </td>
                 </tr>
-              ))
+              );
+              })
             )}
           </tbody>
         </table>

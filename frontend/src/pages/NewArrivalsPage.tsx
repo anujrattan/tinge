@@ -10,7 +10,7 @@ export const NewArrivalsPage: React.FC = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       setLoading(true);
-      const data = await api.getNewArrivals();
+      const data = await api.getNewArrivals(200);
       setProducts(data);
       setLoading(false);
     };

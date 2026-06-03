@@ -8,41 +8,42 @@
 
 /* Theme-aware base styles using CSS variables */
 @layer base {
-  /* Prevent horizontal scroll */
+  /* Prevent horizontal scroll; enable smooth scrolling site-wide */
   html, body {
     overflow-x: hidden;
     max-width: 100vw;
+    scroll-behavior: smooth;
   }
 
-  /* Light theme - default when no .dark class */
+  /* ── Light theme — warm cream base ──────────────────────────────────── */
   html {
-    --color-bg: #FAF8FF; /* Subtle lavender tinge */
-    --color-surface: #F5F3FF; /* Lighter purple tint */
-    --color-primary: #111827;
-    --color-secondary: #4B5563;
-    --color-accent: #9333EA;
-    --color-accent-hover: #7C3AED;
-    --color-card-bg: #FFFFFF; /* Keep cards pure white for contrast */
-    --color-card-border: #E9D5FF; /* Light purple border */
-    --color-hero-text: #FFFFFF;
-  }
-  
-  /* Dark theme - when .dark class is present */
-  html.dark {
-    --color-bg: #0D091F;
-    --color-surface: #191333;
-    --color-primary: #FFFFFF;
-    --color-secondary: #A9A2C2;
-    --color-accent: #C056F0;
-    --color-accent-hover: #a845d0;
-    --color-card-bg: #191333;
-    --color-card-border: rgba(255, 255, 255, 0.1);
-    --color-hero-text: #FFFFFF;
+    --color-bg:           #FAF7F2; /* warm cream page background            */
+    --color-surface:      #F4EFE6; /* warm surface — cards, panels           */
+    --color-primary:      #1E1B22; /* warm near-black — body text            */
+    --color-secondary:    #6B6258; /* warm mid-gray — secondary text         */
+    --color-accent:       #FF7A59; /* coral — primary CTAs & highlights      */
+    --color-accent-hover: #FF5E62; /* hotter coral — hover / active          */
+    --color-card-bg:      #FFFFFF; /* pure white cards for contrast          */
+    --color-card-border:  #E8E0D5; /* warm sand border                       */
+    --color-hero-text:    #F7F3EA; /* warm cream — text over dark hero       */
   }
 
-  /* Subtle gradient background for light theme */
+  /* ── Dark theme — warm espresso / charcoal ──────────────────────────── */
+  html.dark {
+    --color-bg:           #1A1410; /* dark espresso page background          */
+    --color-surface:      #231E1A; /* warm charcoal — cards, panels          */
+    --color-primary:      #F7F3EA; /* warm cream — body text on dark         */
+    --color-secondary:    #9E9587; /* warm desaturated gray — secondary text  */
+    --color-accent:       #FF7A59; /* coral accent                           */
+    --color-accent-hover: #FF5E62; /* hotter coral hover                     */
+    --color-card-bg:      #231E1A; /* warm charcoal card background          */
+    --color-card-border:  rgba(247, 243, 234, 0.08); /* subtle cream border  */
+    --color-hero-text:    #F7F3EA; /* warm cream hero text                   */
+  }
+
+  /* Warm cream gradient background for light theme */
   html:not(.dark) body {
-    background: linear-gradient(135deg, #FAF8FF 0%, #FEF9FF 50%, #F9F8FF 100%);
+    background: linear-gradient(135deg, #FAF7F2 0%, #F9F4EC 50%, #FAF7F2 100%);
     background-attachment: fixed;
   }
 }
@@ -69,26 +70,31 @@
   }
 }
 
-/* Theme-aware utility classes */
+/* Theme-aware utility overrides */
 @layer utilities {
-  /* Navigation active state - better contrast in light theme */
+  /* Navigation active state — coral in light theme instead of yellow */
   html:not(.dark) .text-yellow-400 {
-    color: #9333EA !important; /* Purple instead of yellow */
+    color: #FF7A59 !important;
   }
   html:not(.dark) .bg-yellow-400\/20 {
-    background-color: rgba(147, 51, 234, 0.2) !important; /* Purple tint */
+    background-color: rgba(255, 122, 89, 0.15) !important;
   }
-  
-  /* Product card borders for light theme */
+
+  /* Product card borders — warm sand in light theme */
   html:not(.dark) .border-gray-200\/50 {
-    border-color: #D1D5DB !important;
+    border-color: #E8E0D5 !important;
     border-width: 1px;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px 0 rgba(0, 0, 0, 0.04);
   }
-  
-  /* Section backgrounds for better contrast */
+
+  /* Section surface background — warm cream */
   html:not(.dark) .bg-brand-surface {
-    background-color: #F9FAFB !important; /* Matches color system */
+    background-color: #F4EFE6 !important;
+  }
+
+  /* Divider lines — warm instead of gray */
+  html:not(.dark) .divide-white\/10 > * + * {
+    border-color: rgba(30, 27, 34, 0.08) !important;
   }
 }
 
@@ -195,6 +201,7 @@
 
 .card-3d-hover:hover {
   transform: perspective(1000px) rotateX(7deg) rotateY(-7deg) scale(1.05);
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 8px 20px rgba(192, 86, 240, 0.2);
+  /* warm coral glow replaces purple */
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 8px 20px rgba(255, 122, 89, 0.20);
 }
 

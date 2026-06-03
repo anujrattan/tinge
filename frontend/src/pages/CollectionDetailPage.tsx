@@ -7,6 +7,7 @@ import { XIcon } from "../components/icons";
 import { SEOHead } from "../components/SEOHead";
 import { StructuredData, createBreadcrumbSchema } from "../components/StructuredData";
 import { DEFAULT_SITE_URL } from "../utils/seo";
+import { shuffleArray } from "../utils/shuffle";
 
 type SortOption = "default" | "price-asc" | "price-desc" | "name-asc";
 
@@ -29,7 +30,7 @@ export const CollectionDetailPage: React.FC = () => {
         setLoading(true);
         setError(null);
         const data = await api.getProductsByCollection(slug);
-        setProducts(data);
+        setProducts(shuffleArray(data));
         if (data.length > 0) {
           const prices = data.map((p) => p.selling_price || p.price || 0);
           const minPrice = Math.floor(Math.min(...prices));
@@ -303,13 +304,69 @@ export const CollectionDetailPage: React.FC = () => {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-16 text-brand-secondary">
-                <p className="mb-2">
-                  No products in this collection yet.
-                </p>
-                <p className="text-sm">
-                  Check back soon – we’re still curating this drop.
-                </p>
+              <div className="flex justify-center py-16 px-4">
+                <div className="relative w-full max-w-xl overflow-hidden rounded-3xl border border-purple-100/80 bg-white/80 p-8 text-center shadow-xl shadow-purple-500/10 dark:border-white/10 dark:bg-brand-surface/80">
+                  <div className="absolute -left-16 -top-16 h-40 w-40 rounded-full bg-purple-400/20 blur-3xl" />
+                  <div className="absolute -bottom-16 -right-16 h-40 w-40 rounded-full bg-pink-400/20 blur-3xl" />
+
+                  <div className="relative mx-auto mb-6 flex h-36 w-36 items-center justify-center rounded-full bg-gradient-to-br from-purple-100 via-pink-50 to-white shadow-inner dark:from-purple-500/20 dark:via-pink-500/10 dark:to-white/5">
+                    <div className="absolute left-7 top-8 h-5 w-5 rounded-full bg-purple-400/30" />
+                    <div className="absolute bottom-8 right-7 h-4 w-4 rounded-full bg-pink-400/40" />
+                    <div className="absolute right-9 top-7 rounded-full bg-white px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-purple-500 shadow-md dark:bg-brand-surface">
+                      Soon
+                    </div>
+
+                    <svg
+                      viewBox="0 0 120 120"
+                      className="relative h-24 w-24"
+                      role="img"
+                      aria-label="Coming soon collection illustration"
+                    >
+                      <defs>
+                        <linearGradient id="emptyCollectionBag" x1="24" y1="26" x2="96" y2="104" gradientUnits="userSpaceOnUse">
+                          <stop stopColor="#A855F7" />
+                          <stop offset="1" stopColor="#EC4899" />
+                        </linearGradient>
+                      </defs>
+                      <path
+                        d="M34 45h52l6 50a8 8 0 0 1-8 9H36a8 8 0 0 1-8-9l6-50Z"
+                        fill="url(#emptyCollectionBag)"
+                        opacity="0.95"
+                      />
+                      <path
+                        d="M46 45c0-13 6-22 14-22s14 9 14 22"
+                        fill="none"
+                        stroke="#FFFFFF"
+                        strokeLinecap="round"
+                        strokeWidth="6"
+                        opacity="0.9"
+                      />
+                      <path
+                        d="M45 67h30M45 79h22"
+                        stroke="#FFFFFF"
+                        strokeLinecap="round"
+                        strokeWidth="5"
+                        opacity="0.85"
+                      />
+                      <path
+                        d="M83 24l3 8 8 3-8 3-3 8-3-8-8-3 8-3 3-8Z"
+                        fill="#FDE68A"
+                      />
+                    </svg>
+                  </div>
+
+                  <div className="relative">
+                    <p className="text-xs font-bold uppercase tracking-[0.28em] text-purple-500">
+                      Drop loading
+                    </p>
+                    <h3 className="mt-3 text-2xl font-display font-extrabold tracking-tight text-brand-primary">
+                      This collection is getting dressed up
+                    </h3>
+                    <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-brand-secondary">
+                      We’re curating fresh pieces for this drop. Check back soon for new fits, colors, and limited-edition styles.
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
           </section>

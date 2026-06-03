@@ -22,19 +22,19 @@ export const Footer: React.FC = () => {
           {/* Column 1: Brand Info */}
           <div className="flex flex-col">
             <Link to="/" className="flex items-center gap-2 mb-4">
-              <span className="text-2xl font-display font-bold tracking-tight bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+              <span className="text-2xl font-display font-bold tracking-tight bg-gradient-to-r from-[#FF7A59] to-[#FFC371] bg-clip-text text-transparent">
                 Tinge Clothing
               </span>
-              <StarIcon className="w-5 h-5 text-yellow-400" />
+              <StarIcon className="w-5 h-5 text-[#FFC371]" />
             </Link>
             <p className="text-sm max-w-xs">
               Your premium destination for quality clothing. Premium threads that match your energy.
             </p>
             <div className="flex items-center gap-3 mt-6">
-                <a href="#" className="w-9 h-9 flex items-center justify-center rounded-full bg-blue-500 text-white hover:opacity-80 transition-opacity"><InstagramIcon className="w-5 h-5" /></a>
-                <a href="#" className="w-9 h-9 flex items-center justify-center rounded-full bg-sky-400 text-white hover:opacity-80 transition-opacity"><TwitterIcon className="w-5 h-5" /></a>
-                <a href="#" className="w-9 h-9 flex items-center justify-center rounded-full bg-blue-700 text-white hover:opacity-80 transition-opacity"><FacebookIcon className="w-5 h-5" /></a>
-                <a href="#" className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-400 text-white hover:opacity-80 transition-opacity"><MailIcon className="w-5 h-5" /></a>
+                <a href="#" className="w-9 h-9 flex items-center justify-center rounded-full bg-[#FF7A59] text-white hover:bg-[#FF5E62] transition-colors"><InstagramIcon className="w-5 h-5" /></a>
+                <a href="#" className="w-9 h-9 flex items-center justify-center rounded-full bg-[#5DA9E9] text-white hover:bg-[#4A94D5] transition-colors"><TwitterIcon className="w-5 h-5" /></a>
+                <a href="#" className="w-9 h-9 flex items-center justify-center rounded-full bg-[#5DA9E9] text-white hover:bg-[#4A94D5] transition-colors"><FacebookIcon className="w-5 h-5" /></a>
+                <a href="#" className="w-9 h-9 flex items-center justify-center rounded-full bg-[#FFC371]/90 text-[#1E1B22] hover:bg-[#FFC371] transition-colors"><MailIcon className="w-5 h-5" /></a>
             </div>
           </div>
 
@@ -150,16 +150,16 @@ export const Footer: React.FC = () => {
               <button type="submit" className="bg-brand-accent hover:bg-brand-accent-hover text-white px-3 py-2 rounded-r-lg"><SendIcon className="w-5 h-5"/></button>
             </form>
              <ul className="grid grid-cols-2 md:grid-cols-1 lg:grid-cols-1 gap-x-4 gap-y-2 mt-4 text-sm">
-              <li className="flex items-center gap-2"><GiftIcon className="w-4 h-4 text-green-400"/>Exclusive discounts</li>
-              <li className="flex items-center gap-2"><LightbulbIcon className="w-4 h-4 text-blue-400"/>Design tips & inspiration</li>
-              <li className="flex items-center gap-2 col-span-2 md:col-span-1 justify-center md:justify-start"><BellIcon className="w-4 h-4 text-yellow-400"/>Early access to new drops</li>
+              <li className="flex items-center gap-2"><GiftIcon className="w-4 h-4 text-[#FF7A59]"/>Exclusive discounts</li>
+              <li className="flex items-center gap-2"><LightbulbIcon className="w-4 h-4 text-[#5DA9E9]"/>Design tips & inspiration</li>
+              <li className="flex items-center gap-2 col-span-2 md:col-span-1 justify-center md:justify-start"><BellIcon className="w-4 h-4 text-[#FFC371]"/>Early access to new drops</li>
             </ul>
           </div>
         </div>
 
         {/* Middle Divider & Links */}
         <div className="mt-16 border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center text-sm gap-4">
-          <p className="order-2 md:order-1 text-center md:text-left">&copy; {new Date().getFullYear()} Tinge Clothing. All rights reserved. <span className="inline-flex items-center gap-1">Made with <HeartIcon className="w-4 h-4 text-pink-500 animate-heartbeat inline-block" /> for fashion lovers</span></p>
+          <p className="order-2 md:order-1 text-center md:text-left">&copy; {new Date().getFullYear()} Tinge Clothing. All rights reserved. <span className="inline-flex items-center gap-1">Made with <HeartIcon className="w-4 h-4 text-[#FF7A59] animate-heartbeat inline-block" /> for fashion lovers</span></p>
           <div className="flex flex-wrap gap-4 order-1 md:order-2 justify-center">
             <Link to="/privacy-policy" className="hover:text-brand-primary transition-colors">Privacy Policy</Link>
             <Link to="/terms-of-service" className="hover:text-brand-primary transition-colors">Terms of Service</Link>

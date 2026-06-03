@@ -70,6 +70,10 @@ export interface PartnerVariant {
   size: string;
   partner_variant_id: string;
   partner_sku: string;
+  /** Resolved front mockup image URL (e.g. from Printrove `data.variants[i].mockup.front_mockup`) */
+  mockup_front_url?: string | null;
+  /** Raw Printrove field when stored on the variant object */
+  front_mockup?: string | null;
 }
 
 export interface CartItem extends Product {

@@ -11,6 +11,7 @@ import { getColorName, getColorHex } from '../utils/colorUtils';
 import { SEOHead } from '../components/SEOHead';
 import { StructuredData, createBreadcrumbSchema } from '../components/StructuredData';
 import { DEFAULT_SITE_URL } from '../utils/seo';
+import { shuffleArray } from '../utils/shuffle';
 
 type SortOption = 'default' | 'price-asc' | 'price-desc' | 'name-asc';
 
@@ -35,7 +36,7 @@ export const ProductListPage: React.FC = () => {
     const fetchProducts = async () => {
       setLoading(true);
       const data = await api.getProducts(slug);
-      setProducts(data);
+      setProducts(shuffleArray(data));
       setLoading(false);
       
       // Set initial price range based on products

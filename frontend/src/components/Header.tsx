@@ -189,9 +189,9 @@ export const Header: React.FC<HeaderProps> = ({
     return () => document.removeEventListener("keydown", handleEscape);
   }, [showSearchBar]);
 
-  // Navbar styling: over hero transparent (no blur); else theme-aware with backdrop
+  // Navbar styling: over dark cinematic hero → frosted glass dark; else theme-aware with backdrop
   const headerClasses = useHeroNavStyle
-    ? "fixed top-0 left-0 right-0 z-[100] w-full max-w-full overflow-visible"
+    ? "fixed top-0 left-0 right-0 z-[100] w-full max-w-full overflow-visible backdrop-blur-md bg-black/30 border-b border-white/10"
     : `fixed top-0 left-0 right-0 z-[100] w-full max-w-full overflow-visible backdrop-blur-md border-b ${
         theme === "dark"
           ? "bg-black/80 border-white/10"
@@ -199,21 +199,21 @@ export const Header: React.FC<HeaderProps> = ({
       }`;
 
   const navPillClasses = useHeroNavStyle
-    ? "flex items-center gap-1 rounded-full bg-white/80 backdrop-blur-lg border border-black/10 shadow-lg px-2 py-1.5"
+    ? "flex items-center gap-1 rounded-full bg-white/10 backdrop-blur-lg border border-white/20 shadow-lg px-2 py-1.5"
     : `flex items-center gap-1 rounded-full shadow-lg px-2 py-1.5 ${
         theme === "dark"
           ? "bg-white/10 backdrop-blur-lg border border-white/20"
           : "bg-black/5 backdrop-blur-lg border border-black/10"
       }`;
 
-  const rightIconColor = useHeroNavStyle ? "#1e293b" : theme === "dark" ? "#FACC15" : "#1e293b";
+  const rightIconColor = useHeroNavStyle ? "#F7F3EA" : theme === "dark" ? "#FACC15" : "#1e293b";
 
-  // Nav link text colors: black when over light hero, theme-aware when scrolled
+  // Nav link text colors: white when over dark hero, theme-aware when scrolled
   const getNavLinkClasses = (isActiveLink: boolean) => {
     if (useHeroNavStyle) {
       return isActiveLink
-        ? "text-slate-900 bg-black/10"
-        : "text-slate-700 hover:text-slate-900 hover:bg-black/5";
+        ? "text-white bg-white/20"
+        : "text-white/80 hover:text-white hover:bg-white/10";
     }
     return theme === "dark"
       ? isActiveLink
@@ -229,7 +229,7 @@ export const Header: React.FC<HeaderProps> = ({
     "inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-full transition-all duration-200 shadow-sm border";
   const userButtonClasses =
     useHeroNavStyle
-      ? `${userButtonBase} bg-slate-800 text-white border-slate-700 hover:bg-slate-900 hover:shadow-md`
+      ? `${userButtonBase} bg-white/15 text-white border-white/20 hover:bg-white/25 hover:shadow-md`
       : theme === "dark"
       ? `${userButtonBase} bg-white/15 text-white border-white/20 hover:bg-white/25 hover:shadow-md`
       : `${userButtonBase} bg-slate-800 text-white border-slate-700 hover:bg-slate-900 hover:shadow-md`;
@@ -644,7 +644,7 @@ export const Header: React.FC<HeaderProps> = ({
                 to="/auth"
                 className={`hidden md:inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-full transition-all duration-200 ${
                   useHeroNavStyle
-                    ? "bg-slate-800 text-white hover:bg-slate-900 shadow-md"
+                    ? "bg-white/15 text-white hover:bg-white/25 border border-white/20"
                     : theme === "dark"
                     ? "bg-white/15 text-white hover:bg-white/25 border border-white/20"
                     : "bg-slate-800 text-white hover:bg-slate-900 shadow-md"

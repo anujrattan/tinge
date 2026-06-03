@@ -46,11 +46,18 @@ export const OrderDetailsPage: React.FC = () => {
     return getGuestEmailFromStorage();
   }, [searchParams, isAuthenticated, user?.email]);
 
-  const fetchOrderDetails = useCallback(async (orderNumber: string, email?: string | null) => {
+  const fetchOrderDetails = useCallback(async (
+    orderNumber: string,
+    email?: string | null,
+    options?: { silent?: boolean },
+  ) => {
+    const silent = Boolean(options?.silent);
     try {
-      setLoading(true);
-      setError(null);
-      setShowLookupForm(false);
+      if (!silent) {
+        setLoading(true);
+        setError(null);
+        setShowLookupForm(false);
+      }
 
       let response;
       if (isAuthenticated) {
@@ -67,7 +74,7 @@ export const OrderDetailsPage: React.FC = () => {
       } else if (email) {
         response = await api.getOrderByNumber(orderNumber, email);
       } else {
-        setLoading(false);
+        if (!silent) setLoading(false);
         setShowLookupForm(true);
         setLookupOrderNumber(orderNumber || '');
         setLookupEmail(getGuestEmailFromStorage() || '');
@@ -85,7 +92,7 @@ export const OrderDetailsPage: React.FC = () => {
         const productResults = await Promise.all(productPromises);
         const productsMap: Record<string, any> = {};
         productResults.forEach((product) => {
-          if (product) products[product.id] = product;
+          if (product) productsMap[product.id] = product;
         });
         setProducts(productsMap);
 
@@ -101,21 +108,23 @@ export const OrderDetailsPage: React.FC = () => {
         } catch (err) {
           console.error('Failed to load ratings:', err);
         }
-      } else {
+      } else if (!silent) {
         setError('We couldn’t find an order with that number and email. Please check and try again.');
         setShowLookupForm(true);
         setLookupOrderNumber(orderNumber);
         setLookupEmail(email || '');
       }
     } catch (err: any) {
-      setError(err.message || 'We couldn’t load this order. Please check your details and try again.');
-      setShowLookupForm(true);
-      setLookupOrderNumber(orderNumber);
-      setLookupEmail(resolveEmail() || '');
+      if (!silent) {
+        setError(err.message || 'We couldn’t load this order. Please check your details and try again.');
+        setShowLookupForm(true);
+        setLookupOrderNumber(orderNumber);
+        setLookupEmail(resolveEmail() || '');
+      }
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
-  }, [isAuthenticated, resolveEmail]);
+  }, [isAuthenticated, resolveEmail, searchParams, setSearchParams]);
 
   useEffect(() => {
     const orderNumber = orderNumberParam?.trim();
@@ -140,6 +149,26 @@ export const OrderDetailsPage: React.FC = () => {
 
     fetchOrderDetails(orderNumber, email || undefined);
   }, [orderNumberParam, isAuthenticated, resolveEmail, fetchOrderDetails]);
+
+  // Refresh order (shipping/tracking) when the user returns to the tab — avoids stale admin updates.
+  useEffect(() => {
+    const orderNumber = orderNumberParam?.trim();
+    if (!orderNumber || showLookupForm) return;
+
+    const email = resolveEmail();
+    const run = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (!isAuthenticated && !email) return;
+      void fetchOrderDetails(orderNumber, email || undefined, { silent: true });
+    };
+
+    window.addEventListener('focus', run);
+    document.addEventListener('visibilitychange', run);
+    return () => {
+      window.removeEventListener('focus', run);
+      document.removeEventListener('visibilitychange', run);
+    };
+  }, [orderNumberParam, isAuthenticated, resolveEmail, fetchOrderDetails, showLookupForm]);
 
   useEffect(() => {
     const cancelled = searchParams.get('cancelled') === 'true';
@@ -417,6 +446,20 @@ export const OrderDetailsPage: React.FC = () => {
   const isCancelled = order.status === 'cancelled';
   const needsRetryPayment = order.gateway === 'Prepaid' && order.payment_status !== 'paid';
 
+  const trimStr = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
+  const courierName = trimStr(order.shipping_partner);
+  const trackingNo = trimStr(order.tracking_number);
+  const trackingLink = trimStr(order.tracking_url);
+
+  const showShippingDetailsSection =
+    !isCancelled &&
+    order.status !== 'failed' &&
+    (order.payment_status === 'paid' || order.gateway === 'COD');
+
+  const PLACEHOLDER_COURIER = 'Awaiting details';
+  const PLACEHOLDER_TRACKING_ID = 'Awaiting details';
+  const PLACEHOLDER_TRACKING_URL = 'Pending updation';
+
   return (
     <div className="relative min-h-screen">
       {/* Ambient background blobs */}
@@ -575,9 +618,8 @@ export const OrderDetailsPage: React.FC = () => {
               )}
             </div>
 
-            {/* Tracking info – when shipped / delivered */}
-            {(order.status === 'shipped' || order.status === 'delivered') &&
-              (order.tracking_number || order.tracking_url || order.shipping_partner) && (
+            {/* Shipping & tracking — reflects admin updates; placeholders until filled */}
+            {showShippingDetailsSection && (
               <div className="backdrop-blur-xl bg-white/5 border border-white/15 rounded-2xl p-6 shadow-xl shadow-black/10">
                 <div className="flex items-center gap-3 mb-5">
                   <div className="w-9 h-9 rounded-xl bg-blue-500/15 border border-blue-500/20 flex items-center justify-center shrink-0">
@@ -586,35 +628,48 @@ export const OrderDetailsPage: React.FC = () => {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
                   </div>
-                  <h3 className="text-base font-semibold text-brand-primary">Tracking Information</h3>
+                  <h3 className="text-base font-semibold text-brand-primary">Shipping and tracking</h3>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  {order.shipping_partner && (
-                    <div>
-                      <p className="text-[10px] uppercase tracking-widest text-brand-secondary mb-1.5 font-medium">Shipping Partner</p>
-                      <p className="text-brand-primary font-semibold">{order.shipping_partner}</p>
-                    </div>
-                  )}
-                  {order.tracking_number && (
-                    <div>
-                      <p className="text-[10px] uppercase tracking-widest text-brand-secondary mb-1.5 font-medium">Tracking Number</p>
-                      <p className="text-brand-primary font-mono font-semibold text-sm">{order.tracking_number}</p>
-                    </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-brand-secondary mb-1.5 font-medium">Courier</p>
+                    <p
+                      className={`font-semibold ${
+                        courierName ? 'text-brand-primary' : 'text-brand-secondary italic'
+                      }`}
+                    >
+                      {courierName || PLACEHOLDER_COURIER}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-brand-secondary mb-1.5 font-medium">Tracking ID</p>
+                    <p
+                      className={`text-sm font-semibold ${
+                        trackingNo ? 'text-brand-primary font-mono' : 'text-brand-secondary italic'
+                      }`}
+                    >
+                      {trackingNo || PLACEHOLDER_TRACKING_ID}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-5">
+                  <p className="text-[10px] uppercase tracking-widest text-brand-secondary mb-2 font-medium">Tracking URL</p>
+                  {trackingLink ? (
+                    <a
+                      href={trackingLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 hover:border-blue-500/40 text-sm font-semibold transition-all duration-200"
+                    >
+                      Track your shipment
+                      <svg className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </a>
+                  ) : (
+                    <p className="text-sm font-semibold text-brand-secondary italic">{PLACEHOLDER_TRACKING_URL}</p>
                   )}
                 </div>
-                {order.tracking_url && (
-                  <a
-                    href={order.tracking_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 hover:border-blue-500/40 text-sm font-semibold transition-all duration-200"
-                  >
-                    Track your shipment
-                    <svg className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                  </a>
-                )}
               </div>
             )}
 

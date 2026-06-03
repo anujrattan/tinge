@@ -25,6 +25,7 @@ import {
   OrganizationSchema,
   WebsiteSchema,
 } from "../components/StructuredData";
+import { shuffleArray } from "../utils/shuffle";
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -47,10 +48,12 @@ export const HomePage: React.FC = () => {
       const visible = (collectionsData || []).filter((c) => c.isActive !== false);
       setCollections(visible.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)));
       setCollectionsLoading(false);
-      setFeaturedProducts(bestSellers.slice(0, displayLimit));
-      setHasMoreBestSellers(bestSellers.length > displayLimit);
-      setNewArrivals(arrivals.slice(0, displayLimit));
-      setHasMoreNewArrivals(arrivals.length > displayLimit);
+      const shuffledBest = shuffleArray(bestSellers);
+      const shuffledNew = shuffleArray(arrivals);
+      setFeaturedProducts(shuffledBest.slice(0, displayLimit));
+      setHasMoreBestSellers(shuffledBest.length > displayLimit);
+      setNewArrivals(shuffledNew.slice(0, displayLimit));
+      setHasMoreNewArrivals(shuffledNew.length > displayLimit);
     };
     fetchFeatured();
   }, []);
@@ -110,65 +113,153 @@ export const HomePage: React.FC = () => {
       <StructuredData data={OrganizationSchema} />
       <StructuredData data={WebsiteSchema} />
       <div className="space-y-8 md:space-y-12 animate-fadeIn pb-16">
-        {/* Hero Section – same banner on all viewports; optimized for mobile */}
+        {/* ── Cinematic Hero ──────────────────────────────────────────────── */}
         <section className="relative -mt-20 md:-mt-24 overflow-hidden" aria-label="Hero banner">
-          <div className="relative w-full min-h-[85vh] sm:min-h-[90vh] h-[100vh] pt-20 md:pt-24">
-            {/* Hero banner: mobile portrait image; desktop landscape */}
+          {/*
+           * Mobile:  portrait image fills full height; text anchored to bottom behind
+           *          a strong gradient scrim for readability.
+           * Desktop: landscape image; text centered-left with lighter overlay.
+           */}
+          <div className="relative w-full min-h-[100svh] md:h-[100vh] md:min-h-[700px]">
+
+            {/* ── Background image ─────────────────────────────────────────────── */}
             <picture>
-              <source
-                media="(max-width: 767px)"
-                srcSet="/light-hero-banner-mobile.jpeg"
-              />
+              <source media="(max-width: 767px)" srcSet="/Hero-Banner-Updated-Mobile.png" />
               <img
-                src="/light-hero-banner.jpeg"
-                alt="Luxe Threads hero banner"
-                className="absolute inset-0 w-full h-full object-cover object-center md:object-[center_15%]"
+                src="/Hero-Banner-Updated.png"
+                alt="Luxe Threads lifestyle hero"
+                className="absolute inset-0 w-full h-full object-cover object-top md:object-center animate-cinematicZoom"
                 loading="eager"
                 decoding="async"
                 fetchPriority="high"
-                sizes="100vw"
               />
             </picture>
 
-            {/* Hero content – left-aligned; cohesive block on mobile, desktop centered */}
-            <div className="relative h-full container mx-auto px-4 sm:px-6 lg:px-8 flex flex-col items-start justify-start pt-12 md:pt-0 md:justify-center">
-              <div className="max-w-3xl text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-                <h1 className="text-5xl sm:text-5xl md:text-8xl font-display font-extrabold tracking-tight leading-tight">
-                  <span className="block">Wear Your</span>
+            {/* ── Gradient overlays ────────────────────────────────────────────── */}
+            {/* Mobile: light bottom scrim — text legibility only where copy sits */}
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 md:hidden pointer-events-none"
+              style={{
+                background:
+                  "linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.28) 32%, rgba(0,0,0,0.04) 58%, transparent 100%)",
+              }}
+            />
+            {/* Desktop: minimal tint — preserve original image color */}
+            <div aria-hidden="true" className="hidden md:block absolute inset-0 bg-gradient-to-br from-black/20 via-transparent to-black/12 pointer-events-none" />
+            <div aria-hidden="true" className="hidden md:block absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent pointer-events-none" />
+
+            {/* ── Film grain ───────────────────────────────────────────────────── */}
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 opacity-[0.06] md:opacity-[0.08] pointer-events-none mix-blend-overlay"
+              style={{
+                backgroundImage:
+                  "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E\")",
+                backgroundRepeat: "repeat",
+                backgroundSize: "180px 180px",
+              }}
+            />
+
+            {/* ── Bottom page fade ─────────────────────────────────────────────── */}
+            <div
+              aria-hidden="true"
+              className="absolute bottom-0 left-0 right-0 h-20 md:h-24 pointer-events-none bg-gradient-to-b from-transparent to-black/15"
+            />
+
+            {/* ── Floating particles — desktop only ────────────────────────────── */}
+            <div className="hidden md:block" aria-hidden="true">
+              {(
+                [
+                  { top: "18%", left: "6%",  size: 3, color: "rgba(255,153,102,0.55)", delay: "0s",   dur: "7s"   },
+                  { top: "42%", left: "12%", size: 2, color: "rgba(255,94,98,0.45)",   delay: "1.8s", dur: "9s"   },
+                  { top: "65%", left: "4%",  size: 4, color: "rgba(255,195,113,0.40)", delay: "3.2s", dur: "7.5s" },
+                  { top: "22%", left: "88%", size: 2, color: "rgba(255,153,102,0.50)", delay: "2.4s", dur: "8.5s" },
+                  { top: "55%", left: "92%", size: 3, color: "rgba(255,94,98,0.40)",   delay: "0.8s", dur: "6.5s" },
+                  { top: "78%", left: "28%", size: 2, color: "rgba(255,195,113,0.45)", delay: "4s",   dur: "8s"   },
+                  { top: "12%", left: "55%", size: 2, color: "rgba(255,153,102,0.30)", delay: "5s",   dur: "11s"  },
+                ] as { top: string; left: string; size: number; color: string; delay: string; dur: string }[]
+              ).map((p, i) => (
+                <span
+                  key={i}
+                  className="absolute rounded-full pointer-events-none animate-float"
+                  style={{
+                    top: p.top,
+                    left: p.left,
+                    width: p.size,
+                    height: p.size,
+                    background: p.color,
+                    animationDelay: p.delay,
+                    animationDuration: p.dur,
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* ── Hero content ─────────────────────────────────────────────────── */}
+            {/*
+             * Mobile:  justify-end — block sits at the bottom of the image.
+             * Desktop: justify-center — block floats in the left-center of the image.
+             */}
+            <div className="relative h-full flex flex-col justify-end pb-10 px-5 md:pb-0 md:px-0 md:justify-center md:container md:mx-auto md:px-8 pt-24 md:pt-0">
+              <div className="w-full md:max-w-3xl">
+
+                {/* Eyebrow tagline — visible on mobile as an orientation cue */}
+                <p
+                  className="text-[10px] md:text-xs font-bold uppercase tracking-[0.28em] mb-3 md:mb-4"
+                  style={{ color: "rgba(255,153,102,0.90)" }}
+                >
+                  New Season · Collectible Drops
+                </p>
+
+                {/* Headline */}
+                <h1
+                  className="text-[2.65rem] leading-[1.08] sm:text-5xl md:text-8xl font-display font-extrabold tracking-tight"
+                  style={{ color: "#F7F3EA" }}
+                >
+                  <span className="block animate-flicker">Wear Your</span>
                   <span className="block">
                     <RotatingText
-                      words={["Style", "Energy", "Essence"]}
+                      words={["Escape", "Orbit", "Adventure"]}
                       interval={3000}
-                      className="bg-gradient-to-r from-[#9333EA] to-[#F5E04E] bg-clip-text text-transparent"
+                      className="bg-gradient-to-r from-[#FF9966] via-[#FF5E62] to-[#FFC371] bg-clip-text text-transparent"
                     />
                   </span>
                 </h1>
-                <p className="mt-4 sm:mt-6 text-xl sm:text-xl md:text-2xl max-w-2xl font-sans text-white/90 leading-relaxed">
-                  Premium everyday wear. Designed to feel as good as it looks.
+
+                {/* Subheading */}
+                <p
+                  className="mt-3 md:mt-6 text-sm sm:text-base md:text-2xl max-w-sm md:max-w-2xl font-sans leading-relaxed"
+                  style={{ color: "rgba(247,243,234,0.80)" }}
+                >
+                  Retro-inspired graphics and collectible drops made for people who never stay still.
                 </p>
-                <div className="mt-8 sm:mt-10 space-y-3">
-                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                    <Button
-                      onClick={() => navigate("/best-sellers")}
-                      className="px-8 sm:px-10 py-3 sm:py-3.5 text-base md:text-lg font-semibold"
-                    >
-                      Shop Best Sellers
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      onClick={() => navigate("/new-arrivals")}
-                      className="text-base md:text-lg font-semibold text-white hover:text-brand-accent hover:bg-white/10"
-                    >
-                      New Arrivals →
-                    </Button>
-                  </div>
-                  <p className="text-sm text-white/80">
-                    Easy 7-day returns · Premium fabrics
-                  </p>
+
+                {/* CTAs — full-width on mobile for thumb-friendly tap targets */}
+                <div className="mt-5 md:mt-10 flex flex-col sm:flex-row gap-3">
+                  <button
+                    onClick={() => navigate("/collections")}
+                    className="w-full sm:w-auto min-h-[52px] px-8 py-3.5 rounded-full text-base font-bold tracking-wide transition-all duration-200 bg-[#FF7A59] hover:bg-[#FF5E62] text-[#FFF8EE] active:scale-[0.97] shadow-[0_4px_24px_rgba(255,94,98,0.40)]"
+                  >
+                    Explore Drops
+                  </button>
+                  <button
+                    onClick={() => navigate("/best-sellers")}
+                    className="w-full sm:w-auto min-h-[52px] px-8 py-3.5 rounded-full text-base font-bold tracking-wide transition-all duration-200 border border-white/30 hover:border-white/55 hover:shadow-[0_0_22px_rgba(255,255,255,0.12)] active:scale-[0.97]"
+                    style={{ color: "#F7F3EA" }}
+                  >
+                    Shop Best Sellers
+                  </button>
                 </div>
+
+                {/* Trust micro-copy */}
+                <p className="mt-3 text-xs" style={{ color: "rgba(255,255,255,0.48)" }}>
+                  Easy 7-day returns · Premium fabrics
+                </p>
+
               </div>
             </div>
+
           </div>
         </section>
 
@@ -176,12 +267,12 @@ export const HomePage: React.FC = () => {
         <section className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-8 flex items-end justify-between">
             <div>
-              <span className="text-sm font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider">
+              <span className="text-sm font-semibold text-[#FF7A59] uppercase tracking-wider">
                 Curated drops
               </span>
               <h2 className="text-3xl md:text-4xl font-display font-bold tracking-tight text-brand-primary mt-2">
                 Shop by{" "}
-                <span className="bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-[#FF7A59] to-[#FFC371] bg-clip-text text-transparent">
                   Collection
                 </span>
               </h2>
@@ -226,7 +317,7 @@ export const HomePage: React.FC = () => {
                         loading="lazy"
                       />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-slate-800 via-slate-900 to-purple-900 flex items-center justify-center">
+                      <div className="w-full h-full bg-gradient-to-br from-[#1A1410] via-[#231E1A] to-[#2C2620] flex items-center justify-center">
                         <TagIcon className="w-10 h-10 text-white/70" />
                       </div>
                     )}
@@ -265,14 +356,14 @@ export const HomePage: React.FC = () => {
           <div className="mb-8 flex items-end justify-between">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <TrendingUpIcon className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                <span className="text-sm font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wider">
+                <TrendingUpIcon className="w-5 h-5 text-[#FF7A59]" />
+                <span className="text-sm font-semibold text-[#FF7A59] uppercase tracking-wider">
                   Top Picks
                 </span>
               </div>
               <h2 className="text-3xl md:text-4xl font-display font-bold tracking-tight text-brand-primary">
                 Best{" "}
-                <span className="bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-[#FF7A59] to-[#FFC371] bg-clip-text text-transparent">
                   Sellers
                 </span>
               </h2>
@@ -315,14 +406,14 @@ export const HomePage: React.FC = () => {
           <div className="mb-8 flex items-end justify-between">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <FlameIcon className="w-5 h-5 text-orange-500 dark:text-orange-400" />
-                <span className="text-sm font-semibold text-orange-500 dark:text-orange-400 uppercase tracking-wider">
+                <FlameIcon className="w-5 h-5 text-[#FF7A59]" />
+                <span className="text-sm font-semibold text-[#FF7A59] uppercase tracking-wider">
                   Just In
                 </span>
               </div>
               <h2 className="text-3xl md:text-4xl font-display font-bold tracking-tight text-brand-primary">
                 New{" "}
-                <span className="bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-[#FF7A59] to-[#FFC371] bg-clip-text text-transparent">
                   Arrivals
                 </span>
               </h2>
