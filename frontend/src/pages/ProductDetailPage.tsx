@@ -17,7 +17,8 @@ import { StructuredData, createProductSchema, createBreadcrumbSchema } from '../
 import { truncateDescription, DEFAULT_SITE_URL, DEFAULT_SITE_NAME } from '../utils/seo';
 import { trackViewContent } from '../utils/gtm';
 import { calculateFinalPrice, toAnchoredDisplayPrice } from '../utils/pricing';
-import { getSizeChartForProduct } from '../utils/sizeSystem';
+import { formatPosterSizeLabel, getSizeChartForProduct, isPosterProduct } from '../utils/sizeSystem';
+import { getSellingPriceForSize, hasVariableSizePricing } from '../utils/sizePricing';
 
 // ── Description renderer (bullets or paragraph) ──────────────────────────────
 const ProductDescription: React.FC<{ text: string }> = ({ text }) => {
@@ -157,22 +158,31 @@ export const ProductDetailPage: React.FC = () => {
   }
   if (!product) return <div className="text-center py-20 text-brand-secondary">Product not found.</div>;
 
-  const sellingPrice = parseFloat(String(product.selling_price || 0));
+  const mockupImages = product?.mockup_images || [];
+  const allImages = [product.main_image_url || product.imageUrl || '', ...mockupImages.slice(0, 4)].filter(Boolean);
+  const isPoster = isPosterProduct(product);
+  const availableSizes = product.variants?.sizes || [];
+  const showSizeSelector =
+    isPoster
+      ? availableSizes.length > 0
+      : availableSizes.length > 0 && availableSizes[0] !== 'One Size' && availableSizes[0] !== '11oz';
+
+  const variableSizePricing = hasVariableSizePricing(product);
+  const activeSellingPrice = getSellingPriceForSize(
+    product,
+    showSizeSelector ? selectedSize || undefined : undefined,
+  );
   const discountPercentage = product.discount_percentage ? parseFloat(String(product.discount_percentage)) : 0;
   const onSale = product.on_sale === true;
   const saleDiscountPercentage = onSale && product.sale_discount_percentage ? parseFloat(String(product.sale_discount_percentage)) : 0;
-  const finalPrice = calculateFinalPrice(sellingPrice, discountPercentage, onSale, saleDiscountPercentage);
+  const finalPrice = calculateFinalPrice(activeSellingPrice, discountPercentage, onSale, saleDiscountPercentage);
   const displayFinalPrice = toAnchoredDisplayPrice(finalPrice);
-  const displaySellingPrice = toAnchoredDisplayPrice(sellingPrice);
+  const displaySellingPrice = toAnchoredDisplayPrice(activeSellingPrice);
   const hasAnyDiscount = discountPercentage > 0 || saleDiscountPercentage > 0;
   const effectiveDiscount = hasAnyDiscount
     ? 100 - (100 - discountPercentage) * (100 - saleDiscountPercentage) / 100
     : 0;
 
-  const mockupImages = product?.mockup_images || [];
-  const allImages = [product.main_image_url || product.imageUrl || '', ...mockupImages.slice(0, 4)].filter(Boolean);
-  const availableSizes = product.variants?.sizes || [];
-  const showSizeSelector = availableSizes.length > 0 && availableSizes[0] !== 'One Size' && availableSizes[0] !== '11oz';
   const sizeChart = getSizeChartForProduct(product);
 
   const handleAddToCart = () => {
@@ -187,12 +197,20 @@ export const ProductDetailPage: React.FC = () => {
       showToast('Please select a size first!', 'error');
       return;
     }
-    if (!color) {
+    if (!isPoster && !color) {
       showToast('This product is missing color configuration. Please contact support.', 'error');
       return;
     }
 
-    addToCart({ ...product, quantity: 1, selectedSize: size || 'One Size', selectedColor: color });
+    const lineSellingPrice = getSellingPriceForSize(product, size || undefined);
+
+    addToCart({
+      ...product,
+      selling_price: lineSellingPrice,
+      quantity: 1,
+      selectedSize: size || 'One Size',
+      selectedColor: isPoster ? '' : color,
+    });
     setAddedToCart(true);
     setSizeError(false);
     setTimeout(() => setAddedToCart(false), 2500);
@@ -340,7 +358,11 @@ export const ProductDetailPage: React.FC = () => {
                 </>
               )}
             </div>
-            <p className="text-xs text-brand-secondary mt-1">Inclusive of all taxes</p>
+            <p className="text-xs text-brand-secondary mt-1">
+              {variableSizePricing && selectedSize
+                ? `Price for ${isPoster ? formatPosterSizeLabel(selectedSize) : selectedSize} · inclusive of all taxes`
+                : 'Inclusive of all taxes'}
+            </p>
 
             <div className="mt-6 h-px bg-gradient-to-r from-purple-500/30 via-pink-500/30 to-transparent" />
 
@@ -354,8 +376,8 @@ export const ProductDetailPage: React.FC = () => {
 
             <div className="mt-6 h-px bg-gray-200 dark:bg-white/10" />
 
-            {/* Color */}
-            {product.color && (
+            {/* Color — apparel only */}
+            {!isPoster && product.color && (
               <div className="mt-5">
                 <p className="text-xs font-bold uppercase tracking-widest text-brand-secondary mb-2">Color</p>
                 <div className="flex items-center gap-2.5">
@@ -402,7 +424,9 @@ export const ProductDetailPage: React.FC = () => {
             {showSizeSelector && (
               <div className="mt-5" ref={sizeRef}>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs font-bold uppercase tracking-widest text-brand-secondary">Size</p>
+                  <p className="text-xs font-bold uppercase tracking-widest text-brand-secondary">
+                    {isPoster ? 'Select size' : 'Size'}
+                  </p>
                   {sizeChart && (
                     <button
                       onClick={() => setShowSizeGuide(true)}
@@ -428,7 +452,7 @@ export const ProductDetailPage: React.FC = () => {
                             : 'border-2 border-gray-200 dark:border-white/20 text-brand-secondary hover:border-purple-400 hover:text-purple-500 bg-white dark:bg-white/5'
                         }`}
                       >
-                        {size}
+                        {isPoster ? formatPosterSizeLabel(size) : size}
                       </button>
                     );
                   })}

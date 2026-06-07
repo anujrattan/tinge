@@ -2,6 +2,8 @@
 
 A modern, single-brand e-commerce store for premium apparel and accessories, featuring a full shopping experience from browsing products to checkout, and a simple admin panel for product management.
 
+> **Implementation notes (AI / contributors):** Detailed documentation of metal posters, per-size pricing, color typeahead, category `product_type`, migrations, and file map → **[docs/IMPLEMENTATION_NOTES.md](docs/IMPLEMENTATION_NOTES.md)**.
+
 ## Project Structure
 
 ```

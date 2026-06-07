@@ -12,6 +12,9 @@ import {
   XIcon,
   SearchIcon,
   ClockIcon,
+  ArrowRightIcon,
+  SparklesIcon,
+  TagIcon,
 } from "./icons";
 import { Category } from "../types";
 import api from "../services/api";
@@ -669,314 +672,302 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </header>
 
-      {/* Mobile Menu Dropdown - Outside header */}
+      {/* Mobile Menu — full-height slide-in panel */}
       {mobileMenuOpen && (
         <>
-          {/* Overlay */}
+          {/* Dimmed overlay */}
           <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998] md:hidden"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9998] md:hidden"
             onClick={() => setMobileMenuOpen(false)}
           />
 
-          {/* Dropdown Menu */}
-          <div className="fixed top-20 right-4 w-80 max-h-[625px] bg-white dark:bg-brand-surface border border-gray-200 dark:border-white/10 rounded-2xl shadow-2xl z-[9999] md:hidden overflow-hidden animate-dropdownIn flex flex-col">
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-white/10 flex-shrink-0">
-              <span className="text-lg font-display font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
-                Menu
-              </span>
+          {/* Panel */}
+          <div className="fixed top-[68px] right-3 w-[calc(100vw-24px)] max-w-[340px] max-h-[82vh] bg-white dark:bg-[#1E1A17] border border-gray-200/70 dark:border-white/10 rounded-3xl shadow-2xl z-[9999] md:hidden overflow-hidden animate-dropdownIn flex flex-col">
+
+            {/* Gradient accent bar at top */}
+            <div className="h-[3px] w-full bg-gradient-to-r from-purple-500 via-pink-500 to-[#FF7A59] flex-shrink-0" />
+
+            {/* Header row */}
+            <div className="flex items-center justify-between px-5 py-4 flex-shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-sm">
+                  <SparklesIcon className="w-3.5 h-3.5 text-white" />
+                </div>
+                <span className="text-base font-display font-bold bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent tracking-tight">
+                  Explore
+                </span>
+              </div>
               <button
                 onClick={() => setMobileMenuOpen(false)}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 transition-colors"
+                aria-label="Close menu"
               >
-                <XIcon className="w-5 h-5 text-brand-secondary" />
+                <XIcon className="w-4 h-4 text-brand-secondary" />
               </button>
             </div>
 
-            {/* Search Bar - Mobile */}
-            <div className="px-4 pt-4 pb-2 border-b border-gray-200 dark:border-white/10 flex-shrink-0">
+            {/* Search bar */}
+            <div className="px-4 pb-3 flex-shrink-0">
               <form
                 onSubmit={(e) => {
                   handleSearch(e);
                   setMobileMenuOpen(false);
                 }}
               >
-                <div className="flex items-center bg-gray-100 dark:bg-white/5 border border-gray-300 dark:border-white/10 rounded-lg px-4 py-2.5">
-                  <SearchIcon className="h-5 w-5 text-brand-secondary mr-2 flex-shrink-0" />
+                <div className="flex items-center bg-gray-100 dark:bg-white/8 border border-gray-200 dark:border-white/10 rounded-2xl px-4 py-3 gap-2.5 focus-within:ring-2 focus-within:ring-purple-500/40 focus-within:border-purple-400/60 transition-all">
+                  <SearchIcon className="h-4 w-4 text-brand-secondary flex-shrink-0" />
                   <input
                     type="text"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onFocus={() => setShowSuggestions(true)}
-                    placeholder="Search products..."
+                    placeholder="Search products…"
                     className="bg-transparent outline-none text-sm text-brand-primary placeholder-brand-secondary w-full"
                   />
                   {searchQuery && (
                     <button
                       type="button"
-                      onClick={() => {
-                        setSearchQuery("");
-                        setShowSuggestions(false);
-                      }}
-                      className="ml-2 text-brand-secondary hover:text-brand-primary flex-shrink-0"
+                      onClick={() => { setSearchQuery(""); setShowSuggestions(false); }}
+                      className="text-brand-secondary hover:text-brand-primary flex-shrink-0"
                     >
-                      <XIcon className="h-4 w-4" />
+                      <XIcon className="h-3.5 w-3.5" />
                     </button>
                   )}
                 </div>
               </form>
 
-              {/* Mobile Suggestions Dropdown */}
+              {/* Suggestions */}
               {showSuggestions && mobileMenuOpen && (
-                <div className="mt-2 bg-white dark:bg-brand-surface border border-gray-200 dark:border-white/10 rounded-lg shadow-lg overflow-hidden max-h-64 overflow-y-auto">
-                  {/* Recent Searches */}
+                <div className="mt-2 bg-white dark:bg-brand-surface border border-gray-200 dark:border-white/10 rounded-2xl shadow-xl overflow-hidden max-h-56 overflow-y-auto">
                   {!searchQuery.trim() && recentSearches.length > 0 && (
                     <div className="p-2">
-                      <div className="px-3 py-2 text-xs font-semibold text-brand-secondary uppercase tracking-wide">
-                        Recent
-                      </div>
+                      <div className="px-3 py-1.5 text-[10px] font-bold text-brand-secondary uppercase tracking-widest">Recent</div>
                       {recentSearches.map((search, index) => (
-                        <div
-                          key={index}
-                          className="flex items-center justify-between px-3 py-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg group"
-                        >
-                          <div
-                            onClick={() => {
-                              handleRecentSearchClick(search);
-                              setMobileMenuOpen(false);
-                            }}
-                            className="flex items-center gap-2 flex-1"
-                          >
-                            <ClockIcon className="w-4 h-4 text-brand-secondary flex-shrink-0" />
-                            <span className="text-sm text-brand-primary">
-                              {search}
-                            </span>
+                        <div key={index} className="flex items-center justify-between px-3 py-2 hover:bg-gray-50 dark:hover:bg-white/5 rounded-xl group cursor-pointer">
+                          <div onClick={() => { handleRecentSearchClick(search); setMobileMenuOpen(false); }} className="flex items-center gap-2 flex-1">
+                            <ClockIcon className="w-3.5 h-3.5 text-brand-secondary flex-shrink-0" />
+                            <span className="text-sm text-brand-primary">{search}</span>
                           </div>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removeRecentSearch(search);
-                            }}
-                            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 dark:hover:bg-white/10 rounded transition-opacity flex-shrink-0"
-                          >
+                          <button onClick={(e) => { e.stopPropagation(); removeRecentSearch(search); }} className="opacity-0 group-hover:opacity-100 p-1 rounded transition-opacity">
                             <XIcon className="w-3 h-3 text-brand-secondary" />
                           </button>
                         </div>
                       ))}
                     </div>
                   )}
-
-                  {/* Loading State */}
                   {suggestionsLoading && searchQuery.trim() && (
-                    <div className="p-4 text-center">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-brand-accent mx-auto"></div>
+                    <div className="p-4 text-center"><div className="animate-spin rounded-full h-5 w-5 border-b-2 border-brand-accent mx-auto" /></div>
+                  )}
+                  {!suggestionsLoading && searchQuery.trim() && suggestions.length > 0 && (
+                    <div className="p-2">
+                      <div className="px-3 py-1.5 text-[10px] font-bold text-brand-secondary uppercase tracking-widest">Products</div>
+                      {suggestions.map((product) => (
+                        <div key={product.id} onClick={() => { handleSuggestionClick(product.id); setMobileMenuOpen(false); }} className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-white/5 rounded-xl cursor-pointer">
+                          <div className="w-10 h-10 flex-shrink-0 bg-gray-100 dark:bg-white/5 rounded-xl overflow-hidden">
+                            {product.main_image_url
+                              ? <img src={product.main_image_url} alt={product.title} className="w-full h-full object-cover" />
+                              : <div className="w-full h-full flex items-center justify-center"><SearchIcon className="w-4 h-4 text-brand-secondary" /></div>}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-brand-primary truncate">{product.title}</p>
+                            <p className="text-xs text-brand-secondary">{formatCurrency(product.selling_price, currency)}</p>
+                          </div>
+                        </div>
+                      ))}
+                      <div onClick={() => { if (searchQuery.trim()) { handleSearch(new Event("submit") as any); setMobileMenuOpen(false); } }} className="flex items-center justify-center gap-2 px-3 py-2 mt-0.5 hover:bg-gray-50 dark:hover:bg-white/5 rounded-xl cursor-pointer text-sm font-semibold text-purple-500">
+                        <SearchIcon className="w-3.5 h-3.5" /><span>See all results</span>
+                      </div>
                     </div>
                   )}
-
-                  {/* Product Suggestions */}
-                  {!suggestionsLoading &&
-                    searchQuery.trim() &&
-                    suggestions.length > 0 && (
-                      <div className="p-2">
-                        <div className="px-3 py-2 text-xs font-semibold text-brand-secondary uppercase tracking-wide">
-                          Products
-                        </div>
-                        {suggestions.map((product) => (
-                          <div
-                            key={product.id}
-                            onClick={() => {
-                              handleSuggestionClick(product.id);
-                              setMobileMenuOpen(false);
-                            }}
-                            className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg"
-                          >
-                            <div className="w-12 h-12 flex-shrink-0 bg-gray-100 dark:bg-white/5 rounded-lg overflow-hidden">
-                              {product.main_image_url ? (
-                                <img
-                                  src={product.main_image_url}
-                                  alt={product.title}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center text-brand-secondary">
-                                  <SearchIcon className="w-5 h-5" />
-                                </div>
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-brand-primary truncate">
-                                {product.title}
-                              </p>
-                              <p className="text-xs text-brand-secondary">
-                                {formatCurrency(
-                                  product.selling_price,
-                                  currency,
-                                )}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                        <div
-                          onClick={() => {
-                            if (searchQuery.trim()) {
-                              handleSearch(new Event("submit") as any);
-                              setMobileMenuOpen(false);
-                            }
-                          }}
-                          className="flex items-center justify-center gap-2 px-3 py-2 mt-1 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg text-sm text-brand-accent font-medium"
-                        >
-                          <SearchIcon className="w-4 h-4" />
-                          <span className="truncate">View all results</span>
-                        </div>
-                      </div>
-                    )}
-
-                  {/* No Results */}
-                  {!suggestionsLoading &&
-                    searchQuery.trim() &&
-                    suggestions.length === 0 && (
-                      <div className="p-4 text-center">
-                        <SearchIcon className="w-6 h-6 mx-auto mb-2 text-brand-secondary opacity-50" />
-                        <p className="text-xs text-brand-secondary">
-                          No products found
-                        </p>
-                      </div>
-                    )}
+                  {!suggestionsLoading && searchQuery.trim() && suggestions.length === 0 && (
+                    <div className="p-5 text-center">
+                      <SearchIcon className="w-7 h-7 mx-auto mb-1.5 text-brand-secondary opacity-40" />
+                      <p className="text-xs text-brand-secondary">No products found</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
 
-            {/* Scrollable Navigation Links: Home, Shop, Collections */}
-            <nav className="flex-1 overflow-y-auto p-4 space-y-1">
-              <Link
-                to="/"
-                onClick={() => setMobileMenuOpen(false)}
-                className={`block px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                  isActive("/")
-                    ? "bg-purple-500/20 text-purple-600 dark:text-purple-400"
-                    : "text-brand-secondary hover:text-brand-primary hover:bg-gray-100 dark:hover:bg-white/5"
-                }`}
-              >
-                Home
-              </Link>
+            {/* Scrollable nav body */}
+            <nav className="flex-1 overflow-y-auto px-3 pb-2 space-y-0.5">
 
-              {/* Shop Submenu */}
-              <div className="pt-2">
-                <div className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-brand-secondary">
-                  Shop
+              {/* Primary links — Home & Collections */}
+              <div className="space-y-1 mb-2">
+                <Link
+                  to="/"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-200 group ${
+                    isActive("/")
+                      ? "bg-gradient-to-r from-purple-500/15 to-pink-500/10 text-brand-primary border border-purple-400/20"
+                      : "text-brand-secondary hover:text-brand-primary hover:bg-gray-100/80 dark:hover:bg-white/5"
+                  }`}
+                >
+                  <span className={`w-8 h-8 flex items-center justify-center rounded-xl flex-shrink-0 transition-colors ${
+                    isActive("/")
+                      ? "bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-sm"
+                      : "bg-gray-100 dark:bg-white/8 text-brand-secondary group-hover:bg-gray-200 dark:group-hover:bg-white/15"
+                  }`}>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                  </span>
+                  <span className="text-sm font-semibold flex-1">Home</span>
+                  <ArrowRightIcon className={`w-4 h-4 transition-transform flex-shrink-0 ${isActive("/") ? "text-purple-500 translate-x-0.5" : "text-brand-secondary/40 group-hover:translate-x-0.5 group-hover:text-brand-secondary"}`} />
+                </Link>
+
+                <Link
+                  to="/collections"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-200 group ${
+                    isActive("/collections")
+                      ? "bg-gradient-to-r from-purple-500/15 to-pink-500/10 text-brand-primary border border-purple-400/20"
+                      : "text-brand-secondary hover:text-brand-primary hover:bg-gray-100/80 dark:hover:bg-white/5"
+                  }`}
+                >
+                  <span className={`w-8 h-8 flex items-center justify-center rounded-xl flex-shrink-0 transition-colors ${
+                    isActive("/collections")
+                      ? "bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-sm"
+                      : "bg-gray-100 dark:bg-white/8 text-brand-secondary group-hover:bg-gray-200 dark:group-hover:bg-white/15"
+                  }`}>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                  </span>
+                  <span className="text-sm font-semibold flex-1">Collections</span>
+                  <ArrowRightIcon className={`w-4 h-4 transition-transform flex-shrink-0 ${isActive("/collections") ? "text-purple-500 translate-x-0.5" : "text-brand-secondary/40 group-hover:translate-x-0.5 group-hover:text-brand-secondary"}`} />
+                </Link>
+              </div>
+
+              {/* Shop section */}
+              <div className="pt-1">
+                {/* Section header */}
+                <div className="flex items-center gap-2 px-4 py-2 mb-1">
+                  <div className="w-1 h-4 rounded-full bg-gradient-to-b from-[#FF7A59] to-pink-500" />
+                  <span className="text-[11px] font-bold uppercase tracking-widest text-brand-secondary">Shop</span>
                 </div>
+
+                {/* All Products */}
                 <Link
                   to="/categories"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="block px-4 py-3 rounded-lg text-sm font-medium text-brand-secondary hover:text-brand-primary hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
+                  className="flex items-center gap-3 px-4 py-3 rounded-2xl text-brand-secondary hover:text-brand-primary hover:bg-gray-100/80 dark:hover:bg-white/5 transition-all group"
                 >
-                  All Products
+                  <span className="w-8 h-8 flex items-center justify-center rounded-xl bg-gradient-to-br from-[#FF7A59]/20 to-pink-500/10 flex-shrink-0">
+                    <TagIcon className="w-4 h-4 text-[#FF7A59]" />
+                  </span>
+                  <span className="text-sm font-semibold flex-1">All Products</span>
+                  <ArrowRightIcon className="w-3.5 h-3.5 text-brand-secondary/30 group-hover:text-brand-secondary group-hover:translate-x-0.5 transition-all flex-shrink-0" />
                 </Link>
-                {categories.map((category) => (
-                  <Link
-                    key={category.id}
-                    to={`/category/${category.slug}`}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block px-4 py-3 rounded-lg text-sm font-medium text-brand-secondary hover:text-brand-primary hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
-                  >
-                    {category.name}
-                  </Link>
-                ))}
+
+                {/* Category links */}
+                <div className="ml-2 mt-0.5 space-y-0.5 pl-2 border-l-2 border-gray-200/80 dark:border-white/10">
+                  {categories.map((category, idx) => {
+                    const dotColors = [
+                      "bg-purple-400", "bg-pink-400", "bg-[#FF7A59]",
+                      "bg-blue-400", "bg-emerald-400", "bg-amber-400",
+                    ];
+                    const dotColor = dotColors[idx % dotColors.length];
+                    return (
+                      <Link
+                        key={category.id}
+                        to={`/category/${category.slug}`}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-brand-secondary hover:text-brand-primary hover:bg-gray-100/80 dark:hover:bg-white/5 transition-all group ${
+                          isActive(`/category/${category.slug}`) ? "text-brand-primary bg-gray-100/80 dark:bg-white/5" : ""
+                        }`}
+                      >
+                        <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotColor} opacity-70 group-hover:opacity-100`} />
+                        <span className="text-sm font-medium flex-1">{category.name}</span>
+                        <ArrowRightIcon className="w-3 h-3 text-brand-secondary/20 group-hover:text-brand-secondary/60 group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+                      </Link>
+                    );
+                  })}
+                </div>
               </div>
 
-              <Link
-                to="/collections"
-                onClick={() => setMobileMenuOpen(false)}
-                className={`block px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
-                  isActive("/collections")
-                    ? "bg-purple-500/20 text-purple-600 dark:text-purple-400"
-                    : "text-brand-secondary hover:text-brand-primary hover:bg-gray-100 dark:hover:bg-white/5"
-                }`}
-              >
-                Collections
-              </Link>
-
-              {/* User Section (if logged in) */}
+              {/* Account section (logged in) */}
               {isAuthenticated && user && (
-                <div className="pt-4 border-t border-gray-200 dark:border-white/10">
-                  <div className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-brand-secondary">
-                    Account
+                <div className="pt-3 mt-2 border-t border-gray-200/60 dark:border-white/8">
+                  {/* User identity chip */}
+                  <div className="flex items-center gap-3 px-4 py-3 mb-1 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-200/60 dark:border-white/8">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0 text-white text-xs font-bold shadow-sm">
+                      {(user.name || user.email).charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-brand-primary truncate">{user.name || user.email.split("@")[0]}</p>
+                      <p className="text-[11px] text-brand-secondary truncate">{user.email}</p>
+                    </div>
                   </div>
-                  <Link
-                    to="/profile"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block px-4 py-3 rounded-lg text-sm font-medium text-brand-secondary hover:text-brand-primary hover:bg-white/5 transition-colors flex items-center gap-2"
-                  >
-                    <UserIcon className="w-4 h-4" />
-                    <span>Profile</span>
+
+                  <div className="flex items-center gap-2 px-4 py-2 mb-1">
+                    <div className="w-1 h-4 rounded-full bg-gradient-to-b from-purple-500 to-blue-400" />
+                    <span className="text-[11px] font-bold uppercase tracking-widest text-brand-secondary">Account</span>
+                  </div>
+
+                  <Link to="/profile" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-brand-secondary hover:text-brand-primary hover:bg-gray-100/80 dark:hover:bg-white/5 transition-all group">
+                    <span className="w-7 h-7 flex items-center justify-center rounded-xl bg-gray-100 dark:bg-white/8 group-hover:bg-gray-200 dark:group-hover:bg-white/15 transition-colors flex-shrink-0">
+                      <UserIcon className="w-3.5 h-3.5" />
+                    </span>
+                    <span className="text-sm font-medium flex-1">Profile</span>
+                    <ArrowRightIcon className="w-3.5 h-3.5 text-brand-secondary/30 group-hover:text-brand-secondary flex-shrink-0" />
                   </Link>
-                  <Link
-                    to="/orders"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block px-4 py-3 rounded-lg text-sm font-medium text-brand-secondary hover:text-brand-primary hover:bg-white/5 transition-colors flex items-center gap-2"
-                  >
-                    <ShoppingBagIcon className="w-4 h-4" />
-                    <span>My Orders</span>
+                  <Link to="/orders" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-brand-secondary hover:text-brand-primary hover:bg-gray-100/80 dark:hover:bg-white/5 transition-all group">
+                    <span className="w-7 h-7 flex items-center justify-center rounded-xl bg-gray-100 dark:bg-white/8 group-hover:bg-gray-200 dark:group-hover:bg-white/15 transition-colors flex-shrink-0">
+                      <ShoppingBagIcon className="w-3.5 h-3.5" />
+                    </span>
+                    <span className="text-sm font-medium flex-1">My Orders</span>
+                    <ArrowRightIcon className="w-3.5 h-3.5 text-brand-secondary/30 group-hover:text-brand-secondary flex-shrink-0" />
                   </Link>
                   {isAdmin && (
-                    <Link
-                      to="/admin"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="block px-4 py-3 rounded-lg text-sm font-medium text-brand-secondary hover:text-brand-primary hover:bg-white/5 transition-colors flex items-center gap-2"
-                    >
-                      <SettingsIcon className="w-4 h-4" />
-                      <span>Admin Panel</span>
+                    <Link to="/admin" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 px-4 py-2.5 rounded-2xl text-brand-secondary hover:text-brand-primary hover:bg-gray-100/80 dark:hover:bg-white/5 transition-all group">
+                      <span className="w-7 h-7 flex items-center justify-center rounded-xl bg-gray-100 dark:bg-white/8 group-hover:bg-gray-200 dark:group-hover:bg-white/15 transition-colors flex-shrink-0">
+                        <SettingsIcon className="w-3.5 h-3.5" />
+                      </span>
+                      <span className="text-sm font-medium flex-1">Admin Panel</span>
+                      <ArrowRightIcon className="w-3.5 h-3.5 text-brand-secondary/30 group-hover:text-brand-secondary flex-shrink-0" />
                     </Link>
                   )}
                   <button
-                    onClick={() => {
-                      logout();
-                      setMobileMenuOpen(false);
-                      navigate("/");
-                    }}
-                    className="w-full block px-4 py-3 rounded-lg text-sm font-medium text-red-500 dark:text-red-400 hover:text-red-600 dark:hover:text-red-300 hover:bg-red-100 dark:hover:bg-red-500/10 transition-colors flex items-center gap-2"
+                    onClick={() => { logout(); setMobileMenuOpen(false); navigate("/"); }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 rounded-2xl text-red-500/80 dark:text-red-400/80 hover:text-red-600 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all group"
                   >
-                    <LogOutIcon className="w-4 h-4" />
-                    <span>Sign Out</span>
+                    <span className="w-7 h-7 flex items-center justify-center rounded-xl bg-red-50 dark:bg-red-500/10 group-hover:bg-red-100 dark:group-hover:bg-red-500/20 transition-colors flex-shrink-0">
+                      <LogOutIcon className="w-3.5 h-3.5" />
+                    </span>
+                    <span className="text-sm font-medium flex-1 text-left">Sign Out</span>
                   </button>
                 </div>
               )}
             </nav>
 
-            {/* Fixed Bottom Section - Settings */}
-            <div className="flex-shrink-0 border-t border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-brand-surface/50 p-4">
-              <div className="space-y-2">
-                {/* Theme Switcher */}
+            {/* Footer — theme toggle + sign in */}
+            <div className="flex-shrink-0 border-t border-gray-200/60 dark:border-white/8 bg-gray-50/80 dark:bg-white/3 px-4 py-3">
+              <div className="flex items-center gap-3">
+                {/* Theme toggle pill */}
                 <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    toggleTheme();
-                  }}
-                  className="w-full px-4 py-3 rounded-lg text-sm font-medium text-brand-secondary hover:text-brand-primary hover:bg-white dark:hover:bg-white/10 transition-colors flex items-center gap-2"
+                  onClick={(e) => { e.preventDefault(); toggleTheme(); }}
+                  className="flex-1 flex items-center gap-2.5 px-4 py-2.5 rounded-2xl bg-white dark:bg-white/8 border border-gray-200/80 dark:border-white/10 text-brand-secondary hover:text-brand-primary hover:bg-gray-50 dark:hover:bg-white/12 transition-all shadow-sm text-sm font-medium"
                 >
-                  {theme === "dark" ? (
-                    <>
-                      <SunIcon className="w-4 h-4" />
-                      <span>Light Mode</span>
-                    </>
-                  ) : (
-                    <>
-                      <MoonIcon className="w-4 h-4" />
-                      <span>Dark Mode</span>
-                    </>
-                  )}
+                  {theme === "dark"
+                    ? <><SunIcon className="w-4 h-4 text-amber-400 flex-shrink-0" /><span>Light Mode</span></>
+                    : <><MoonIcon className="w-4 h-4 text-indigo-400 flex-shrink-0" /><span>Dark Mode</span></>}
                 </button>
 
-                {/* Sign In Button (if not logged in) */}
-                {!isAuthenticated && (
+                {/* Sign In CTA or account initial */}
+                {!isAuthenticated ? (
                   <Link
                     to="/auth"
                     onClick={() => setMobileMenuOpen(false)}
-                    className="block px-4 py-3 rounded-lg text-sm font-medium bg-gradient-to-r from-purple-500 to-pink-500 text-white hover:from-purple-600 hover:to-pink-600 transition-colors flex items-center justify-center gap-2 shadow-md"
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-sm font-semibold shadow-md shadow-purple-500/20 transition-all"
                   >
-                    <UserIcon className="w-4 h-4" />
+                    <UserIcon className="w-4 h-4 flex-shrink-0" />
                     <span>Sign In</span>
                   </Link>
+                ) : (
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-bold shadow-md flex-shrink-0">
+                    {(user?.name || user?.email || "U").charAt(0).toUpperCase()}
+                  </div>
                 )}
               </div>
             </div>

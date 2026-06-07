@@ -9,6 +9,12 @@ import { uploadProductImage, extractFilePathFromUrl, deleteFile } from '../servi
 import { cache, cacheKeys } from '../services/redis.js';
 import { createPricingValidationSnapshot, pricingPayloadMatches, PricingValidationPayload } from '../utils/pricing.js';
 import { normalizeSizeList } from '../utils/sizeNormalization.js';
+import {
+  buildVariantsPayload,
+  extractVariantsFromDb,
+  parseSizePricesMap,
+  resolveListingSellingPrice,
+} from '../utils/variantPricing.js';
 
 const router = Router();
 
@@ -93,9 +99,7 @@ const transformProduct = (dbProduct: any, category?: any) => {
     rating: dbProduct.rating || undefined,
     rating_count: dbProduct.rating_count || 0,
     review_count: dbProduct.rating_count || dbProduct.review_count || dbProduct.reviewCount || 0,
-    variants: (dbProduct.variants && Array.isArray(dbProduct.variants.sizes))
-      ? { sizes: dbProduct.variants.sizes }
-      : { sizes: [] },
+    variants: extractVariantsFromDb(dbProduct.variants),
     color: dbProduct.color || undefined,
     created_at: dbProduct.created_at,
     updated_at: dbProduct.updated_at,
@@ -119,16 +123,10 @@ const transformProduct = (dbProduct: any, category?: any) => {
     size_chart_profile: dbProduct.size_chart_profile || undefined,
     design_family: dbProduct.design_family || undefined,
     is_active: dbProduct.is_active !== false,
+    category_name: category?.name || dbProduct.category_name || undefined,
+    category_product_type:
+      category?.product_type === 'poster' ? 'poster' : 'apparel',
   };
-};
-
-// Helper to extract sizes from product variants JSONB (variants = sizes only)
-const extractVariantsFromDb = (variants: any) => {
-  if (!variants || typeof variants !== 'object') {
-    return { sizes: [] };
-  }
-  const sizes = Array.isArray(variants.sizes) ? normalizeSizeList(variants.sizes) : [];
-  return { sizes };
 };
 
 // Helper function to upsert product in cache arrays
@@ -210,7 +208,8 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
           id,
           slug,
           name,
-          is_active
+          is_active,
+          product_type
         )
       `);
     
@@ -308,7 +307,8 @@ router.get('/search', async (req: Request, res: Response, next: NextFunction) =>
         categories:category_id (
           id,
           name,
-          slug
+          slug,
+          product_type
         )
       `, { count: 'exact' });
     
@@ -427,7 +427,8 @@ router.get('/best-sellers', async (req: Request, res: Response, next: NextFuncti
           categories:category_id (
             id,
             name,
-            slug
+            slug,
+            product_type
           )
         `)
         .eq('is_active', true)
@@ -455,7 +456,8 @@ router.get('/best-sellers', async (req: Request, res: Response, next: NextFuncti
         categories:category_id (
           id,
           name,
-          slug
+          slug,
+          product_type
         )
       `)
       .in('id', sortedProducts)
@@ -492,7 +494,8 @@ router.get('/new-arrivals', async (req: Request, res: Response, next: NextFuncti
         categories:category_id (
           id,
           name,
-          slug
+          slug,
+          product_type
         )
       `)
       .eq('is_active', true)
@@ -578,7 +581,8 @@ router.get(
             id,
             slug,
             name,
-            is_active
+            is_active,
+            product_type
           )
         `)
         .order('created_at', { ascending: false });
@@ -744,7 +748,8 @@ router.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
         categories:category_id (
           id,
           slug,
-          name
+          name,
+          product_type
         )
       `)
       .eq('id', id)
@@ -788,6 +793,7 @@ router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res: 
       rating,
       review_count,
       sizes,
+      size_prices,
       color,
       fulfillment_partner,
       partner_product_id,
@@ -801,6 +807,8 @@ router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res: 
     } = req.body;
     
     const sizesArray = normalizeSizeList(Array.isArray(sizes) ? sizes : (sizes ? [sizes] : []));
+    const parsedSizePrices = parseSizePricesMap(size_prices, sizesArray);
+    const variantsPayload = buildVariantsPayload(sizesArray, parsedSizePrices);
     
     console.log('📝 Creating product with data:', { title, sizes: sizesArray, color: color || null });
     
@@ -869,20 +877,26 @@ router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res: 
       });
     }
 
-    const expectedPricing = createPricingValidationSnapshot({
+    const listingSellingPrice = resolveListingSellingPrice(
+      parsedSellingPrice,
+      sizesArray,
+      variantsPayload.size_prices,
+    );
+
+    const expectedPricingForValidation = createPricingValidationSnapshot({
       vendorBaseCost: parsedVendorBaseCost,
       vendorShippingCost: parsedVendorShippingCost,
       targetMarginPercent: parsedTargetMarginPercent,
-      sellingPrice: parsedSellingPrice,
+      sellingPrice: listingSellingPrice,
       discountPercentage: parsedDiscountPercentage,
       onSale: parsedOnSale,
       saleDiscountPercentage: parsedSaleDiscountPercentage,
     });
 
-    if (!pricingPayloadMatches(pricing_validation, expectedPricing)) {
+    if (!pricingPayloadMatches(pricing_validation, expectedPricingForValidation)) {
       return res.status(409).json({
         error: 'Pricing mismatch between frontend and backend calculations. Please retry.',
-        expected: expectedPricing,
+        expected: expectedPricingForValidation,
       });
     }
 
@@ -891,9 +905,9 @@ router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res: 
       collection_id: collection_id || null,
       title,
       description,
-      selling_price: parsedSellingPrice,
+      selling_price: listingSellingPrice,
       main_image_url: finalMainImageUrl,
-      variants: { sizes: sizesArray },
+      variants: variantsPayload,
       color: color && String(color).trim() ? String(color).trim() : null,
       size_chart_profile: size_chart_profile || null,
       design_family: design_family && String(design_family).trim() ? String(design_family).trim() : null,
@@ -938,7 +952,8 @@ router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res: 
         categories:category_id (
           id,
           slug,
-          name
+          name,
+          product_type
         )
       `)
       .single();
@@ -1036,6 +1051,7 @@ router.put('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res
       rating,
       review_count,
       sizes,
+      size_prices,
       color,
       fulfillment_partner,
       partner_product_id,
@@ -1049,6 +1065,8 @@ router.put('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res
     } = req.body;
     
     const sizesArray = normalizeSizeList(Array.isArray(sizes) ? sizes : (sizes ? [sizes] : []));
+    const parsedSizePrices = parseSizePricesMap(size_prices, sizesArray);
+    const variantsPayload = buildVariantsPayload(sizesArray, parsedSizePrices);
     console.log('🔄 Updating product with data:', { id, sizes: sizesArray, color: color ?? null });
     
     const productSlug = title?.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || id.substring(0, 8);
@@ -1100,7 +1118,23 @@ router.put('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res
     if (rating !== undefined) productData.rating = rating ? parseFloat(rating) : null;
     if (review_count !== undefined) productData.review_count = parseInt(review_count);
     if (sizesArray.length > 0) {
-      productData.variants = { sizes: sizesArray };
+      productData.variants = variantsPayload;
+      const baseForListing =
+        selling_price !== undefined && selling_price !== null && selling_price !== ''
+          ? parseFloat(selling_price)
+          : undefined;
+      if (!isNaN(baseForListing as number) && baseForListing !== undefined) {
+        productData.selling_price = resolveListingSellingPrice(
+          baseForListing,
+          sizesArray,
+          variantsPayload.size_prices,
+        );
+      } else if (variantsPayload.size_prices) {
+        const minOnly = resolveListingSellingPrice(0, sizesArray, variantsPayload.size_prices);
+        if (minOnly > 0) productData.selling_price = minOnly;
+      }
+    } else if (size_prices !== undefined) {
+      productData.variants = variantsPayload;
     }
     if (color !== undefined) {
       productData.color = color && String(color).trim() ? String(color).trim() : null;
@@ -1231,7 +1265,8 @@ router.put('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res
         categories:category_id (
           id,
           slug,
-          name
+          name,
+          product_type
         )
       `)
       .single();

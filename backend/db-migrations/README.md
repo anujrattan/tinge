@@ -2,6 +2,8 @@
 
 This directory contains SQL migration scripts for the Supabase database.
 
+**Recent features (2026):** For metal posters, category `product_type`, `complement_slugs`, and `color_profiles`, see **[docs/IMPLEMENTATION_NOTES.md](../../docs/IMPLEMENTATION_NOTES.md)** §2. Notable files: `024_create_color_profiles_table.sql`, `027_add_product_type_to_categories.sql`, `028_add_complement_slugs_to_categories.sql`. Per-size prices use `products.variants` JSON (`size_prices`) — no extra migration.
+
 ## Migration Files
 
 - `001_setup_product_variants_for_mockups.sql` - Sets up product_variants table with size, color, and mockup_images columns

@@ -205,3 +205,29 @@
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 8px 20px rgba(255, 122, 89, 0.20);
 }
 
+/* Hero banner — clarity, warmth, headline legibility */
+.hero-banner-image {
+  filter: brightness(1.1) contrast(1.08) saturate(1.18);
+}
+
+@media (min-width: 768px) {
+  .hero-banner-image {
+    filter: brightness(1.08) contrast(1.1) saturate(1.15);
+  }
+}
+
+.hero-wear-your-line {
+  color: #f7f3ea;
+  -webkit-text-stroke: 2px #ff7a59;
+  paint-order: stroke fill;
+  text-shadow:
+    0 2px 12px rgba(0, 0, 0, 0.35),
+    0 0 1px rgba(255, 122, 89, 0.6);
+}
+
+@media (min-width: 768px) {
+  .hero-wear-your-line {
+    -webkit-text-stroke-width: 2.5px;
+  }
+}
+

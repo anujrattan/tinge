@@ -572,7 +572,9 @@ export const CheckoutPage: React.FC = () => {
           index,
           title: item.name || item.title || `Item ${index + 1}`,
           missingSize: !String(item.selectedSize || '').trim(),
-          missingColor: !String(item.selectedColor || '').trim(),
+          missingColor:
+            item.category_product_type !== 'poster' &&
+            !String(item.selectedColor || '').trim(),
         }))
         .filter((item) => item.missingSize || item.missingColor);
 

@@ -103,6 +103,7 @@ const transformCategory = (dbCategory: any) => ({
   imageUrl: dbCategory.image_url || dbCategory.imageUrl,
   isActive: dbCategory.is_active !== undefined ? dbCategory.is_active : true,
   complementSlugs: Array.isArray(dbCategory.complement_slugs) ? dbCategory.complement_slugs : [],
+  product_type: dbCategory.product_type === 'poster' ? 'poster' : 'apparel',
 });
 
 // Get all categories (public) - only returns active categories
@@ -209,7 +210,8 @@ router.get('/:slug', async (req, res, next) => {
 // Create category (admin only)
 router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res, next) => {
   try {
-    const { name, slug, imageUrl, imageFile, complementSlugs } = req.body;
+    const { name, slug, imageUrl, imageFile, complementSlugs, product_type } = req.body;
+    const resolvedProductType = product_type === 'poster' ? 'poster' : 'apparel';
     
     let finalImageUrl: string;
     
@@ -252,6 +254,7 @@ router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res, 
       image_url: finalImageUrl,
       is_active: true, // New categories are active by default
       complement_slugs: Array.isArray(complementSlugs) ? complementSlugs : [],
+      product_type: resolvedProductType,
     };
     
     const { data, error } = await supabase
@@ -277,7 +280,8 @@ router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res, 
 router.put('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res, next) => {
   try {
     const { id } = req.params;
-    const { name, slug, imageUrl, imageFile, complementSlugs } = req.body;
+    const { name, slug, imageUrl, imageFile, complementSlugs, product_type } = req.body;
+    const resolvedProductType = product_type === 'poster' ? 'poster' : 'apparel';
     
     // Get existing category to check for old image
     const { data: existingCategory } = await supabase
@@ -290,6 +294,7 @@ router.put('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res
     if (name) categoryData.name = name;
     if (slug) categoryData.slug = slug;
     if (Array.isArray(complementSlugs)) categoryData.complement_slugs = complementSlugs;
+    if (product_type !== undefined) categoryData.product_type = resolvedProductType;
     
     // Handle image URL or file upload
     if (imageFile && !imageUrl) {

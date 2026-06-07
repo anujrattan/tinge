@@ -1,3 +1,5 @@
+export type ProductType = 'apparel' | 'poster';
+
 export interface Category {
   id: string;
   name: string;
@@ -6,6 +8,7 @@ export interface Category {
   isActive?: boolean;
   /** Slugs of categories to cross-sell when this category is in the cart */
   complementSlugs?: string[];
+  product_type?: ProductType;
 }
 
 export interface Collection {
@@ -41,9 +44,10 @@ export interface Product {
   review_count?: number;
   variants: {
     sizes: string[];
+    /** Optional per-size selling prices (canonical size keys). */
+    size_prices?: Record<string, number>;
   };
   color?: string; // Single color per listing (name or hex)
-  mockup_images?: string[];
   created_at?: string;
   updated_at?: string;
   // Legacy fields for backward compatibility (computed)
@@ -64,6 +68,7 @@ export interface Product {
   partner_variants?: PartnerVariant[] | null;
   size_chart_profile?: string | null;
   design_family?: string | null;
+  category_product_type?: ProductType;
 }
 
 export interface PartnerVariant {

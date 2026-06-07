@@ -59,6 +59,12 @@ const COLOR_MAP: ColorMapping[] = [
   { name: 'Charcoal', hex: '#36454F', aliases: ['#374151', '#1f2937'] },
 ];
 
+const titleCaseColorName = (name: string): string =>
+  name
+    .split(' ')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
+
 /**
  * Convert hex color code to readable color name
  * @param color - hex code or color name
@@ -66,13 +72,28 @@ const COLOR_MAP: ColorMapping[] = [
  */
 export const getColorName = (color: string): string => {
   if (!color) return 'Unknown';
-  
-  // If it's already a color name (doesn't start with #), return as is
-  if (!color.startsWith('#')) {
-    return color.charAt(0).toUpperCase() + color.slice(1);
+
+  const trimmed = color.trim();
+  if (!trimmed) return 'Unknown';
+
+  if (DYNAMIC_COLOR_PROFILES) {
+    if (!trimmed.startsWith('#')) {
+      if (DYNAMIC_COLOR_PROFILES.has(trimmed.toLowerCase())) {
+        return titleCaseColorName(trimmed);
+      }
+    } else {
+      const hexUpper = trimmed.toUpperCase();
+      for (const [nameKey, hexVal] of DYNAMIC_COLOR_PROFILES.entries()) {
+        if (hexVal === hexUpper) return titleCaseColorName(nameKey);
+      }
+    }
   }
-  
-  const normalizedHex = color.toLowerCase();
+
+  if (!trimmed.startsWith('#')) {
+    return titleCaseColorName(trimmed);
+  }
+
+  const normalizedHex = trimmed.toLowerCase();
   
   // Find exact match or alias match
   for (const mapping of COLOR_MAP) {
@@ -94,7 +115,7 @@ export const getColorName = (color: string): string => {
     } : null;
   };
   
-  const rgb = hexToRgb(color);
+  const rgb = hexToRgb(trimmed);
   if (!rgb) return 'Custom';
   
   const { r, g, b } = rgb;

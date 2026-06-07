@@ -1,5 +1,11 @@
 import type { Product } from '../types';
 
+export const POSTER_SIZES = ['8x11.7in', '11.7x15.7in'] as const;
+
+const POSTER_SIZE_CANONICAL = new Map(
+  POSTER_SIZES.map((s) => [s.toLowerCase(), s]),
+);
+
 export const PREFERRED_SIZES = ['S', 'M', 'L', 'XL', 'XXL', '3XL'] as const;
 type PreferredSize = (typeof PREFERRED_SIZES)[number];
 
@@ -15,9 +21,31 @@ const SIZE_ALIASES: Record<string, PreferredSize> = {
 };
 
 export const normalizeSizeLabel = (value: string): string => {
-  const normalized = String(value || '').trim().toUpperCase();
+  const trimmed = String(value || '').trim();
+  const poster = POSTER_SIZE_CANONICAL.get(trimmed.toLowerCase());
+  if (poster) return poster;
+  const normalized = trimmed.toUpperCase();
   return SIZE_ALIASES[normalized] || normalized;
 };
+
+export const formatPosterSizeLabel = (size: string): string => {
+  const canonical = POSTER_SIZE_CANONICAL.get(String(size || '').trim().toLowerCase());
+  if (canonical === '8x11.7in') return '8 × 11.7 in';
+  if (canonical === '11.7x15.7in') return '11.7 × 15.7 in';
+  return size;
+};
+
+export const normalizePosterSizeList = (sizes: string[]): string[] => {
+  const found = new Set<string>();
+  for (const size of sizes || []) {
+    const canonical = POSTER_SIZE_CANONICAL.get(String(size || '').trim().toLowerCase());
+    if (canonical) found.add(canonical);
+  }
+  return POSTER_SIZES.filter((s) => found.has(s));
+};
+
+export const isPosterProduct = (product: Product): boolean =>
+  product.category_product_type === 'poster';
 
 export const normalizeSizeList = (sizes: string[]): string[] => {
   const unique = new Set<string>();
@@ -51,6 +79,8 @@ export const SIZE_CHART_DEFINITIONS: SizeChartDefinition[] = [
 ];
 
 export const getSizeChartForProduct = (product: Product): SizeChartDefinition | null => {
+  if (isPosterProduct(product)) return null;
+
   if (product.size_chart_profile) {
     const explicit = SIZE_CHART_DEFINITIONS.find((chart) => chart.id === product.size_chart_profile);
     if (explicit) return explicit;

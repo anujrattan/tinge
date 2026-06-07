@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-    StarIcon, InstagramIcon, TwitterIcon, FacebookIcon, MailIcon,
+    InstagramIcon, TwitterIcon, FacebookIcon, MailIcon,
     ZapIcon, FlameIcon, Wand2Icon, TagIcon, HeartIcon, RulerIcon, TruckIcon,
     Undo2Icon, HelpCircleIcon, SendIcon, GiftIcon, TrendingUpIcon, BellIcon,
     LightbulbIcon
@@ -21,11 +21,20 @@ export const Footer: React.FC = () => {
           
           {/* Column 1: Brand Info */}
           <div className="flex flex-col">
-            <Link to="/" className="flex items-center gap-2 mb-4">
-              <span className="text-2xl font-display font-bold tracking-tight bg-gradient-to-r from-[#FF7A59] to-[#FFC371] bg-clip-text text-transparent">
-                Tinge Clothing
-              </span>
-              <StarIcon className="w-5 h-5 text-[#FFC371]" />
+            <Link
+              to="/"
+              className="inline-flex flex-shrink-0 hover:opacity-90 transition-opacity mb-4"
+              aria-label="Tinge Clothing home"
+            >
+              <div className="h-16 w-20 sm:h-16 sm:w-24 overflow-visible flex items-center justify-center">
+                <img
+                  src={encodeURI("/Tinge Clothing - Logo - No background.png")}
+                  alt="Tinge Clothing Logo"
+                  className="h-full w-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                />
+              </div>
             </Link>
             <p className="text-sm max-w-xs">
               Your premium destination for quality clothing. Premium threads that match your energy.

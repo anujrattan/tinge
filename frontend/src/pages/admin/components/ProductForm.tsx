@@ -1,5 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Product, Category, Collection, PartnerVariant } from '../../../types';
+import { Product, Category, Collection, PartnerVariant, ProductType } from '../../../types';
+import { PosterProductFields } from './product-form/PosterProductFields';
+import {
+  PRODUCT_TYPE_OPTIONS,
+  DEFAULT_FULFILLMENT_BY_TYPE,
+  getPosterSizesForListing,
+  posterSizesComplete,
+  usesSizePricing,
+} from '../productTypeConfig';
+import {
+  buildSizePricesPayload,
+  minPriceForSizes,
+  parseSizePricesMap,
+} from '../../../utils/sizePricing';
+import { POSTER_SIZES, normalizePosterSizeList } from '../../../utils/sizeSystem';
 import { PrintrovePrefill } from './PrintroveSyncModal';
 import api from '../../../services/api';
 import { Button, Card, Input } from '../../../components/ui';
@@ -18,9 +32,11 @@ export const ProductForm: React.FC<{
   onCancel: () => void;
   categories: Category[];
   collections: Collection[];
-}> = ({ product, prefill, onSave, onCancel, categories, collections }) => {
-  const { currency } = useApp();
+  onProductTypeChange?: (type: ProductType) => void;
+}> = ({ product, prefill, onSave, onCancel, categories, collections, onProductTypeChange }) => {
+  const { currency, isAdmin } = useApp();
   const designFamilyWrapperRef = useRef<HTMLDivElement | null>(null);
+  const colorWrapperRef = useRef<HTMLDivElement | null>(null);
   const [formData, setFormData] = useState({
     title: prefill?.title || product?.title || product?.name || '',
     description: product?.description || '',
@@ -38,6 +54,10 @@ export const ProductForm: React.FC<{
     mockup_images: (prefill?.mockup_images ?? product?.mockup_images) || [],
     mockup_video_url: product?.mockup_video_url || '',
     sizes: prefill?.sizes || product?.variants?.sizes || [],
+    size_prices: parseSizePricesMap(
+      product?.variants?.size_prices,
+      prefill?.sizes || product?.variants?.sizes || [],
+    ),
     color: prefill?.color || (product as any)?.color || '',
     fulfillment_partner: prefill?.fulfillment_partner || (product as any)?.fulfillment_partner || '',
     partner_product_id: prefill?.partner_product_id || (product as any)?.partner_product_id || '',
@@ -77,6 +97,75 @@ export const ProductForm: React.FC<{
   const [colorProfiles, setColorProfiles] = useState<{ name: string; hex: string }[]>([]);
   const [needsColorName, setNeedsColorName] = useState(false);
   const [customColorName, setCustomColorName] = useState('');
+  const [showColorSuggestions, setShowColorSuggestions] = useState(false);
+
+  const isAddListing = !product?.id;
+  const enableColorTypeahead = isAdmin && isAddListing;
+  const colorQuery = String(formData.color || '').trim();
+  const colorSuggestions = enableColorTypeahead
+    ? colorProfiles
+        .filter((profile) => {
+          if (!colorQuery) return true;
+          const q = colorQuery.toLowerCase();
+          return (
+            profile.name.toLowerCase().includes(q) ||
+            profile.hex.toLowerCase().includes(q)
+          );
+        })
+        .slice(0, 12)
+    : [];
+
+  const [productType, setProductType] = useState<ProductType>('apparel');
+  const isPoster = productType === 'poster';
+  const sizePricingEnabled = usesSizePricing(productType);
+  const filteredCategories = categories.filter(
+    (c) => (c.product_type || 'apparel') === productType,
+  );
+
+  useEffect(() => {
+    if (!product?.category_id || categories.length === 0) return;
+    const cat = categories.find((c) => c.id === product.category_id);
+    if (cat?.product_type === 'poster') setProductType('poster');
+    else setProductType('apparel');
+  }, [product?.category_id, categories]);
+
+  const applyProductTypeSwitch = (nextType: ProductType) => {
+    setProductType(nextType);
+    onProductTypeChange?.(nextType);
+    if (nextType === 'poster') {
+      setFormData((prev: typeof formData) => ({
+        ...prev,
+        sizes: getPosterSizesForListing(),
+        size_prices: { ...(prev.size_prices || {}) },
+        color: '',
+        design_family: '',
+        size_chart_profile: '',
+        fulfillment_partner: prev.fulfillment_partner || DEFAULT_FULFILLMENT_BY_TYPE.poster,
+        partner_variants: POSTER_SIZES.map((size) => {
+          const existing = (prev.partner_variants as PartnerVariant[] | undefined)?.find(
+            (p) => p.size === size,
+          );
+          return {
+            size,
+            partner_variant_id: existing?.partner_variant_id || '',
+            partner_sku: existing?.partner_sku || '',
+          };
+        }),
+      }));
+      setNeedsColorName(false);
+      setCustomColorName('');
+      const posterCat = categories.find((c) => c.product_type === 'poster');
+      if (posterCat && !categories.some((c) => c.id === formData.category_id && c.product_type === 'poster')) {
+        setFormData((prev: typeof formData) => ({ ...prev, category_id: posterCat.id }));
+      }
+    } else {
+      setFormData((prev: typeof formData) => ({
+        ...prev,
+        sizes: prev.sizes.filter((s) => !POSTER_SIZES.includes(s as (typeof POSTER_SIZES)[number])),
+        partner_variants: [],
+      }));
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -302,13 +391,18 @@ export const ProductForm: React.FC<{
     const savingAsDraft = isDraft && !publishNow;
 
     if (!savingAsDraft && formData.sizes.length === 0) {
-      alert('Please add at least one size variant');
+      alert(isPoster ? 'Please include poster sizes' : 'Please add at least one size variant');
+      return;
+    }
+
+    if (!savingAsDraft && isPoster && !posterSizesComplete(formData.sizes)) {
+      alert('Metal posters must include both sizes: 8 × 11.7 in and 11.7 × 15.7 in.');
       return;
     }
 
     const rawColor = String(formData.color || '').trim();
     const isHexColor = /^#[0-9A-Fa-f]{6}$/.test(rawColor);
-    if (needsColorName && isHexColor && !customColorName.trim()) {
+    if (!isPoster && needsColorName && isHexColor && !customColorName.trim()) {
       alert('Please enter a color name for this new hex value.');
       return;
     }
@@ -340,7 +434,7 @@ export const ProductForm: React.FC<{
       }
 
       // If this is a brand-new hex color with a provided name, persist it before saving the product
-      if (needsColorName && isHexColor && customColorName.trim()) {
+      if (!isPoster && needsColorName && isHexColor && customColorName.trim()) {
         try {
           await api.upsertColorProfile(customColorName.trim(), rawColor.toUpperCase());
         } catch (colorError: any) {
@@ -350,28 +444,57 @@ export const ProductForm: React.FC<{
 
       const savingAsDraft = isDraft && !publishNow;
 
-      const sizesArray = normalizeSizeList(
-        Array.isArray(formData.sizes) ? formData.sizes.filter(s => s && s.trim()) : [],
-      );
+      const sizesArray = isPoster
+        ? normalizePosterSizeList(
+            Array.isArray(formData.sizes) ? formData.sizes.filter((s) => s && s.trim()) : [],
+          )
+        : normalizeSizeList(
+            Array.isArray(formData.sizes) ? formData.sizes.filter((s) => s && s.trim()) : [],
+          );
+
+      const publishSizes = isPoster && !savingAsDraft ? [...POSTER_SIZES] : sizesArray;
+
+      if (!savingAsDraft && sizePricingEnabled) {
+        const missingPrice = publishSizes.filter(
+          (s) => !(Number((formData as any).size_prices?.[s]) > 0),
+        );
+        if (missingPrice.length > 0) {
+          alert('Enter a selling price for each included size in the size pricing table.');
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      const sizePricesForApi = sizePricingEnabled
+        ? buildSizePricesPayload(publishSizes, (formData as any).size_prices || {})
+        : undefined;
+      const listingSellingPrice = sizePricesForApi
+        ? minPriceForSizes(publishSizes, (formData as any).size_prices || {}, Number(formData.selling_price) || 0)
+        : Number(formData.selling_price) || 0;
 
       const productData: any = {
         category_id: formData.category_id,
         title: formData.title,
         description: formData.description || '',
-        selling_price: Number(formData.selling_price) || 0,
+        selling_price: listingSellingPrice,
         discount_percentage: formData.discount_percentage > 0 ? Number(formData.discount_percentage) : null,
         on_sale: formData.on_sale || false,
         sale_discount_percentage: formData.on_sale && formData.sale_discount_percentage > 0 ? Number(formData.sale_discount_percentage) : null,
         usp_tag: formData.usp_tag || null,
-        sizes: sizesArray,
-        color: formData.color && String(formData.color).trim() ? String(formData.color).trim() : null,
+        sizes: publishSizes,
+        ...(sizePricesForApi ? { size_prices: sizePricesForApi } : {}),
+        color: isPoster
+          ? null
+          : formData.color && String(formData.color).trim()
+            ? String(formData.color).trim()
+            : null,
         fulfillment_partner: formData.fulfillment_partner || null,
         partner_product_id: formData.partner_product_id || null,
         partner_variants: Array.isArray((formData as any).partner_variants)
           ? (formData as any).partner_variants
           : [],
-        size_chart_profile: formData.size_chart_profile || null,
-        design_family: (formData as any).design_family?.trim() || null,
+        size_chart_profile: isPoster ? null : formData.size_chart_profile || null,
+        design_family: isPoster ? null : (formData as any).design_family?.trim() || null,
         vendor_base_cost: formData.vendor_base_cost !== '' ? Number(formData.vendor_base_cost) : null,
         vendor_shipping_cost: formData.vendor_shipping_cost !== '' ? Number(formData.vendor_shipping_cost) : null,
         target_margin_percent: formData.target_margin_percent !== undefined && formData.target_margin_percent !== null
@@ -388,7 +511,7 @@ export const ProductForm: React.FC<{
             formData.target_margin_percent !== undefined && formData.target_margin_percent !== null
               ? Number(formData.target_margin_percent)
               : 100,
-          sellingPrice: Number(formData.selling_price),
+          sellingPrice: listingSellingPrice,
           discountPercentage: Number(formData.discount_percentage) || 0,
           onSale: formData.on_sale,
           saleDiscountPercentage: Number(formData.sale_discount_percentage) || 0,
@@ -514,12 +637,18 @@ export const ProductForm: React.FC<{
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      if (!(event.target instanceof Node)) return;
       if (
         designFamilyWrapperRef.current &&
-        event.target instanceof Node &&
         !designFamilyWrapperRef.current.contains(event.target)
       ) {
         setShowDesignFamilySuggestions(false);
+      }
+      if (
+        colorWrapperRef.current &&
+        !colorWrapperRef.current.contains(event.target)
+      ) {
+        setShowColorSuggestions(false);
       }
     };
 
@@ -534,6 +663,25 @@ export const ProductForm: React.FC<{
       {/* Form Section */}
       <Card className="p-6 w-full lg:w-[calc(50%-0.5rem)] flex-shrink-0">
         <h3 className="text-lg font-medium mb-4 text-brand-primary">{product ? 'Edit Product' : 'Add New Product'}</h3>
+        <div className="mb-6">
+          <label className="block text-sm font-semibold text-brand-primary mb-2">
+            Product type <span className="text-red-400">*</span>
+          </label>
+          <select
+            value={productType}
+            onChange={(e) => applyProductTypeSwitch(e.target.value as ProductType)}
+            className="w-full rounded-lg border-2 border-gray-300 dark:border-white/40 bg-white dark:bg-brand-surface px-3 py-2 text-sm text-brand-primary focus:outline-none focus:ring-2 focus:ring-purple-500"
+          >
+            {PRODUCT_TYPE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-brand-secondary mt-1">
+            Switches listing fields for apparel vs metal posters. Same product database for all types.
+          </p>
+        </div>
         <form onSubmit={handleSubmit} className="space-y-0">
           {/* Draft banner */}
           {isDraft && (
@@ -563,7 +711,7 @@ export const ProductForm: React.FC<{
                 required
               >
                 <option value="">Select a category</option>
-                {categories.map(cat => (
+                {filteredCategories.map(cat => (
                   <option key={cat.id} value={cat.id}>{cat.name}</option>
                 ))}
               </select>
@@ -622,6 +770,7 @@ export const ProductForm: React.FC<{
                 Start a line with <span className="font-mono">-</span> or <span className="font-mono">•</span> to show it as a bullet point on the product page.
               </p>
             </div>
+            {!isPoster && (
             <div className="mt-4" ref={designFamilyWrapperRef}>
               <label className="block text-sm font-semibold text-brand-primary mb-2">
                 Design Family
@@ -674,6 +823,8 @@ export const ProductForm: React.FC<{
                 Use same value across color variants of the same design to link them on product page.
               </p>
             </div>
+            )}
+            {!isPoster && (
             <div className="mt-4">
               <label className="block text-sm font-semibold text-brand-primary mb-2">
                 Size Chart Profile
@@ -692,9 +843,11 @@ export const ProductForm: React.FC<{
                 Leave on auto-detect, or set explicitly to avoid keyword ambiguity.
               </p>
             </div>
+            )}
           </div>
 
-          {/* Section: Fulfillment */}
+          {/* Section: Fulfillment (apparel) */}
+          {!isPoster && (
           <div className="pb-6 mb-6 border-b border-gray-200 dark:border-white/20">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
               <div>
@@ -778,6 +931,7 @@ export const ProductForm: React.FC<{
             )}
             </div>
           </div>
+          )}
 
           {/* Section: Cost & Pricing */}
           <div className="pb-6 mb-6 border-b border-gray-200 dark:border-white/20">
@@ -836,7 +990,8 @@ export const ProductForm: React.FC<{
             {/* Selling Price */}
             <div>
               <label className="block text-sm font-semibold text-brand-primary mb-2">
-                Selling Price ({getCurrencySymbol(currency)}) <span className="text-red-400">*</span>
+                {sizePricingEnabled ? 'List price (from)' : 'Selling Price'} ({getCurrencySymbol(currency)}){' '}
+                <span className="text-red-400">*</span>
               </label>
               <Input 
                 name="selling_price" 
@@ -845,9 +1000,15 @@ export const ProductForm: React.FC<{
                 placeholder="35.00" 
                 value={formData.selling_price} 
                 onChange={handleChange} 
-                required
-                className="border-2 border-gray-300 dark:border-white/40"
+                required={!sizePricingEnabled}
+                readOnly={sizePricingEnabled}
+                className={`border-2 border-gray-300 dark:border-white/40 ${sizePricingEnabled ? 'opacity-80 cursor-not-allowed' : ''}`}
               />
+              {sizePricingEnabled && (
+                <p className="text-xs text-brand-secondary mt-1">
+                  Auto-set to the lowest size price. Enter prices per size in the variant table below.
+                </p>
+              )}
               {/* Suggested price helper */}
               {(() => {
                 const base = parseFloat(String(formData.vendor_base_cost || '0')) || 0;
@@ -971,7 +1132,15 @@ export const ProductForm: React.FC<{
             <label className="block text-sm font-semibold text-brand-primary mb-3">
               Product Variants <span className="text-red-400">*</span>
             </label>
-            
+
+            {isPoster ? (
+              <PosterProductFields
+                formData={formData}
+                setFormData={setFormData}
+                onFieldChange={handleChange}
+              />
+            ) : (
+              <>
             {/* Sizes Section */}
             <div className="mb-4">
               <label className="block text-xs font-semibold text-brand-secondary mb-2">
@@ -1014,19 +1183,68 @@ export const ProductForm: React.FC<{
             </div>
 
             {/* Color (single per listing) */}
-            <div>
+            <div ref={enableColorTypeahead ? colorWrapperRef : undefined}>
               <label className="block text-xs font-semibold text-brand-secondary mb-2">
                 Color (Name or Hex)
               </label>
               <div className="flex items-center gap-2">
-                <Input
-                  type="text"
-                  name="color"
-                  value={formData.color}
-                  onChange={handleChange}
-                  placeholder="e.g., Black, Lavender, #E6E6FA"
-                  className="flex-1 border-2 border-gray-300 dark:border-white/40 rounded-lg px-3 py-2"
-                />
+                <div className={enableColorTypeahead ? 'relative flex-1 min-w-0' : 'contents'}>
+                  <Input
+                    type="text"
+                    name="color"
+                    value={formData.color}
+                    onChange={(e) => {
+                      handleChange(e);
+                      if (enableColorTypeahead) setShowColorSuggestions(true);
+                    }}
+                    onFocus={() => {
+                      if (enableColorTypeahead) setShowColorSuggestions(true);
+                    }}
+                    autoComplete="off"
+                    placeholder="e.g., Black, Sky Blue, #1BCEFA"
+                    className={`${enableColorTypeahead ? 'w-full' : 'flex-1'} border-2 border-gray-300 dark:border-white/40 rounded-lg px-3 py-2`}
+                  />
+                  {enableColorTypeahead && showColorSuggestions && (
+                    <div className="absolute z-30 mt-1 w-full rounded-lg border border-gray-200 dark:border-white/20 bg-white dark:bg-brand-surface shadow-lg max-h-56 overflow-auto">
+                      {colorProfiles.length === 0 ? (
+                        <div className="px-3 py-2 text-xs text-brand-secondary">
+                          Loading color palette…
+                        </div>
+                      ) : colorSuggestions.length > 0 ? (
+                        colorSuggestions.map((profile) => (
+                          <button
+                            key={`${profile.name}-${profile.hex}`}
+                            type="button"
+                            className="w-full px-3 py-2 text-left text-sm text-brand-primary hover:bg-gray-50 dark:hover:bg-white/5 flex items-center gap-2"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              setFormData((prev) => ({ ...prev, color: profile.name }));
+                              setShowColorSuggestions(false);
+                            }}
+                          >
+                            <span
+                              className="w-5 h-5 rounded-full border border-white/30 flex-shrink-0"
+                              style={{ backgroundColor: profile.hex }}
+                              aria-hidden
+                            />
+                            <span className="font-medium">{profile.name}</span>
+                            <span className="text-xs text-brand-secondary font-mono ml-auto">
+                              {profile.hex}
+                            </span>
+                          </button>
+                        ))
+                      ) : colorQuery ? (
+                        <div className="px-3 py-2 text-xs text-brand-secondary">
+                          No palette match. Enter a name or hex — new hex colors can be saved on submit.
+                        </div>
+                      ) : (
+                        <div className="px-3 py-2 text-xs text-brand-secondary">
+                          Start typing to search the color palette.
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
                 {formData.color && (
                   <span
                     className="w-8 h-8 rounded-full border border-white/30 flex-shrink-0"
@@ -1036,7 +1254,9 @@ export const ProductForm: React.FC<{
                 )}
               </div>
               <p className="text-xs text-brand-secondary mt-1 italic">
-                One listing per color. Name (e.g., Black) or hex (e.g., #000000).
+                {enableColorTypeahead
+                  ? 'Search the palette or type a custom name/hex. One listing per color.'
+                  : 'One listing per color. Name (e.g., Black) or hex (e.g., #000000).'}
               </p>
               {needsColorName && (
                 <div className="mt-2">
@@ -1056,6 +1276,8 @@ export const ProductForm: React.FC<{
                 </div>
               )}
             </div>
+              </>
+            )}
           </div>
           </div>
 

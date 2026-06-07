@@ -1,5 +1,6 @@
 import React, { useState, useRef, KeyboardEvent } from 'react';
-import { Category } from '../../../types';
+import { Category, ProductType } from '../../../types';
+import { PRODUCT_TYPE_OPTIONS } from '../productTypeConfig';
 import api from '../../../services/api';
 import { Button, Card, Input } from '../../../components/ui';
 import { UploadCloudIcon, LinkIcon, XIcon } from '../../../components/icons';
@@ -9,6 +10,7 @@ export const CategoryForm: React.FC<{ category?: Category | null, onSave: () => 
     name: category?.name || '',
     slug: category?.slug || '',
     imageUrl: category?.imageUrl || '',
+    product_type: (category?.product_type || 'apparel') as ProductType,
   });
   const [complementSlugs, setComplementSlugs] = useState<string[]>(
     category?.complementSlugs ?? []
@@ -137,6 +139,7 @@ export const CategoryForm: React.FC<{ category?: Category | null, onSave: () => 
         name: formData.name,
         slug: formData.slug,
         complementSlugs,
+        product_type: formData.product_type,
       };
 
       // If file is selected, convert to base64 and send as imageFile
@@ -196,6 +199,29 @@ export const CategoryForm: React.FC<{ category?: Category | null, onSave: () => 
             className="w-full"
           />
           <p className="mt-1 text-xs text-brand-secondary">URL-friendly identifier (auto-generated from name)</p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-brand-primary mb-2">
+            Product type <span className="text-red-400">*</span>
+          </label>
+          <select
+            name="product_type"
+            value={formData.product_type}
+            onChange={(e) =>
+              setFormData({ ...formData, product_type: e.target.value as ProductType })
+            }
+            className="w-full rounded-lg border-2 border-gray-300 dark:border-white/40 bg-white dark:bg-brand-surface px-3 py-2 text-sm text-brand-primary"
+          >
+            {PRODUCT_TYPE_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-brand-secondary">
+            Controls which fields appear when adding products to this category.
+          </p>
         </div>
 
         {/* Cross-sell complement categories */}

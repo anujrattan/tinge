@@ -128,7 +128,7 @@ export const HomePage: React.FC = () => {
               <img
                 src="/Hero-Banner-Updated.png"
                 alt="Luxe Threads lifestyle hero"
-                className="absolute inset-0 w-full h-full object-cover object-top md:object-center animate-cinematicZoom"
+                className="hero-banner-image absolute inset-0 w-full h-full object-cover object-top md:object-center animate-cinematicZoom"
                 loading="eager"
                 decoding="async"
                 fetchPriority="high"
@@ -142,17 +142,17 @@ export const HomePage: React.FC = () => {
               className="absolute inset-0 md:hidden pointer-events-none"
               style={{
                 background:
-                  "linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.28) 32%, rgba(0,0,0,0.04) 58%, transparent 100%)",
+                  "linear-gradient(to top, rgba(0,0,0,0.48) 0%, rgba(0,0,0,0.22) 30%, transparent 55%)",
               }}
             />
             {/* Desktop: minimal tint — preserve original image color */}
-            <div aria-hidden="true" className="hidden md:block absolute inset-0 bg-gradient-to-br from-black/20 via-transparent to-black/12 pointer-events-none" />
-            <div aria-hidden="true" className="hidden md:block absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent pointer-events-none" />
+            <div aria-hidden="true" className="hidden md:block absolute inset-0 bg-gradient-to-br from-black/12 via-transparent to-transparent pointer-events-none" />
+            <div aria-hidden="true" className="hidden md:block absolute inset-0 bg-gradient-to-t from-black/28 via-transparent to-transparent pointer-events-none" />
 
             {/* ── Film grain ───────────────────────────────────────────────────── */}
             <div
               aria-hidden="true"
-              className="absolute inset-0 opacity-[0.06] md:opacity-[0.08] pointer-events-none mix-blend-overlay"
+              className="absolute inset-0 opacity-[0.03] md:opacity-[0.04] pointer-events-none mix-blend-overlay"
               style={{
                 backgroundImage:
                   "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)'/%3E%3C/svg%3E\")",
@@ -217,7 +217,7 @@ export const HomePage: React.FC = () => {
                   className="text-[2.65rem] leading-[1.08] sm:text-5xl md:text-8xl font-display font-extrabold tracking-tight"
                   style={{ color: "#F7F3EA" }}
                 >
-                  <span className="block animate-flicker">Wear Your</span>
+                  <span className="hero-wear-your-line block">Wear Your</span>
                   <span className="block">
                     <RotatingText
                       words={["Escape", "Orbit", "Adventure"]}

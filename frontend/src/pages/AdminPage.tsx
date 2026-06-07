@@ -347,6 +347,9 @@ export const AdminPage: React.FC = () => {
                 onCancel={handleCancel}
                 categories={categories}
                 collections={collections}
+                onProductTypeChange={(type) => {
+                  if (type === 'poster') setPrintrovePrefill(null);
+                }}
               />
             ) : (
               <>

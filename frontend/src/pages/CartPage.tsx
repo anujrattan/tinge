@@ -125,7 +125,11 @@ export const CartPage: React.FC = () => {
                       <h3>{item.name}</h3>
                       <p className="ml-4">{formatCurrency(item.price * item.quantity, currency, { showDecimals: false })}</p>
                     </div>
-                    <p className="mt-1 text-sm text-brand-secondary">{item.selectedColor} / {item.selectedSize}</p>
+                    <p className="mt-1 text-sm text-brand-secondary">
+                      {item.category_product_type === 'poster'
+                        ? `Size: ${item.selectedSize}`
+                        : `${item.selectedColor} / ${item.selectedSize}`}
+                    </p>
                   </div>
                   <div className="flex-1 flex items-end justify-between text-sm">
                     <div className="flex items-center border border-white/20 rounded-md">

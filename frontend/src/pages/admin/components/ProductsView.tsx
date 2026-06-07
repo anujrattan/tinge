@@ -7,7 +7,8 @@ import { toAnchoredDisplayPrice } from '../../../utils/pricing';
 
 /** Admin list thumb: prefer Printrove mockup URL on partner_variants, then gallery, then main. */
 function adminProductListThumbnailSrc(product: Product & { partner_variants?: unknown }): string | undefined {
-  const pvs = (product as { partner_variants?: Array<Record<string, unknown>> }).partner_variants;
+  const pvs = (product as unknown as { partner_variants?: Array<Record<string, unknown>> })
+    .partner_variants;
   if (Array.isArray(pvs)) {
     for (const pv of pvs) {
       for (const key of ['mockup_front_url', 'front_mockup'] as const) {

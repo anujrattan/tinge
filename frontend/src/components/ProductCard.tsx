@@ -9,6 +9,7 @@ import { useApp } from '../context/AppContext';
 import { getCssColorValue, getColorName } from '../utils/colorUtils';
 import { useToast } from '../context/ToastContext';
 import { calculateFinalPrice, toAnchoredDisplayPrice } from '../utils/pricing';
+import { getListingSellingPrice, hasVariableSizePricing } from '../utils/sizePricing';
 
 interface ProductCardProps {
   product: Product;
@@ -23,8 +24,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   
   const inWishlist = isInWishlist(product.id);
   
-  // Calculate prices exactly like ProductCardPreview
-  const sellingPrice = parseFloat(String(product.selling_price || 0));
+  const showFromPrice = hasVariableSizePricing(product);
+  const sellingPrice = getListingSellingPrice(product);
   const discountPercentage = product.discount_percentage ? parseFloat(String(product.discount_percentage)) : 0;
   const onSale = product.on_sale === true;
   const saleDiscountPercentage = onSale && product.sale_discount_percentage ? parseFloat(String(product.sale_discount_percentage)) : 0;
@@ -155,6 +156,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         )}
         
         <div className="mt-1 flex items-baseline gap-1.5 flex-nowrap overflow-hidden">
+          {showFromPrice && (
+            <span className="text-[10px] sm:text-xs font-semibold text-card-light-text-secondary uppercase tracking-wide">
+              From
+            </span>
+          )}
           <p className="text-base sm:text-lg font-extrabold text-pink-500 whitespace-nowrap">
             {formatCurrency(displayFinalPrice, currency, { showDecimals: false })}
           </p>
