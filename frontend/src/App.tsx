@@ -6,6 +6,7 @@ import { ToastProvider, useToast } from "./context/ToastContext";
 import { Toaster } from "./components/Toaster";
 import { Header } from "./components/Header";
 import { Footer } from "./components/Footer";
+import { CartDrawer } from "./components/CartDrawer";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { HomePage } from "./pages/HomePage";
 import { CategoriesPage } from "./pages/CategoriesPage";
@@ -89,6 +90,7 @@ const AppLayout: React.FC = () => {
     <div className="min-h-screen flex flex-col font-sans bg-brand-bg">
       <Toaster toasts={toasts} onClose={removeToast} />
       <CookieConsent />
+      <CartDrawer />
       <Header
         cartItemCount={cartItemCount}
         currentPage={currentPage}

@@ -9,7 +9,9 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "lint": "eslint . --ext .ts",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:integration": "RUN_INTEGRATION_TESTS=true vitest run src/tests/integrations.test.ts"
   },
   "keywords": [
     "e-commerce",
@@ -41,7 +43,10 @@
     "@types/jsonwebtoken": "^9.0.5",
     "@types/node": "^22.14.0",
     "@types/pdfkit": "^0.17.4",
+    "@types/supertest": "^6.0.3",
+    "supertest": "^7.1.0",
     "tsx": "^4.19.2",
-    "typescript": "^5.8.2"
+    "typescript": "^5.8.2",
+    "vitest": "^3.2.4"
   }
 }

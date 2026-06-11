@@ -5,20 +5,18 @@ import api from "../services/api";
 import { ProductCard } from "../components/ProductCard";
 import { Button, Card } from "../components/ui";
 import {
-  StarIcon,
-  TruckIcon,
   TrendingUpIcon,
-  Undo2Icon,
   ArrowRightIcon,
   FlameIcon,
-  SmileIcon,
-  MessageCircleIcon,
-  ShoppingBagIcon,
-  PackageIcon,
   TagIcon,
+  GlobeIcon,
+  Wand2Icon,
+  SparklesIcon,
+  RecycleIcon,
+  RocketIcon,
 } from "../components/icons";
 import { RotatingText } from "../components/RotatingText";
-import { TestimonialsCarousel } from "../components/TestimonialsCarousel";
+import { NewsletterSignup } from "../components/NewsletterSignup";
 import { SEOHead } from "../components/SEOHead";
 import {
   StructuredData,
@@ -58,42 +56,49 @@ export const HomePage: React.FC = () => {
     fetchFeatured();
   }, []);
 
-  const testimonials = [
+  const benefits = [
     {
-      name: "Alex Johnson",
-      text: "The quality of the fabric is unreal. So soft and durable. I've already ordered more!",
-      rating: 5,
+      icon: <GlobeIcon className="w-8 h-8 text-brand-accent" />,
+      title: "Designed for Escape",
+      description:
+        "Inspired by road trips, campfires, sunsets and exploration.",
     },
     {
-      name: "Maria Garcia",
-      text: "Fast shipping and beautiful packaging. The hoodie I bought is now my absolute favorite.",
-      rating: 5,
+      icon: <Wand2Icon className="w-8 h-8 text-brand-accent" />,
+      title: "Wearable Art",
+      description:
+        "Graphics created to tell stories, not follow trends.",
     },
     {
-      name: "Chris Lee",
-      text: "Finally, a brand that gets minimalist design right. Everything is stylish and versatile.",
-      rating: 5,
+      icon: <SparklesIcon className="w-8 h-8 text-brand-accent" />,
+      title: "Small Batch Drops",
+      description:
+        "Curated collections instead of endless catalogs.",
+    },
+    {
+      icon: <RecycleIcon className="w-8 h-8 text-brand-accent" />,
+      title: "Made on Demand",
+      description:
+        "Made only when ordered to reduce waste.",
     },
   ];
 
-  const benefits = [
+  const philosophy = [
     {
-      icon: <PackageIcon className="w-8 h-8 text-brand-accent" />,
-      title: "Premium Fabrics",
-      description:
-        "We source only the finest materials for a difference you can feel.",
+      icon: <FlameIcon className="w-7 h-7 text-[#FF7A59]" />,
+      title: "Escape",
+      description: "Designs inspired by movement and adventure.",
     },
     {
-      icon: <TruckIcon className="w-8 h-8 text-brand-accent" />,
-      title: "Fast Shipping",
+      icon: <RocketIcon className="w-7 h-7 text-[#FF7A59]" />,
+      title: "Horizon",
       description:
-        "Get your new favorite pieces delivered to your door quickly and reliably.",
+        "Space for curiosity — break routine, roam farther, discover what's next.",
     },
     {
-      icon: <Undo2Icon className="w-8 h-8 text-brand-accent" />,
-      title: "Easy Returns",
-      description:
-        "Not a perfect fit? No problem. We offer hassle-free returns.",
+      icon: <Wand2Icon className="w-7 h-7 text-[#FF7A59]" />,
+      title: "Unordinary",
+      description: "Created for people who don't blend in.",
     },
   ];
 
@@ -245,15 +250,14 @@ export const HomePage: React.FC = () => {
                   </button>
                   <button
                     onClick={() => navigate("/best-sellers")}
-                    className="w-full sm:w-auto min-h-[52px] px-8 py-3.5 rounded-full text-base font-bold tracking-wide transition-all duration-200 border border-white/30 hover:border-white/55 hover:shadow-[0_0_22px_rgba(255,255,255,0.12)] active:scale-[0.97]"
-                    style={{ color: "#F7F3EA" }}
+                    className="w-full sm:w-auto min-h-[52px] px-8 py-3.5 rounded-full text-base font-bold tracking-wide transition-all duration-200 bg-black/45 backdrop-blur-md border border-white/15 text-[#F7F3EA] hover:bg-black/55 hover:border-white/25 active:scale-[0.97]"
                   >
                     Shop Best Sellers
                   </button>
                 </div>
 
-                {/* Trust micro-copy */}
-                <p className="mt-3 text-xs" style={{ color: "rgba(255,255,255,0.48)" }}>
+                {/* Trust micro-copy — dark ink + light halo for legibility on light hero areas */}
+                <p className="mt-3 text-xs font-semibold tracking-wide text-[#1E1B22]/90 drop-shadow-[0_1px_3px_rgba(255,255,255,0.85)]">
                   Easy 7-day returns · Premium fabrics
                 </p>
 
@@ -267,10 +271,10 @@ export const HomePage: React.FC = () => {
         <section className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-8 flex items-end justify-between">
             <div>
-              <span className="text-sm font-semibold text-[#FF7A59] uppercase tracking-wider">
+              <span className="text-[11px] font-semibold text-[#FF7A59] uppercase tracking-[0.22em]">
                 Curated drops
               </span>
-              <h2 className="text-3xl md:text-4xl font-display font-bold tracking-tight text-brand-primary mt-2">
+              <h2 className="font-playfair text-3xl md:text-4xl font-medium tracking-tight text-brand-primary mt-2">
                 Shop by{" "}
                 <span className="bg-gradient-to-r from-[#FF7A59] to-[#FFC371] bg-clip-text text-transparent">
                   Collection
@@ -357,11 +361,11 @@ export const HomePage: React.FC = () => {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <TrendingUpIcon className="w-5 h-5 text-[#FF7A59]" />
-                <span className="text-sm font-semibold text-[#FF7A59] uppercase tracking-wider">
+                <span className="text-[11px] font-semibold text-[#FF7A59] uppercase tracking-[0.22em]">
                   Top Picks
                 </span>
               </div>
-              <h2 className="text-3xl md:text-4xl font-display font-bold tracking-tight text-brand-primary">
+              <h2 className="font-playfair text-3xl md:text-4xl font-medium tracking-tight text-brand-primary">
                 Best{" "}
                 <span className="bg-gradient-to-r from-[#FF7A59] to-[#FFC371] bg-clip-text text-transparent">
                   Sellers
@@ -407,11 +411,11 @@ export const HomePage: React.FC = () => {
             <div>
               <div className="flex items-center gap-2 mb-2">
                 <FlameIcon className="w-5 h-5 text-[#FF7A59]" />
-                <span className="text-sm font-semibold text-[#FF7A59] uppercase tracking-wider">
+                <span className="text-[11px] font-semibold text-[#FF7A59] uppercase tracking-[0.22em]">
                   Just In
                 </span>
               </div>
-              <h2 className="text-3xl md:text-4xl font-display font-bold tracking-tight text-brand-primary">
+              <h2 className="font-playfair text-3xl md:text-4xl font-medium tracking-tight text-brand-primary">
                 New{" "}
                 <span className="bg-gradient-to-r from-[#FF7A59] to-[#FFC371] bg-clip-text text-transparent">
                   Arrivals
@@ -457,17 +461,25 @@ export const HomePage: React.FC = () => {
           )}
         </section>
 
-        {/* Benefits Section */}
-        <section className="bg-brand-surface/50 dark:bg-brand-surface/50 bg-gray-50">
+        {/* The Tinge Difference */}
+        <section className="bg-white dark:bg-brand-surface/50">
           <div className="container mx-auto px-4 py-8 md:py-16 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-12 text-center">
+            <div className="text-center mb-8 md:mb-12">
+              <span className="text-[11px] font-semibold text-[#FF7A59] uppercase tracking-[0.22em]">
+                Why Tinge
+              </span>
+              <h2 className="font-playfair text-3xl md:text-4xl font-medium tracking-tight text-brand-primary mt-2">
+                The Tinge Difference
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-10 text-center">
               {benefits.map((benefit) => (
                 <div key={benefit.title} className="flex flex-col items-center">
                   <div className="flex-shrink-0">{benefit.icon}</div>
-                  <h3 className="mt-3 md:mt-4 text-lg md:text-xl font-display font-semibold text-brand-primary">
+                  <h3 className="mt-3 md:mt-4 text-lg font-playfair font-medium text-brand-primary">
                     {benefit.title}
                   </h3>
-                  <p className="mt-1 md:mt-2 text-sm md:text-base text-brand-secondary">
+                  <p className="mt-1 md:mt-2 text-sm text-brand-secondary leading-relaxed max-w-xs">
                     {benefit.description}
                   </p>
                 </div>
@@ -476,46 +488,47 @@ export const HomePage: React.FC = () => {
           </div>
         </section>
 
-        {/* Stats Section */}
-        <section className="bg-brand-surface/30 dark:bg-brand-surface/30 bg-gray-100 py-6 md:py-12">
+        {/* Design Philosophy */}
+        <section className="bg-gradient-to-b from-white to-[#FAFAFA] dark:from-brand-surface/30 dark:to-brand-bg py-12 md:py-20">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 text-center">
-              <div className="flex flex-col items-center gap-1">
-                <SmileIcon className="w-8 h-8 text-brand-accent" />
-                <p className="font-bold text-xl text-brand-primary">50K+</p>
-                <p className="text-xs text-brand-secondary">Happy Customers</p>
-              </div>
-              <div className="flex flex-col items-center gap-1">
-                <ShoppingBagIcon className="w-8 h-8 text-brand-accent" />
-                <p className="font-bold text-xl text-brand-primary">50+</p>
-                <p className="text-xs text-brand-secondary">
-                  Products Available
-                </p>
-              </div>
-              <div className="flex flex-col items-center gap-1">
-                <StarIcon className="w-8 h-8 text-brand-accent" />
-                <p className="font-bold text-xl text-brand-primary">99%</p>
-                <p className="text-xs text-brand-secondary">
-                  Satisfaction Rate
-                </p>
-              </div>
-              <div className="flex flex-col items-center gap-1">
-                <MessageCircleIcon className="w-8 h-8 text-brand-accent" />
-                <p className="font-bold text-xl text-brand-primary">24/7</p>
-                <p className="text-xs text-brand-secondary">
-                  Support Available
-                </p>
-              </div>
+            <div className="max-w-3xl mx-auto text-center mb-10 md:mb-14">
+              <p className="text-[11px] font-semibold text-[#FF7A59] uppercase tracking-[0.28em]">
+                Why Tinge
+              </p>
+              <h2 className="font-playfair text-3xl md:text-5xl font-medium tracking-tight text-brand-primary mt-3">
+                Design Philosophy
+              </h2>
+              <p className="mt-5 text-lg md:text-xl text-brand-secondary leading-relaxed font-playfair italic">
+                Wander farther. Own less. Wear what matters.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
+              {philosophy.map((pillar, index) => (
+                <div
+                  key={pillar.title}
+                  className="group relative flex flex-col rounded-2xl border border-gray-200/80 dark:border-white/10 bg-white dark:bg-brand-surface/60 p-6 md:p-8 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden"
+                >
+                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#FF7A59] via-[#FF5E62] to-[#FFC371] opacity-80 group-hover:opacity-100 transition-opacity" />
+                  <span className="text-[10px] font-bold text-brand-secondary/50 tracking-[0.2em] mb-4">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <div className="mb-4">{pillar.icon}</div>
+                  <h3 className="font-playfair text-2xl md:text-[1.65rem] font-medium text-brand-primary">
+                    {pillar.title}
+                  </h3>
+                  <p className="mt-3 text-sm md:text-base text-brand-secondary leading-relaxed">
+                    {pillar.description}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
         </section>
 
-        {/* Testimonials Section */}
-        <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-          <h2 className="text-3xl md:text-4xl font-display font-bold tracking-tight text-center text-brand-primary mb-8">
-            What Our Customers Say
-          </h2>
-          <TestimonialsCarousel testimonials={testimonials} />
+        {/* Newsletter + Community */}
+        <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-16">
+          <NewsletterSignup source="homepage" />
         </section>
       </div>
     </>

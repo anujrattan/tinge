@@ -50,16 +50,9 @@ export const config = {
   // Frontend URL
   frontendUrl: process.env.FRONTEND_URL || "http://localhost:3000",
 
-  // Redis configuration
+  // Redis configuration (Upstash: rediss://default:...@....upstash.io:6379)
   redis: {
-    url: process.env._URL || "redis://localhost:6379",
-  },
-
-  // Qikink API configuration
-  qikink: {
-    clientId: process.env.QIKINK_CLIENT_ID || "",
-    clientSecret: process.env.QIKINK_CLIENT_SECRET || "",
-    sandboxUrl: process.env.QIKINK_SANDBOX_URL || "",
+    url: process.env.REDIS_URL || "redis://localhost:6379",
   },
 
   // Printrove API configuration

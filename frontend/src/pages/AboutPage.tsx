@@ -79,7 +79,7 @@ export const AboutPage: React.FC = () => {
       </section>
 
        {/* Values Section */}
-      <section className="bg-gray-50 dark:bg-brand-surface/50 py-16">
+      <section className="bg-white dark:bg-brand-surface/50 py-16">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <h2 className="text-3xl md:text-4xl font-display font-bold tracking-tight text-center text-brand-primary">Our Core Values</h2>
             <p className="mt-2 text-center text-brand-secondary font-sans max-w-2xl mx-auto">The principles that guide every decision we make.</p>

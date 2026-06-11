@@ -16,6 +16,7 @@ import { ProductsView } from "./admin/components/ProductsView";
 import { OrdersView } from "./admin/components/OrdersView";
 import { OrderDetailView } from "./admin/components/OrderDetailView";
 import { ContentView } from "./admin/components/ContentView";
+import { SystemsGoView } from "./admin/components/SystemsGoView";
 import { useAdminData } from "./admin/hooks/useAdminData";
 import { useAdminOrders } from "./admin/hooks/useAdminOrders";
 import { AdminTab } from "./admin/types";
@@ -300,7 +301,7 @@ export const AdminPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gradient-to-br dark:from-brand-bg dark:via-brand-bg dark:to-purple-900/10">
+    <div className="min-h-screen bg-white dark:bg-gradient-to-br dark:from-brand-bg dark:via-brand-bg dark:to-purple-900/10">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Full Width Header */}
         <div className="mb-8">
@@ -437,6 +438,8 @@ export const AdminPage: React.FC = () => {
                   )
                 ) : activeTab === "content" ? (
                   <ContentView />
+                ) : activeTab === "systems" ? (
+                  <SystemsGoView />
                 ) : null}
               </>
             )}

@@ -149,12 +149,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </div>
         )}
         
-        {product.description && (
-          <p className="text-[10px] sm:text-xs text-card-light-text-secondary mt-0.5 h-6 overflow-hidden line-clamp-2">
-            {product.description}
-          </p>
-        )}
-        
         <div className="mt-1 flex items-baseline gap-1.5 flex-nowrap overflow-hidden">
           {showFromPrice && (
             <span className="text-[10px] sm:text-xs font-semibold text-card-light-text-secondary uppercase tracking-wide">

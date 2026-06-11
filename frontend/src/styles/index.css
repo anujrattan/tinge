@@ -1,5 +1,5 @@
 /* Global styles */
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Sora:wght@400;600;700&family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&family=Oswald:wght@400;500;600;700&display=swap');
 
 /* Tailwind directives will be added by PostCSS */
 @tailwind base;
@@ -15,16 +15,16 @@
     scroll-behavior: smooth;
   }
 
-  /* ── Light theme — warm cream base ──────────────────────────────────── */
+  /* ── Light theme — clean white base ─────────────────────────────────── */
   html {
-    --color-bg:           #FAF7F2; /* warm cream page background            */
-    --color-surface:      #F4EFE6; /* warm surface — cards, panels           */
+    --color-bg:           #FFFFFF; /* page background                        */
+    --color-surface:      #FFFFFF; /* cards, panels, sections                */
     --color-primary:      #1E1B22; /* warm near-black — body text            */
     --color-secondary:    #6B6258; /* warm mid-gray — secondary text         */
     --color-accent:       #FF7A59; /* coral — primary CTAs & highlights      */
     --color-accent-hover: #FF5E62; /* hotter coral — hover / active          */
-    --color-card-bg:      #FFFFFF; /* pure white cards for contrast          */
-    --color-card-border:  #E8E0D5; /* warm sand border                       */
+    --color-card-bg:      #FFFFFF; /* card background                        */
+    --color-card-border:  #E5E7EB; /* neutral border                         */
     --color-hero-text:    #F7F3EA; /* warm cream — text over dark hero       */
   }
 
@@ -41,10 +41,9 @@
     --color-hero-text:    #F7F3EA; /* warm cream hero text                   */
   }
 
-  /* Warm cream gradient background for light theme */
+  /* Plain white page background for light theme */
   html:not(.dark) body {
-    background: linear-gradient(135deg, #FAF7F2 0%, #F9F4EC 50%, #FAF7F2 100%);
-    background-attachment: fixed;
+    background: #FFFFFF;
   }
 }
 
@@ -80,16 +79,16 @@
     background-color: rgba(255, 122, 89, 0.15) !important;
   }
 
-  /* Product card borders — warm sand in light theme */
+  /* Product card borders — neutral gray on white */
   html:not(.dark) .border-gray-200\/50 {
-    border-color: #E8E0D5 !important;
+    border-color: #E5E7EB !important;
     border-width: 1px;
     box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px 0 rgba(0, 0, 0, 0.04);
   }
 
-  /* Section surface background — warm cream */
+  /* Section surface background — white */
   html:not(.dark) .bg-brand-surface {
-    background-color: #F4EFE6 !important;
+    background-color: #FFFFFF !important;
   }
 
   /* Divider lines — warm instead of gray */

@@ -57,6 +57,9 @@ interface AppContextType {
   clearCart: () => void;
   cartItemCount: number;
   cartAnimationKey: number;
+  isCartOpen: boolean;
+  openCart: () => void;
+  closeCart: () => void;
   wishlist: string[];
   wishlistItemCount: number;
   addToWishlist: (productId: string) => Promise<void>;
@@ -94,6 +97,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     const savedCart = localStorage.getItem(CART_STORAGE_KEY);
     return savedCart ? JSON.parse(savedCart) : [];
   });
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const openCart = React.useCallback(() => setIsCartOpen(true), []);
+  const closeCart = React.useCallback(() => setIsCartOpen(false), []);
   const [wishlist, setWishlist] = useState<string[]>(() => {
     // Load from localStorage for guests
     const savedWishlist = localStorage.getItem(WISHLIST_STORAGE_KEY);
@@ -339,6 +345,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       return [...prevCart, normalizedItem];
     });
     setCartAnimationKey(prev => prev + 1);
+    setIsCartOpen(true);
     const trackingPrice = anchoredPrice * normalizedItem.quantity;
     trackAddToCart({
       currency,
@@ -378,6 +385,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
         clearCart,
         cartItemCount,
         cartAnimationKey,
+        isCartOpen,
+        openCart,
+        closeCart,
         wishlist,
         wishlistItemCount,
         addToWishlist,

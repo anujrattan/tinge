@@ -4,7 +4,7 @@ import { PackageIcon, RefreshCwIcon, CheckCircleIcon } from '../components/icons
 
 export const ReturnPolicyPage: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-brand-bg py-12">
+    <div className="min-h-screen bg-white dark:bg-brand-bg py-12">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
         <div className="mb-8">
           <h1 className="text-4xl md:text-5xl font-display font-bold text-brand-primary mb-4">
@@ -75,7 +75,7 @@ export const ReturnPolicyPage: React.FC = () => {
             <section className="mb-8">
               <h2 className="text-2xl font-bold text-brand-primary mb-4">3. How to Initiate a Return or Exchange</h2>
               
-              <div className="bg-gray-50 dark:bg-brand-bg p-6 rounded-lg border border-gray-200 dark:border-white/10 mb-6">
+              <div className="bg-white dark:bg-brand-bg p-6 rounded-lg border border-gray-200 dark:border-white/10 mb-6">
                 <h3 className="text-lg font-semibold text-brand-primary mb-4">Step-by-Step Process:</h3>
                 <ol className="space-y-4">
                   <li className="flex gap-4">
@@ -257,7 +257,7 @@ export const ReturnPolicyPage: React.FC = () => {
               <p className="text-brand-secondary leading-relaxed mb-4">
                 If you have any questions about our Return & Exchange Policy, please contact us:
               </p>
-              <div className="bg-gray-50 dark:bg-brand-bg p-6 rounded-lg border border-gray-200 dark:border-white/10">
+              <div className="bg-white dark:bg-brand-bg p-6 rounded-lg border border-gray-200 dark:border-white/10">
                 <p className="text-brand-primary font-semibold mb-2">Tinge Clothing</p>
                 <p className="text-brand-secondary">Email: support@tingeclothing.com</p>
                 <p className="text-brand-secondary">Phone: +91-XXXXXXXXXX</p>

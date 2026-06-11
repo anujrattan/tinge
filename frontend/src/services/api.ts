@@ -701,6 +701,70 @@ const api = {
     ).toString();
     return await apiCall(`/products/search?${queryString}`);
   },
+
+  // System health (admin)
+  getHealthStatus: async (): Promise<{
+    status: string;
+    timestamp: string;
+    environment: string;
+    services: Array<{
+      name: string;
+      status: string;
+      message?: string;
+      latency_ms?: number;
+      details?: Record<string, unknown>;
+    }>;
+    summary: {
+      ok: number;
+      degraded: number;
+      error: number;
+      not_configured: number;
+    };
+  }> => {
+    return apiCall('/health/status');
+  },
+
+  runPrintroveTests: async (): Promise<{
+    status: string;
+    timestamp: string;
+    summary: { ok: number; degraded: number; error: number };
+    probes: Array<{
+      serial: number;
+      group: string;
+      name: string;
+      method: string;
+      endpoint: string;
+      status: string;
+      message?: string;
+      latency_ms?: number;
+      details?: Record<string, unknown>;
+    }>;
+  }> => {
+    return apiCall('/health/printrove-tests', { method: 'POST' });
+  },
+
+  subscribeNewsletter: async (
+    email: string,
+    source = 'homepage'
+  ): Promise<{ success: boolean; message: string; alreadySubscribed?: boolean }> => {
+    return apiCall('/newsletter/subscribe', {
+      method: 'POST',
+      body: JSON.stringify({ email, source }),
+    });
+  },
+
+  runHealthTests: async (): Promise<{
+    status: string;
+    timestamp: string;
+    tests: Array<{
+      name: string;
+      status: string;
+      message?: string;
+      latency_ms?: number;
+    }>;
+  }> => {
+    return apiCall('/health/run-tests', { method: 'POST' });
+  },
 };
 
 export default api;

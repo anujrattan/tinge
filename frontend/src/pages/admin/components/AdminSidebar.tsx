@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card } from '../../../components/ui';
-import { PackageIcon, TagIcon, BarChartIcon, ShoppingBagIcon, LightbulbIcon, LayoutTemplateIcon } from '../../../components/icons';
+import { PackageIcon, TagIcon, BarChartIcon, ShoppingBagIcon, LightbulbIcon, LayoutTemplateIcon, ZapIcon } from '../../../components/icons';
 import { AdminTab } from '../types';
 
 interface AdminSidebarProps {
@@ -110,6 +110,19 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
               <div className="flex flex-col lg:flex-row items-center gap-2 lg:gap-3">
                 <LightbulbIcon className="w-5 h-5" />
                 <span className="text-sm lg:text-base">Content</span>
+              </div>
+            </button>
+            <button
+              onClick={() => onTabChange('systems')}
+              className={`px-4 py-3 font-semibold rounded-lg transition-all text-left flex items-center justify-center lg:justify-start ${
+                activeTab === 'systems'
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg border-2 border-transparent'
+                  : 'text-brand-secondary hover:text-brand-primary hover:bg-gray-100 dark:hover:bg-white/5 border-2 border-gray-200 dark:border-white/20'
+              }`}
+            >
+              <div className="flex flex-col lg:flex-row items-center gap-2 lg:gap-3">
+                <ZapIcon className="w-5 h-5" />
+                <span className="text-sm lg:text-base">Systems Go</span>
               </div>
             </button>
           </nav>

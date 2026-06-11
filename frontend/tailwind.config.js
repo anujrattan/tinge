@@ -66,6 +66,9 @@ export default {
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
         display: ['Sora', 'sans-serif'],
+        playfair: ['"Playfair Display"', 'Georgia', 'serif'],
+        grotesk: ['"Space Grotesk"', 'sans-serif'],
+        oswald: ['Oswald', 'sans-serif'],
       },
       keyframes: {
         fadeIn: { '0%': { opacity: 0, transform: 'translateY(10px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } },
@@ -102,6 +105,23 @@ export default {
           '0%': { transform: 'scale(1) translateX(0px)' },
           '100%': { transform: 'scale(1.06) translateX(-8px)' },
         },
+        slideInRight: {
+          '0%': { transform: 'translateX(100%)' },
+          '100%': { transform: 'translateX(0)' },
+        },
+        slideOutRight: {
+          '0%': { transform: 'translateX(0)' },
+          '100%': { transform: 'translateX(100%)' },
+        },
+        fadeInOverlay: {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        qtyPop: {
+          '0%': { transform: 'scale(1)' },
+          '40%': { transform: 'scale(1.25)' },
+          '100%': { transform: 'scale(1)' },
+        },
       },
       animation: {
         fadeIn: 'fadeIn 0.5s ease-in-out forwards',
@@ -113,6 +133,10 @@ export default {
         flicker: 'flicker 8s linear infinite',
         blink: 'blink 1s step-end infinite',
         cinematicZoom: 'cinematicZoom 25s ease-in-out infinite alternate',
+        slideInRight: 'slideInRight 0.3s cubic-bezier(0.32,0,0.67,0) forwards',
+        slideOutRight: 'slideOutRight 0.3s cubic-bezier(0.33,1,0.68,1) forwards',
+        fadeInOverlay: 'fadeInOverlay 0.25s ease forwards',
+        qtyPop: 'qtyPop 0.2s ease-out forwards',
       },
       backgroundImage: {
         // Dot pattern — warm gray (was purple-tinted)

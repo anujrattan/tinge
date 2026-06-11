@@ -61,6 +61,7 @@ export const Header: React.FC<HeaderProps> = ({
     toggleTheme,
     currency,
     wishlistItemCount,
+    openCart,
   } = useApp();
   const isHomePage = location.pathname === "/";
   const [scrolledPastHero, setScrolledPastHero] = useState(false);
@@ -192,24 +193,40 @@ export const Header: React.FC<HeaderProps> = ({
     return () => document.removeEventListener("keydown", handleEscape);
   }, [showSearchBar]);
 
-  // Navbar styling: over dark cinematic hero → frosted glass dark; else theme-aware with backdrop
+  // Navbar: no bottom border — hero uses a top scrim; scrolled state uses solid bar
   const headerClasses = useHeroNavStyle
-    ? "fixed top-0 left-0 right-0 z-[100] w-full max-w-full overflow-visible backdrop-blur-md bg-black/30 border-b border-white/10"
-    : `fixed top-0 left-0 right-0 z-[100] w-full max-w-full overflow-visible backdrop-blur-md border-b ${
+    ? "fixed top-0 left-0 right-0 z-[100] w-full max-w-full overflow-visible bg-gradient-to-b from-black/55 via-black/25 to-transparent"
+    : `fixed top-0 left-0 right-0 z-[100] w-full max-w-full overflow-visible transition-colors duration-300 ${
         theme === "dark"
-          ? "bg-black/80 border-white/10"
-          : "bg-white/80 border-black/5"
+          ? "bg-brand-bg/95"
+          : "bg-white/95"
       }`;
 
-  const navPillClasses = useHeroNavStyle
-    ? "flex items-center gap-1 rounded-full bg-white/10 backdrop-blur-lg border border-white/20 shadow-lg px-2 py-1.5"
-    : `flex items-center gap-1 rounded-full shadow-lg px-2 py-1.5 ${
-        theme === "dark"
-          ? "bg-white/10 backdrop-blur-lg border border-white/20"
-          : "bg-black/5 backdrop-blur-lg border border-black/10"
-      }`;
+  // Backdrop blur on a separate layer so absolute dropdowns aren't clipped by the pill
+  const navPillShellClasses = "relative inline-flex overflow-visible";
+  const navPillBgClasses = useHeroNavStyle
+    ? "pointer-events-none absolute inset-0 rounded-full bg-black/45 backdrop-blur-md border border-white/15 shadow-lg"
+    : theme === "dark"
+    ? "pointer-events-none absolute inset-0 rounded-full bg-brand-surface/90 border border-white/12 backdrop-blur-md shadow-lg"
+    : "pointer-events-none absolute inset-0 rounded-full bg-white/90 border border-black/8 backdrop-blur-md shadow-lg";
+  const navPillClasses =
+    "relative flex items-center gap-0.5 px-1.5 py-1 overflow-visible";
+  const shopDropdownLinkClasses =
+    "block px-4 py-2 text-sm text-slate-700 dark:text-brand-secondary hover:text-slate-900 dark:hover:text-brand-primary hover:bg-gray-100 dark:hover:bg-white/5 transition-colors";
 
-  const rightIconColor = useHeroNavStyle ? "#F7F3EA" : theme === "dark" ? "#FACC15" : "#1e293b";
+  const iconBtnClasses = useHeroNavStyle
+    ? "relative flex items-center justify-center w-9 h-9 rounded-full text-[#F7F3EA]/90 hover:text-[#F7F3EA] hover:bg-white/10 transition-colors"
+    : theme === "dark"
+    ? "relative flex items-center justify-center w-9 h-9 rounded-full text-brand-primary/90 hover:text-brand-primary hover:bg-white/10 transition-colors"
+    : "relative flex items-center justify-center w-9 h-9 rounded-full text-brand-ink/80 hover:text-brand-ink hover:bg-black/5 transition-colors";
+
+  const accountPillBase = useHeroNavStyle
+    ? "items-center gap-1.5 h-11 px-3.5 text-sm font-semibold rounded-full bg-black/45 backdrop-blur-md border border-white/15 text-[#F7F3EA] shadow-lg hover:bg-black/55 transition-colors"
+    : theme === "dark"
+    ? "items-center gap-1.5 h-11 px-3.5 text-sm font-semibold rounded-full bg-brand-surface/90 backdrop-blur-md border border-white/12 text-brand-primary shadow-lg hover:bg-brand-elevated transition-colors"
+    : "items-center gap-1.5 h-11 px-3.5 text-sm font-semibold rounded-full bg-white/90 backdrop-blur-md border border-black/8 text-brand-ink shadow-lg hover:bg-white transition-colors";
+  const accountPillClasses = `hidden md:inline-flex ${accountPillBase}`;
+  const accountButtonClasses = `inline-flex ${accountPillBase}`;
 
   // Nav link text colors: white when over dark hero, theme-aware when scrolled
   const getNavLinkClasses = (isActiveLink: boolean) => {
@@ -226,16 +243,6 @@ export const Header: React.FC<HeaderProps> = ({
       ? "text-slate-900 bg-black/10"
       : "text-slate-700 hover:text-slate-900 hover:bg-black/5";
   };
-
-  // Logged-in user button: distinct pill (matches Sign In button style so it doesn’t blend with nav links)
-  const userButtonBase =
-    "inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-full transition-all duration-200 shadow-sm border";
-  const userButtonClasses =
-    useHeroNavStyle
-      ? `${userButtonBase} bg-white/15 text-white border-white/20 hover:bg-white/25 hover:shadow-md`
-      : theme === "dark"
-      ? `${userButtonBase} bg-white/15 text-white border-white/20 hover:bg-white/25 hover:shadow-md`
-      : `${userButtonBase} bg-slate-800 text-white border-slate-700 hover:bg-slate-900 hover:shadow-md`;
 
   return (
     <>
@@ -263,7 +270,9 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Navigation - Center column (true center on desktop) */}
           <nav className="hidden md:flex items-center justify-center overflow-visible">
-            <div className={navPillClasses}>
+            <div className={navPillShellClasses}>
+              <div className={navPillBgClasses} aria-hidden="true" />
+              <div className={navPillClasses}>
               <Link
                 to="/"
                 className={`px-3 md:px-4 py-1.5 text-sm font-semibold transition-colors rounded-lg whitespace-nowrap ${getNavLinkClasses(
@@ -298,27 +307,31 @@ export const Header: React.FC<HeaderProps> = ({
 
                 {/* Dropdown Menu */}
                 {shopDropdownOpen && (
-                  <div className="absolute top-full left-0 -mt-1 pt-3 w-56 z-[100]">
-                    <div className="bg-white dark:bg-brand-surface rounded-xl border border-gray-200 dark:border-white/10 shadow-xl overflow-hidden">
+                  <div className="absolute top-full left-0 -mt-1 pt-3 w-56 z-[110]">
+                    <div className="bg-white dark:bg-brand-surface rounded-xl border border-gray-200 dark:border-white/10 shadow-xl max-h-[min(70vh,320px)] overflow-y-auto">
                       <div className="py-2">
                         <Link
                           to="/categories"
                           onClick={() => setShopDropdownOpen(false)}
-                          className="block px-4 py-2 text-sm text-brand-secondary hover:text-white hover:bg-gradient-to-r hover:from-purple-500/20 hover:to-pink-500/20 border-l-2 border-transparent hover:border-purple-500 transition-all duration-200"
+                          className={shopDropdownLinkClasses}
                         >
                           All Products
                         </Link>
-                        <div className="border-t border-gray-200 dark:border-white/10 my-1"></div>
-                        {categories.map((category) => (
-                          <Link
-                            key={category.id}
-                            to={`/category/${category.slug}`}
-                            onClick={() => setShopDropdownOpen(false)}
-                            className="block px-4 py-2 text-sm text-brand-secondary hover:text-white hover:bg-gradient-to-r hover:from-purple-500/20 hover:to-pink-500/20 border-l-2 border-transparent hover:border-purple-500 transition-all duration-200"
-                          >
-                            {category.name}
-                          </Link>
-                        ))}
+                        {categories.length > 0 && (
+                          <>
+                            <div className="border-t border-gray-200 dark:border-white/10 my-1" />
+                            {categories.map((category) => (
+                              <Link
+                                key={category.id}
+                                to={`/category/${category.slug}`}
+                                onClick={() => setShopDropdownOpen(false)}
+                                className={shopDropdownLinkClasses}
+                              >
+                                {category.name}
+                              </Link>
+                            ))}
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -333,22 +346,25 @@ export const Header: React.FC<HeaderProps> = ({
               >
                 Collections
               </Link>
+              </div>
             </div>
           </nav>
 
-          {/* Actions - Right (grid col 3 on desktop) */}
-          <div className="flex items-center gap-1 md:gap-2 flex-shrink-0 md:justify-end">
+          {/* Actions - Right: icon pill + separate account pill */}
+          <div className="flex items-center gap-2 flex-shrink-0 md:justify-end">
+            <div className={navPillShellClasses}>
+              <div className={navPillBgClasses} aria-hidden="true" />
+              <div className={navPillClasses}>
             {/* Search Icon/Bar - Desktop Only */}
             <div className="hidden md:flex items-center relative max-w-full">
               {!showSearchBar ? (
                 <button
                   onClick={() => setShowSearchBar(true)}
-                  className="p-2 rounded-full transition-opacity hover:opacity-80"
-                  style={{ color: rightIconColor }}
+                  className={iconBtnClasses}
                   aria-label="Search"
                   type="button"
                 >
-                  <SearchIcon className="h-5 w-5" />
+                  <SearchIcon className="h-[18px] w-[18px]" />
                 </button>
               ) : (
                 <div className="relative">
@@ -516,8 +532,7 @@ export const Header: React.FC<HeaderProps> = ({
                 e.preventDefault();
                 toggleTheme();
               }}
-              className="hidden md:flex relative p-2 rounded-full transition-opacity hover:opacity-80"
-              style={{ color: rightIconColor }}
+              className={`hidden md:flex ${iconBtnClasses}`}
               aria-label={
                 theme === "dark"
                   ? "Switch to light mode"
@@ -526,22 +541,21 @@ export const Header: React.FC<HeaderProps> = ({
               type="button"
             >
               {theme === "dark" ? (
-                <SunIcon className="h-5 w-5" />
+                <SunIcon className="h-[18px] w-[18px]" />
               ) : (
-                <MoonIcon className="h-5 w-5" />
+                <MoonIcon className="h-[18px] w-[18px]" />
               )}
             </button>
 
             {/* Wishlist Button */}
             <button
               onClick={() => navigate("/wishlist")}
-              className="relative p-2 rounded-full transition-opacity hover:opacity-80"
-              style={{ color: rightIconColor }}
+              className={iconBtnClasses}
               aria-label="Wishlist"
             >
-              <HeartIcon className="h-5 w-5" />
+              <HeartIcon className="h-[18px] w-[18px]" />
               {wishlistItemCount > 0 && (
-                <span className="absolute top-0 right-0 block h-4 w-4 rounded-full bg-pink-500 text-white text-[10px] font-medium flex items-center justify-center transform translate-x-1/3 -translate-y-1/3">
+                <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-brand-coral text-[10px] font-bold text-white flex items-center justify-center leading-none">
                   {wishlistItemCount}
                 </span>
               )}
@@ -549,42 +563,48 @@ export const Header: React.FC<HeaderProps> = ({
 
             {/* Shopping Cart Button */}
             <button
-              onClick={() => navigate("/cart")}
-              className="relative p-2 rounded-full transition-opacity hover:opacity-80"
-              style={{ color: rightIconColor }}
+              onClick={openCart}
+              className={iconBtnClasses}
               aria-label="Shopping cart"
             >
               <div
                 key={cartAnimationKey}
                 className={cartAnimationKey > 0 ? "animate-cartBump" : ""}
               >
-                <ShoppingBagIcon
-                  className={`h-5 w-5 ${
-                    cartItemCount > 0 ? "text-pink-500" : ""
-                  }`}
-                />
+                <ShoppingBagIcon className="h-[18px] w-[18px]" />
               </div>
               {cartItemCount > 0 && (
-                <span className="absolute top-0 right-0 block h-4 w-4 rounded-full bg-pink-500 text-white text-[10px] font-medium flex items-center justify-center transform translate-x-1/3 -translate-y-1/3 animate-heartbeat shadow-lg">
+                <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-brand-coral text-[10px] font-bold text-white flex items-center justify-center leading-none">
                   {cartItemCount}
                 </span>
               )}
             </button>
 
-            {/* User Menu or Sign In Button - Desktop Only */}
+            {/* Hamburger Menu Button - Mobile Only */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className={`md:hidden ${iconBtnClasses}`}
+              aria-label="Toggle menu"
+            >
+              <HamburgerIcon className="w-5 h-5" />
+            </button>
+              </div>
+            </div>
+
+            {/* Account — separate pill, mirrors center nav styling */}
             {isAuthenticated && user ? (
               <div className="relative hidden md:block">
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className={userButtonClasses}
+                  className={accountButtonClasses}
                   aria-label="User menu"
                 >
-                  <UserIcon className="h-5 w-5" />
-                  <span className="hidden sm:inline max-w-[100px] truncate">
+                  <UserIcon className="h-[18px] w-[18px]" />
+                  <span className="max-w-[88px] truncate">
                     {user.name || user.email.split("@")[0]}
                   </span>
                   <ChevronDownIcon
-                    className={`h-4 w-4 transition-transform ${userMenuOpen ? "rotate-180" : ""}`}
+                    className={`h-3.5 w-3.5 opacity-70 transition-transform ${userMenuOpen ? "rotate-180" : ""}`}
                   />
                 </button>
 
@@ -645,29 +665,13 @@ export const Header: React.FC<HeaderProps> = ({
             ) : (
               <Link
                 to="/auth"
-                className={`hidden md:inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-full transition-all duration-200 ${
-                  useHeroNavStyle
-                    ? "bg-white/15 text-white hover:bg-white/25 border border-white/20"
-                    : theme === "dark"
-                    ? "bg-white/15 text-white hover:bg-white/25 border border-white/20"
-                    : "bg-slate-800 text-white hover:bg-slate-900 shadow-md"
-                }`}
+                className={accountPillClasses}
                 aria-label="Sign in or Sign up"
               >
-                <UserIcon className="h-5 w-5" />
-                <span className="hidden sm:inline">Sign In</span>
+                <UserIcon className="h-[18px] w-[18px] flex-shrink-0" />
+                <span>Sign In</span>
               </Link>
             )}
-
-            {/* Hamburger Menu Button - Mobile Only */}
-            <button
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-2 rounded-lg transition-opacity hover:opacity-80"
-              style={{ color: rightIconColor }}
-              aria-label="Toggle menu"
-            >
-              <HamburgerIcon className="w-6 h-6" />
-            </button>
           </div>
         </div>
       </header>

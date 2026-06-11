@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Button, Input, Select } from '../components/ui';
+import { Button, Input } from '../components/ui';
 import { PaymentMethodSelector } from '../components/PaymentMethodSelector';
-import { UserIcon, MailIcon, SmartphoneIcon, MapPinIcon } from '../components/icons';
+import { UserIcon, MailIcon, SmartphoneIcon, MapPinIcon, ChevronDownIcon } from '../components/icons';
 import { useToast } from '../context/ToastContext';
 import api from '../services/api';
 import { useApp } from '../context/AppContext';
@@ -179,7 +179,7 @@ const CheckoutForm: React.FC<{
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-medium text-brand-primary">Delivery Details</h2>
+              <h2 className="font-playfair text-xl font-medium tracking-tight text-brand-primary">Delivery Details</h2>
               <p className="text-xs text-brand-secondary mt-1">Review your contact and shipping information.</p>
             </div>
             <Button
@@ -199,7 +199,7 @@ const CheckoutForm: React.FC<{
                 <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center">
                   <UserIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 </div>
-                <h3 className="text-sm font-semibold text-brand-primary uppercase tracking-wide">Contact Information</h3>
+                <h3 className="text-[11px] font-semibold text-brand-primary uppercase tracking-[0.22em]">Contact Information</h3>
               </div>
               <div className="ml-10 space-y-2">
                 <div className="flex items-center gap-2">
@@ -226,7 +226,7 @@ const CheckoutForm: React.FC<{
                 <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
                   <MapPinIcon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                 </div>
-                <h3 className="text-sm font-semibold text-brand-primary uppercase tracking-wide">Shipping Address</h3>
+                <h3 className="text-[11px] font-semibold text-brand-primary uppercase tracking-[0.22em]">Shipping Address</h3>
               </div>
               <div className="ml-10 space-y-2">
                 <p className="text-sm text-brand-primary font-medium">
@@ -244,7 +244,7 @@ const CheckoutForm: React.FC<{
         <>
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-medium text-brand-primary">Contact Information</h2>
+              <h2 className="font-playfair text-xl font-medium tracking-tight text-brand-primary">Contact Information</h2>
             </div>
             <div className="mt-4 grid grid-cols-1 gap-y-6 sm:grid-cols-2 sm:gap-x-4">
               <div>
@@ -302,33 +302,43 @@ const CheckoutForm: React.FC<{
                 <label htmlFor="phone" className="block text-sm font-medium text-brand-secondary mb-1">
                   Phone Number <span className="text-red-500">*</span>
                 </label>
-                <div className="flex gap-2">
-                  <div className="w-32">
-                    <Select
-                      options={countryCodes.map(country => ({
-                        value: country.dialCode,
-                        label: `${country.flag} ${country.dialCode}`
-                      }))}
+                <div
+                  className={`flex items-center w-full rounded-lg border-2 bg-white dark:bg-brand-surface shadow-sm transition-all overflow-hidden ${
+                    errors.phone || errors.countryCode
+                      ? 'border-red-500 focus-within:ring-2 focus-within:ring-red-500/40'
+                      : 'border-gray-400 dark:border-white/40 hover:border-gray-500 dark:hover:border-white/50 focus-within:ring-2 focus-within:ring-purple-500 focus-within:border-purple-500 dark:focus-within:ring-brand-accent dark:focus-within:border-brand-accent'
+                  } ${!isEditing ? 'opacity-50' : ''}`}
+                >
+                  <div className="relative flex-shrink-0">
+                    <select
+                      name="countryCode"
                       value={formData.countryCode}
-                      onChange={handleCountryCodeChange}
+                      onChange={(e) => handleCountryCodeChange(e.target.value)}
                       disabled={!isEditing}
-                      className={errors.countryCode ? 'border-red-500' : ''}
-                    />
+                      aria-label="Country code"
+                      className="h-10 appearance-none bg-transparent pl-3 pr-8 text-sm font-medium text-brand-primary focus:outline-none focus:ring-0 cursor-pointer disabled:cursor-not-allowed"
+                    >
+                      {countryCodes.map((country) => (
+                        <option key={country.code} value={country.dialCode}>
+                          {country.flag} {country.dialCode}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDownIcon className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-secondary" />
                   </div>
-                  <div className="flex-1">
-                    <Input 
-                      type="tel" 
-                      name="phone" 
-                      id="phone" 
-                      value={formData.phone} 
-                      onChange={handleChange}
-                      disabled={!isEditing}
-                      placeholder="Enter phone number"
-                      className={errors.phone ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}
-                      aria-invalid={!!errors.phone}
-                      aria-describedby={errors.phone ? 'phone-error' : undefined}
-                    />
-                  </div>
+                  <div className="w-px h-6 bg-gray-300 dark:bg-white/20 flex-shrink-0" aria-hidden="true" />
+                  <input
+                    type="tel"
+                    name="phone"
+                    id="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    disabled={!isEditing}
+                    placeholder="Enter phone number"
+                    className="flex-1 min-w-0 h-10 border-0 bg-transparent px-3 text-sm text-brand-primary placeholder:text-brand-secondary focus:outline-none focus:ring-0 disabled:cursor-not-allowed"
+                    aria-invalid={!!errors.phone}
+                    aria-describedby={errors.phone ? 'phone-error' : undefined}
+                  />
                 </div>
                 {errors.countryCode && <p className="text-red-500 text-sm mt-1">{errors.countryCode}</p>}
                 {errors.phone && <p id="phone-error" className="text-red-500 text-sm mt-1">{errors.phone}</p>}
@@ -336,7 +346,7 @@ const CheckoutForm: React.FC<{
             </div>
           </div>
           <div>
-            <h2 className="text-lg font-medium text-brand-primary">Shipping Address</h2>
+            <h2 className="font-playfair text-xl font-medium tracking-tight text-brand-primary">Shipping Address</h2>
             <div className="mt-4 grid grid-cols-1 gap-y-6 sm:grid-cols-2 sm:gap-x-4">
               <div className="sm:col-span-2">
                 <label htmlFor="address" className="block text-sm font-medium text-brand-secondary">
@@ -739,7 +749,7 @@ export const CheckoutPage: React.FC = () => {
   if (cart.length === 0) {
     return (
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-        <h1 className="text-2xl font-bold tracking-tight text-brand-primary">Your cart is empty.</h1>
+        <h1 className="font-playfair text-2xl font-medium tracking-tight text-brand-primary">Your cart is empty.</h1>
         <Button onClick={() => navigate('/')} className="mt-6">Go to Homepage</Button>
       </div>
     );
@@ -748,8 +758,8 @@ export const CheckoutPage: React.FC = () => {
   return (
     <div className="bg-brand-bg">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12">
-          <main className="lg:col-span-1 bg-brand-surface p-8 rounded-lg shadow-sm border border-white/10">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-x-12">
+          <main className="lg:col-span-3 bg-brand-surface p-8 rounded-lg shadow-sm border border-white/10">
             {isSubmitting ? (
               <div className="text-center py-10">
                 <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mb-4"></div>
@@ -764,7 +774,7 @@ export const CheckoutPage: React.FC = () => {
                 {/* Address Selection for Logged-in Users */}
                 {isAuthenticated && savedAddresses.length > 0 && !useNewAddress && (
                   <div className="mb-6">
-                    <h2 className="text-lg font-medium text-brand-primary mb-4">Select Delivery Address</h2>
+                    <h2 className="font-playfair text-xl font-medium tracking-tight text-brand-primary mb-4">Select Delivery Address</h2>
                     <div className="space-y-3 mb-4">
                       {savedAddresses.map((address) => (
                         <label
@@ -871,24 +881,24 @@ export const CheckoutPage: React.FC = () => {
           </main>
           
           {/* Order Summary - Desktop (right sidebar, sticky within container) */}
-          <aside className="hidden lg:block lg:col-span-1">
+          <aside className="hidden lg:block lg:col-span-2">
             <div className="bg-brand-surface p-6 rounded-lg shadow-sm border border-white/10 lg:sticky lg:top-8 max-h-[calc(100vh-6rem)] overflow-y-auto">
-              <h2 className="text-lg font-medium text-brand-primary">Order Summary</h2>
+              <h2 className="font-playfair text-xl font-medium tracking-tight text-brand-primary">Order Summary</h2>
               <ul className="mt-6 divide-y divide-white/10">
                 {cart.map(item => (
-                  <li key={item.id} className="flex py-4 space-x-4">
+                  <li key={item.id} className="flex items-center gap-4 py-4">
                     <img
                       src={item.imageUrl || item.main_image_url}
                       alt={item.name || item.title}
-                      className="w-16 h-16 rounded-md object-cover"
+                      className="w-24 h-24 sm:w-28 sm:h-28 rounded-lg object-cover flex-shrink-0 bg-gray-100 border border-gray-200/70 dark:border-white/10"
                       loading="lazy"
                       decoding="async"
                     />
-                    <div className="flex-1">
-                      <h3 className="text-sm font-medium text-brand-primary">{item.name || item.title}</h3>
-                      <p className="text-sm text-brand-secondary">Qty: {item.quantity}</p>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-medium text-brand-primary line-clamp-2">{item.name || item.title}</h3>
+                      <p className="text-sm text-brand-secondary mt-1">Qty: {item.quantity}</p>
                     </div>
-                    <p className="text-sm font-medium text-brand-primary">{formatCurrency(item.price * item.quantity, currency, { showDecimals: false })}</p>
+                    <p className="text-sm font-semibold text-brand-primary flex-shrink-0">{formatCurrency(item.price * item.quantity, currency, { showDecimals: false })}</p>
                   </li>
                 ))}
               </ul>
@@ -941,16 +951,22 @@ export const CheckoutPage: React.FC = () => {
           <div className="lg:hidden mt-8">
             {/* Order Summary */}
             <div className="bg-brand-surface p-6 rounded-lg shadow-sm border border-white/10 mb-6">
-              <h2 className="text-lg font-medium text-brand-primary">Order Summary</h2>
+              <h2 className="font-playfair text-xl font-medium tracking-tight text-brand-primary">Order Summary</h2>
               <ul className="mt-6 divide-y divide-white/10">
                 {cart.map(item => (
-                  <li key={item.id} className="flex py-4 space-x-4">
-                    <img src={item.imageUrl || item.main_image_url} alt={item.name || item.title} className="w-16 h-16 rounded-md object-cover"/>
-                    <div className="flex-1">
-                      <h3 className="text-sm font-medium text-brand-primary">{item.name || item.title}</h3>
-                      <p className="text-sm text-brand-secondary">Qty: {item.quantity}</p>
+                  <li key={item.id} className="flex items-center gap-4 py-4">
+                    <img
+                      src={item.imageUrl || item.main_image_url}
+                      alt={item.name || item.title}
+                      className="w-24 h-24 sm:w-28 sm:h-28 rounded-lg object-cover flex-shrink-0 bg-gray-100 border border-gray-200/70 dark:border-white/10"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-sm font-medium text-brand-primary line-clamp-2">{item.name || item.title}</h3>
+                      <p className="text-sm text-brand-secondary mt-1">Qty: {item.quantity}</p>
                     </div>
-                    <p className="text-sm font-medium text-brand-primary">{formatCurrency(item.price * item.quantity, currency, { showDecimals: false })}</p>
+                    <p className="text-sm font-semibold text-brand-primary flex-shrink-0">{formatCurrency(item.price * item.quantity, currency, { showDecimals: false })}</p>
                   </li>
                 ))}
               </ul>

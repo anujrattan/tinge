@@ -65,7 +65,7 @@ export const ContactPage: React.FC = () => {
   return (
     <div className="animate-fadeIn pb-16">
       {/* Hero Section */}
-      <section className="relative bg-gray-50 dark:bg-brand-surface/30 py-16 border-b border-gray-200 dark:border-white/10">
+      <section className="relative bg-white dark:bg-brand-surface/30 py-16 border-b border-gray-200 dark:border-white/10">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto">
             <h1 className="text-4xl md:text-5xl font-display font-bold tracking-tight text-brand-primary">

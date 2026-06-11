@@ -95,7 +95,7 @@ export const CartPage: React.FC = () => {
   if (cart.length === 0) {
     return (
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-brand-primary">Your Cart is Empty</h1>
+        <h1 className="font-playfair text-3xl font-medium tracking-tight text-brand-primary">Your Cart is Empty</h1>
         <p className="mt-4 text-brand-secondary">Looks like you haven't added anything to your cart yet.</p>
         <Button onClick={() => navigate('/categories')} className="mt-6">Continue Shopping</Button>
       </div>
@@ -104,7 +104,7 @@ export const CartPage: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <h1 className="text-3xl font-bold tracking-tight mb-8 text-brand-primary">Shopping Cart</h1>
+      <h1 className="font-playfair text-3xl md:text-4xl font-medium tracking-tight mb-8 text-brand-primary">Shopping Cart</h1>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
         <div className="lg:col-span-2">
           <ul role="list" className="divide-y divide-white/10 border-t border-b border-white/10">
@@ -157,7 +157,7 @@ export const CartPage: React.FC = () => {
         {/* Order Summary */}
         <div className="lg:col-span-1">
           <div className="bg-brand-surface p-6 rounded-lg shadow-sm border border-white/10">
-            <h2 className="text-lg font-medium text-brand-primary">Order Summary</h2>
+            <h2 className="font-playfair text-xl font-medium tracking-tight text-brand-primary">Order Summary</h2>
             <div className="mt-6 space-y-4">
               <div className="flex items-center justify-between">
                 <p className="text-sm text-brand-secondary">Subtotal</p>
@@ -181,7 +181,7 @@ export const CartPage: React.FC = () => {
       {/* Cross-sell: complement categories */}
       {(loadingRecommendations || recommendedProducts.length > 0) && (
         <div className="mt-16 border-t border-white/10 pt-12">
-          <h2 className="text-2xl font-display font-bold tracking-tight text-brand-primary">
+          <h2 className="font-playfair text-2xl font-medium tracking-tight text-brand-primary">
             Complete the look
           </h2>
           <p className="mt-1 text-sm text-brand-secondary">You might also love these</p>
@@ -200,7 +200,7 @@ export const CartPage: React.FC = () => {
       {/* From your wishlist */}
       {(loadingWishlist || wishlistProducts.length > 0) && (
         <div className="mt-16 border-t border-white/10 pt-12">
-          <h2 className="text-2xl font-display font-bold tracking-tight text-brand-primary">
+          <h2 className="font-playfair text-2xl font-medium tracking-tight text-brand-primary">
             From your wishlist
           </h2>
           {loadingWishlist ? (

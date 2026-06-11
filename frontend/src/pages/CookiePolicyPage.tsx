@@ -8,7 +8,7 @@ export const CookiePolicyPage: React.FC = () => {
   const { consent, updateConsent } = useCookieConsent();
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-brand-bg py-12">
+    <div className="min-h-screen bg-white dark:bg-brand-bg py-12">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-4xl">
         <div className="mb-8">
           <h1 className="text-4xl md:text-5xl font-display font-bold text-brand-primary mb-4">
@@ -242,7 +242,7 @@ export const CookiePolicyPage: React.FC = () => {
               <p className="text-brand-secondary leading-relaxed mb-4">
                 If you have any questions about our use of cookies, please contact us:
               </p>
-              <div className="bg-gray-50 dark:bg-brand-bg p-6 rounded-lg border border-gray-200 dark:border-white/10">
+              <div className="bg-white dark:bg-brand-bg p-6 rounded-lg border border-gray-200 dark:border-white/10">
                 <p className="text-brand-primary font-semibold mb-2">Tinge Clothing</p>
                 <p className="text-brand-secondary">Email: support@tingeclothing.com</p>
                 <p className="text-brand-secondary">Phone: +91-XXXXXXXXXX</p>

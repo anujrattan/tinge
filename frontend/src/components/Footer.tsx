@@ -8,10 +8,39 @@ import {
 } from './icons';
 import { useCookieConsent } from '../context/CookieConsentContext';
 import { CookiePreferencesModal } from './CookiePreferencesModal';
+import { useToast } from '../context/ToastContext';
+import api from '../services/api';
 
 export const Footer: React.FC = () => {
   const [showCookiePreferences, setShowCookiePreferences] = useState(false);
   const { consent, updateConsent } = useCookieConsent();
+  const { showToast } = useToast();
+  const [footerEmail, setFooterEmail] = useState('');
+  const [footerLoading, setFooterLoading] = useState(false);
+  const [footerSubscribed, setFooterSubscribed] = useState(false);
+
+  const handleFooterNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (footerLoading) return;
+
+    const trimmed = footerEmail.trim();
+    if (!trimmed) {
+      showToast('Please enter your email address.', 'error');
+      return;
+    }
+
+    setFooterLoading(true);
+    try {
+      const result = await api.subscribeNewsletter(trimmed, 'homepage_footer');
+      setFooterSubscribed(true);
+      setFooterEmail('');
+      showToast(result.message, 'success');
+    } catch (err: any) {
+      showToast(err?.message || 'Something went wrong. Please try again.', 'error');
+    } finally {
+      setFooterLoading(false);
+    }
+  };
   return (
     <footer className="bg-brand-surface bg-footer-dots bg-footer-dots-size text-brand-secondary">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -154,10 +183,32 @@ export const Footer: React.FC = () => {
           <div className="md:col-span-2 lg:col-span-1">
             <h4 className="font-display font-bold text-brand-primary text-lg mb-4 flex items-center gap-2"><MailIcon className="w-5 h-5 text-brand-accent" /> Stay Updated</h4>
             <p className="text-sm mb-4">Get the latest drops, exclusive offers, and design inspiration delivered to your inbox.</p>
-            <form className="flex items-center">
-              <input type="email" placeholder="Enter your email" className="bg-brand-bg border border-white/20 rounded-l-lg w-full px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-accent"/>
-              <button type="submit" className="bg-brand-accent hover:bg-brand-accent-hover text-white px-3 py-2 rounded-r-lg"><SendIcon className="w-5 h-5"/></button>
-            </form>
+            {footerSubscribed ? (
+              <p className="text-sm text-brand-primary font-medium">
+                You're on the list — we'll be in touch before the next drop.
+              </p>
+            ) : (
+              <form className="flex items-center" onSubmit={handleFooterNewsletterSubmit}>
+                <input
+                  type="email"
+                  name="email"
+                  value={footerEmail}
+                  onChange={(e) => setFooterEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  autoComplete="email"
+                  disabled={footerLoading}
+                  className="bg-brand-bg border border-white/20 rounded-l-lg w-full px-3 py-2 text-sm text-brand-primary placeholder:text-brand-secondary focus:outline-none focus:ring-2 focus:ring-brand-accent disabled:opacity-50"
+                />
+                <button
+                  type="submit"
+                  disabled={footerLoading}
+                  aria-label="Subscribe to newsletter"
+                  className="bg-brand-accent hover:bg-brand-accent-hover text-white px-3 py-2 rounded-r-lg disabled:opacity-50 transition-colors"
+                >
+                  <SendIcon className={`w-5 h-5 ${footerLoading ? 'opacity-50' : ''}`} />
+                </button>
+              </form>
+            )}
              <ul className="grid grid-cols-2 md:grid-cols-1 lg:grid-cols-1 gap-x-4 gap-y-2 mt-4 text-sm">
               <li className="flex items-center gap-2"><GiftIcon className="w-4 h-4 text-[#FF7A59]"/>Exclusive discounts</li>
               <li className="flex items-center gap-2"><LightbulbIcon className="w-4 h-4 text-[#5DA9E9]"/>Design tips & inspiration</li>

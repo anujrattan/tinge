@@ -197,10 +197,10 @@ export const PosterProductFields: React.FC<Props> = ({ formData, setFormData, on
           </select>
         </div>
         <div>
-          <label className="block text-sm font-semibold text-brand-primary mb-2">Qikink product ID / SKU</label>
+          <label className="block text-sm font-semibold text-brand-primary mb-2">Fulfillment product ID / SKU</label>
           <Input
             name="partner_product_id"
-            placeholder="Qikink product or parent SKU"
+            placeholder="Product or parent SKU (from fulfillment dashboard)"
             value={formData.partner_product_id}
             onChange={onFieldChange}
             className="border-2 border-gray-300 dark:border-white/40"
@@ -210,7 +210,7 @@ export const PosterProductFields: React.FC<Props> = ({ formData, setFormData, on
 
       <div>
         <label className="block text-sm font-semibold text-brand-primary mb-2">
-          Size pricing &amp; Qikink mapping
+          Size pricing &amp; fulfillment reference
         </label>
         <p className="text-xs text-brand-secondary mb-2">
           Set a selling price for each size. Listing cards use the lowest price (“From …”).
@@ -282,7 +282,7 @@ export const PosterProductFields: React.FC<Props> = ({ formData, setFormData, on
           </table>
         </div>
         <p className="text-[11px] text-brand-secondary mt-1">
-          Map each included size to Qikink SKU/variant ID. Prices apply at checkout for the size the customer picks.
+          SKU and Variant ID are for reference — enter these from your fulfillment dashboard when placing orders manually.
         </p>
       </div>
     </div>

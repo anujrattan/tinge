@@ -23,6 +23,8 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ activeTab, onAddNew })
         return 'Analytics';
       case 'content':
         return 'Content';
+      case 'systems':
+        return 'Systems Go';
       default:
         return '';
     }
@@ -42,13 +44,18 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ activeTab, onAddNew })
         return 'Monitor order flow, revenue and partner performance';
       case 'content':
         return 'Create and update blog posts and FAQ entries for SEO';
+      case 'systems':
+        return 'Check Supabase, Redis, payments, and integration health';
       default:
         return '';
     }
   };
 
   const showAddButton =
-    activeTab !== 'orders' && activeTab !== 'analytics' && activeTab !== 'content';
+    activeTab !== 'orders' &&
+    activeTab !== 'analytics' &&
+    activeTab !== 'content' &&
+    activeTab !== 'systems';
   const addButtonLabel =
     activeTab === 'products'
       ? 'Product'
