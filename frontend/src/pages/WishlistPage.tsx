@@ -294,14 +294,6 @@ export const WishlistPage: React.FC = () => {
           );
         })}
       </div>
-
-      {/* Info Message */}
-      <div className="mt-8 p-4 bg-purple-500/10 border border-purple-500/30 rounded-lg">
-        <p className="text-sm text-brand-secondary">
-          <strong className="text-brand-primary">Tip:</strong> Items in your wishlist will be saved 
-          {isAuthenticated ? ' to your account' : ' in your browser'} so you can come back to them anytime!
-        </p>
-      </div>
     </div>
   );
 };

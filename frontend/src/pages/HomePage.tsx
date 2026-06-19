@@ -234,7 +234,7 @@ export const HomePage: React.FC = () => {
 
                 {/* Subheading */}
                 <p
-                  className="mt-3 md:mt-6 text-sm sm:text-base md:text-2xl max-w-sm md:max-w-2xl font-sans leading-relaxed"
+                  className="mt-3 md:mt-6 text-sm sm:text-base md:text-2xl max-w-sm md:max-w-2xl leading-relaxed"
                   style={{ color: "rgba(247,243,234,0.80)" }}
                 >
                   Retro-inspired graphics and collectible drops made for people who never stay still.
@@ -280,7 +280,7 @@ export const HomePage: React.FC = () => {
                   Collection
                 </span>
               </h2>
-              <p className="mt-2 text-brand-secondary font-sans">
+              <p className="mt-2 text-brand-secondary leading-relaxed">
                 Explore our curated drops – each collection blends styles, colors, and fits.
               </p>
             </div>
@@ -371,7 +371,7 @@ export const HomePage: React.FC = () => {
                   Sellers
                 </span>
               </h2>
-              <p className="mt-2 text-brand-secondary font-sans">
+              <p className="mt-2 text-brand-secondary leading-relaxed">
                 Discover the pieces everyone is talking about.
               </p>
             </div>
@@ -421,7 +421,7 @@ export const HomePage: React.FC = () => {
                   Arrivals
                 </span>
               </h2>
-              <p className="mt-2 text-brand-secondary font-sans">
+              <p className="mt-2 text-brand-secondary leading-relaxed">
                 Be the first to discover our latest additions.
               </p>
             </div>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button, Card, Input } from '../components/ui';
 import api from '../services/api';
 import { authService } from '../services/auth';
@@ -30,12 +30,11 @@ export const AuthPage: React.FC = () => {
 
       authService.setToken(response.token);
       setUser(response.user);
-      
-      // Redirect based on user role
+
       if (response.user.role === 'admin') {
         navigate('/admin');
       } else {
-        navigate('/'); // Redirect to home for regular users
+        navigate('/');
       }
     } catch (err: any) {
       setError(err.message || `Failed to ${isSignup ? 'sign up' : 'sign in'}. Please try again.`);
@@ -44,32 +43,40 @@ export const AuthPage: React.FC = () => {
     }
   };
 
+  const switchMode = (signup: boolean) => {
+    setIsSignup(signup);
+    setError('');
+  };
+
   return (
-    <div className="min-h-[60vh] flex items-center justify-center bg-brand-bg py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-[75vh] flex items-center justify-center bg-gradient-to-b from-white to-[#FAFAFA] dark:from-brand-bg dark:to-brand-surface py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <h2 className="text-3xl font-display font-extrabold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
-            {isSignup ? 'Create Account' : 'Welcome Back'}
-          </h2>
-          <p className="mt-2 text-sm text-brand-secondary">
-            {isSignup 
-              ? 'Join us to start shopping premium apparel' 
-              : 'Sign in to your account to continue'}
+        <div className="text-center space-y-3">
+          <Link to="/" className="inline-flex justify-center mb-2" aria-label="Tinge Clothing home">
+            <img
+              src={encodeURI('/Tinge Clothing - Logo - No background.png')}
+              alt="Tinge Clothing"
+              className="h-14 w-auto object-contain"
+            />
+          </Link>
+          <h1 className="font-playfair text-3xl md:text-4xl font-medium tracking-tight text-brand-primary">
+            {isSignup ? 'Create your account' : 'Welcome back'}
+          </h1>
+          <p className="text-sm text-brand-secondary leading-relaxed max-w-sm mx-auto">
+            {isSignup
+              ? 'Join Tinge to save wishlists, track orders, and checkout faster.'
+              : 'Sign in to access your orders, wishlist, and saved details.'}
           </p>
         </div>
-        
-        <Card className="p-8">
-          {/* Toggle between Sign In and Sign Up */}
-          <div className="flex gap-2 mb-6 p-1 bg-brand-surface rounded-lg">
+
+        <Card className="p-6 sm:p-8 border-gray-200/80 dark:border-white/10 shadow-sm">
+          <div className="flex gap-1.5 p-1 mb-8 rounded-xl bg-gray-100 dark:bg-brand-bg/60 border border-gray-200/60 dark:border-white/10">
             <button
               type="button"
-              onClick={() => {
-                setIsSignup(false);
-                setError('');
-              }}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+              onClick={() => switchMode(false)}
+              className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
                 !isSignup
-                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
+                  ? 'bg-brand-accent text-white shadow-md shadow-brand-accent/20'
                   : 'text-brand-secondary hover:text-brand-primary'
               }`}
             >
@@ -77,13 +84,10 @@ export const AuthPage: React.FC = () => {
             </button>
             <button
               type="button"
-              onClick={() => {
-                setIsSignup(true);
-                setError('');
-              }}
-              className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+              onClick={() => switchMode(true)}
+              className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
                 isSignup
-                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
+                  ? 'bg-brand-accent text-white shadow-md shadow-brand-accent/20'
                   : 'text-brand-secondary hover:text-brand-primary'
               }`}
             >
@@ -91,10 +95,10 @@ export const AuthPage: React.FC = () => {
             </button>
           </div>
 
-          <form className="space-y-6" onSubmit={handleSubmit}>
+          <form className="space-y-5" onSubmit={handleSubmit}>
             {isSignup && (
-              <div>
-                <label htmlFor="name" className="block text-sm font-semibold text-brand-primary mb-2">
+              <div className="space-y-2">
+                <label htmlFor="name" className="block text-sm font-medium text-brand-primary">
                   Full Name <span className="text-red-400">*</span>
                 </label>
                 <Input
@@ -109,9 +113,9 @@ export const AuthPage: React.FC = () => {
                 />
               </div>
             )}
-            
-            <div>
-              <label htmlFor="email" className="block text-sm font-semibold text-brand-primary mb-2">
+
+            <div className="space-y-2">
+              <label htmlFor="email" className="block text-sm font-medium text-brand-primary">
                 Email <span className="text-red-400">*</span>
               </label>
               <Input
@@ -125,9 +129,9 @@ export const AuthPage: React.FC = () => {
                 onChange={(e) => setEmail(e.target.value)}
               />
             </div>
-            
-            <div>
-              <label htmlFor="password" className="block text-sm font-semibold text-brand-primary mb-2">
+
+            <div className="space-y-2">
+              <label htmlFor="password" className="block text-sm font-medium text-brand-primary">
                 Password <span className="text-red-400">*</span>
               </label>
               <Input
@@ -141,33 +145,40 @@ export const AuthPage: React.FC = () => {
                 onChange={(e) => setPassword(e.target.value)}
               />
               {isSignup && (
-                <p className="mt-1 text-xs text-brand-secondary">
-                  Password must be at least 6 characters long
-                </p>
+                <p className="text-xs text-brand-secondary">Password must be at least 6 characters long.</p>
               )}
             </div>
-            
+
             {error && (
-              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20">
-                <p className="text-red-400 text-sm">{error}</p>
+              <div className="p-3.5 rounded-lg bg-red-500/10 border border-red-500/20">
+                <p className="text-red-500 dark:text-red-400 text-sm">{error}</p>
               </div>
             )}
-            
-            <div>
-              <Button 
-                type="submit" 
-                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 shadow-lg hover:shadow-xl" 
-                disabled={loading}
-              >
-                {loading 
-                  ? (isSignup ? 'Creating account...' : 'Signing in...') 
-                  : (isSignup ? 'Create Account' : 'Sign In')}
-              </Button>
-            </div>
+
+            <Button type="submit" className="w-full" size="lg" disabled={loading}>
+              {loading
+                ? isSignup
+                  ? 'Creating account…'
+                  : 'Signing in…'
+                : isSignup
+                  ? 'Create Account'
+                  : 'Sign In'}
+            </Button>
           </form>
+
+          <p className="mt-6 text-center text-xs text-brand-secondary leading-relaxed">
+            By continuing, you agree to our{' '}
+            <Link to="/terms-of-service" className="text-brand-accent hover:text-brand-accent-hover font-medium">
+              Terms of Service
+            </Link>{' '}
+            and{' '}
+            <Link to="/privacy-policy" className="text-brand-accent hover:text-brand-accent-hover font-medium">
+              Privacy Policy
+            </Link>
+            .
+          </p>
         </Card>
       </div>
     </div>
   );
 };
-

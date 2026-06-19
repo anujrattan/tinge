@@ -18,8 +18,8 @@ export const ReturnsPage: React.FC = () => {
     {
       icon: <MailIcon className="w-6 h-6 text-brand-accent" />,
       step: '2',
-      title: 'Contact Us',
-      description: 'Email us at returns@podstore.com or use our contact form to initiate a return.'
+      title: 'Request from your order',
+      description: 'Open your order details page and tap "Request return" within 7 days of delivery.'
     },
     {
       icon: <Undo2Icon className="w-6 h-6 text-brand-accent" />,
@@ -61,7 +61,7 @@ export const ReturnsPage: React.FC = () => {
             <h2 className="text-2xl font-display font-bold text-brand-primary mb-4">Return Policy</h2>
             <div className="space-y-4 text-brand-secondary">
               <p>
-                We offer a <strong className="text-brand-primary">30-day return policy</strong> on all items. 
+                We offer a <strong className="text-brand-primary">7-day return policy</strong> on eligible items. 
                 To be eligible for a return, your item must be:
               </p>
               <ul className="list-disc list-inside space-y-2 ml-4">
@@ -107,7 +107,7 @@ export const ReturnsPage: React.FC = () => {
           <div className="bg-brand-surface/50 rounded-xl border border-white/10 p-8 mb-8">
             <h2 className="text-2xl font-display font-bold text-brand-primary mb-4">Exchanges</h2>
             <p className="text-brand-secondary mb-4">
-              Need a different size or color? We offer free exchanges within 30 days of purchase. 
+              Need a different size or color? We offer exchanges within 7 days of delivery on eligible items. 
               Simply follow the return process and specify your exchange preference when contacting us.
             </p>
             <p className="text-brand-secondary">

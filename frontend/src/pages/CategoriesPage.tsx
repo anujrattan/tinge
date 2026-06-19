@@ -25,23 +25,18 @@ export const CategoriesPage: React.FC = () => {
     fetchCategories();
   }, []);
 
-  // Organize categories into bento groups with randomization
   const bentoGroups = useMemo(() => {
     const groups: BentoGroup[] = [];
     const remainder: Category[] = [];
-    
-    // Filter out any invalid categories first
-    const validCategories = categories.filter(cat => 
+
+    const validCategories = categories.filter(cat =>
       cat && cat.id && cat.name && cat.slug && (cat.imageUrl || (cat as any).image_url)
     );
-    
-    // Process categories in groups of 3
+
     for (let i = 0; i < validCategories.length; i += 3) {
       const group = validCategories.slice(i, i + 3);
-      
+
       if (group.length === 3) {
-        // Randomize which one is large (deterministic based on group index and category IDs)
-        // Use a simple hash-like function for variety
         const groupIndex = i / 3;
         const hash = group.reduce((acc, cat) => {
           const idNum = parseInt(cat.id) || 0;
@@ -50,30 +45,33 @@ export const CategoriesPage: React.FC = () => {
         const largeIndex = hash % 3;
         const large = group[largeIndex];
         const small = group.filter((_, idx) => idx !== largeIndex);
-        
-        // Only add group if large category is valid
+
         if (large) {
           groups.push({ large, small });
         }
       } else {
-        // Remainder categories (standalone)
         remainder.push(...group);
       }
     }
-    
+
     return { groups, remainder };
   }, [categories]);
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 animate-fadeIn">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 animate-fadeIn">
+        <div className="mb-12">
+          <div className="h-3 w-20 bg-gray-200 dark:bg-white/10 rounded animate-pulse mb-4" />
+          <div className="h-9 w-64 bg-gray-200 dark:bg-white/10 rounded animate-pulse mb-3" />
+          <div className="h-4 w-48 bg-gray-200 dark:bg-white/10 rounded animate-pulse" />
+        </div>
         <div className="space-y-6">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="grid grid-cols-1 md:grid-cols-12 gap-6">
-              <div className="md:col-span-7 bg-brand-surface animate-pulse h-[500px] rounded-2xl"></div>
-              <div className="md:col-span-5 flex flex-col gap-6">
-                <div className="bg-brand-surface animate-pulse h-[242px] rounded-2xl"></div>
-                <div className="bg-brand-surface animate-pulse h-[242px] rounded-2xl"></div>
+            <div key={i} className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
+              <div className="md:col-span-7 bg-gray-100 dark:bg-white/5 border border-gray-200/70 dark:border-white/8 animate-pulse h-[400px] md:h-[500px]" />
+              <div className="md:col-span-5 flex flex-col gap-4 md:gap-6">
+                <div className="bg-gray-100 dark:bg-white/5 border border-gray-200/70 dark:border-white/8 animate-pulse h-[240px] md:h-[242px]" />
+                <div className="bg-gray-100 dark:bg-white/5 border border-gray-200/70 dark:border-white/8 animate-pulse h-[240px] md:h-[242px]" />
               </div>
             </div>
           ))}
@@ -85,30 +83,19 @@ export const CategoriesPage: React.FC = () => {
   const renderCategoryCard = (
     category: Category | null | undefined,
     isLarge: boolean = false,
-    index?: number
   ) => {
-    // Safety check: return null if category is invalid
-    if (!category) {
-      return null;
-    }
+    if (!category) return null;
 
-    // Handle both snake_case and camelCase formats (fallback)
     const imageUrl = category.imageUrl || (category as any).image_url || '';
-    
-    if (!imageUrl) {
-      return null; // Skip rendering if no image URL
-    }
+    if (!imageUrl) return null;
 
-    const heightClass = isLarge 
-      ? 'h-[400px] md:h-[500px]' 
+    const heightClass = isLarge
+      ? 'h-[400px] md:h-[500px]'
       : 'h-[240px] md:h-[242px]';
-    const textSize = isLarge 
-      ? 'text-4xl md:text-5xl' 
-      : 'text-2xl md:text-3xl';
+    const titleSize = isLarge
+      ? 'text-3xl md:text-4xl'
+      : 'text-xl md:text-2xl';
     const padding = isLarge ? 'p-8' : 'p-6';
-    const description = isLarge 
-      ? 'Express yourself with bold designs and premium quality.'
-      : null;
 
     const hasImageError = failedImages.has(category.id);
     const shouldShowImage = imageUrl && !hasImageError;
@@ -116,39 +103,37 @@ export const CategoriesPage: React.FC = () => {
     return (
       <div
         key={category.id}
-        className={`relative group overflow-hidden rounded-2xl cursor-pointer ${heightClass}`}
+        className={`relative group overflow-hidden cursor-pointer border border-gray-200/60 dark:border-white/8 bg-brand-surface ${heightClass}`}
         onClick={() => navigate(`/category/${category.slug}`)}
       >
         {shouldShowImage ? (
           <img
             src={imageUrl}
             alt={category.name}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
             onError={() => {
               setFailedImages(prev => new Set(prev).add(category.id));
             }}
             loading="lazy"
           />
         ) : (
-          <div className="w-full h-full bg-gray-300 dark:bg-gray-700 flex items-center justify-center">
-            <span className="text-gray-500 dark:text-gray-400 text-sm">No image</span>
+          <div className="w-full h-full bg-gray-100 dark:bg-white/5 flex items-center justify-center">
+            <span className="text-brand-secondary text-sm">No image</span>
           </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent group-hover:from-black/90 transition-all duration-300"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent group-hover:from-black/85 transition-all duration-300" />
         <div className={`absolute bottom-0 left-0 right-0 ${padding}`}>
-          <h3 className={`${textSize} font-display font-bold text-white ${isLarge ? 'mb-3' : 'mb-2'}`}>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-white/70 mb-2">
+            Category
+          </p>
+          <h3 className={`${titleSize} font-playfair font-medium text-white leading-tight mb-3`}>
             {category.name}
           </h3>
-          {description && (
-            <p className="text-white/90 text-lg mb-4 max-w-md">
-              {description}
-            </p>
-          )}
-          <div className="flex items-center gap-2 text-white/90 group-hover:translate-x-2 transition-transform duration-300">
-            <span className={isLarge ? 'font-semibold' : 'text-sm font-medium'}>
-              {isLarge ? 'Shop Now' : 'Explore'}
+          <div className="flex items-center gap-2 text-white/90 group-hover:translate-x-1 transition-transform duration-300">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.15em]">
+              {isLarge ? 'Shop now' : 'Explore'}
             </span>
-            <ArrowRightIcon className={isLarge ? 'w-5 h-5' : 'w-4 h-4'} />
+            <ArrowRightIcon className={isLarge ? 'w-4 h-4' : 'w-3.5 h-3.5'} />
           </div>
         </div>
       </div>
@@ -156,55 +141,50 @@ export const CategoriesPage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 animate-fadeIn">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 animate-fadeIn pb-16">
       <div className="mb-12 text-left">
-        <h1 className="text-3xl md:text-4xl font-display font-bold tracking-tight text-brand-primary mb-2">
-          Shop By <span className="bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">Category</span>
+        <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-brand-secondary mb-3">
+          Browse
+        </p>
+        <h1 className="font-playfair text-3xl md:text-4xl font-medium tracking-tight text-brand-primary">
+          Shop by{' '}
+          <span className="bg-gradient-to-r from-[#FF7A59] to-[#FFC371] bg-clip-text text-transparent">
+            Category
+          </span>
         </h1>
-        <p className="text-brand-secondary font-sans">Find the perfect collection for your style.</p>
+        <p className="mt-2 text-brand-secondary font-sans">
+          Find the perfect collection for your style.
+        </p>
       </div>
-      
-      <div className="space-y-6">
-        {/* Bento Groups */}
+
+      <div className="space-y-4 md:space-y-6">
         {bentoGroups.groups.map((group, groupIndex) => {
-          // Safety check: skip if group is invalid
           if (!group || !group.large || !group.small || group.small.length === 0) {
             return null;
           }
 
-          // Alternate layout: odd groups (0, 2, 4...) = large left, even groups (1, 3, 5...) = large right
           const isLargeOnLeft = groupIndex % 2 === 0;
-          
+
           return (
-            <div key={groupIndex} className="grid grid-cols-1 md:grid-cols-12 gap-6">
+            <div key={groupIndex} className="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-6">
               {isLargeOnLeft ? (
                 <>
-                  {/* Large Card on Left */}
                   <div className="md:col-span-7">
                     {renderCategoryCard(group.large, true)}
                   </div>
-                  
-                  {/* Two Small Cards on Right */}
-                  <div className="md:col-span-5 flex flex-col gap-6">
+                  <div className="md:col-span-5 flex flex-col gap-4 md:gap-6">
                     {group.small
-                      .filter(cat => cat) // Filter out any null/undefined categories
-                      .map((category, idx) => 
-                        renderCategoryCard(category, false, idx)
-                      )}
+                      .filter(cat => cat)
+                      .map((category) => renderCategoryCard(category, false))}
                   </div>
                 </>
               ) : (
                 <>
-                  {/* Two Small Cards on Left */}
-                  <div className="md:col-span-5 flex flex-col gap-6">
+                  <div className="md:col-span-5 flex flex-col gap-4 md:gap-6">
                     {group.small
-                      .filter(cat => cat) // Filter out any null/undefined categories
-                      .map((category, idx) => 
-                        renderCategoryCard(category, false, idx)
-                      )}
+                      .filter(cat => cat)
+                      .map((category) => renderCategoryCard(category, false))}
                   </div>
-                  
-                  {/* Large Card on Right */}
                   <div className="md:col-span-7">
                     {renderCategoryCard(group.large, true)}
                   </div>
@@ -214,14 +194,11 @@ export const CategoriesPage: React.FC = () => {
           );
         })}
 
-        {/* Standalone Remainder Cards */}
         {bentoGroups.remainder.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {bentoGroups.remainder
-              .filter(cat => cat) // Filter out any null/undefined categories
-              .map((category) => 
-                renderCategoryCard(category, false)
-              )}
+              .filter(cat => cat)
+              .map((category) => renderCategoryCard(category, false))}
           </div>
         )}
       </div>

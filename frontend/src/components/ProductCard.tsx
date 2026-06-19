@@ -129,12 +129,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       </div>
       <div className="p-2 flex flex-col min-w-0">
         {categoryName && (
-          <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-purple-600 truncate">
+          <p className="text-[10px] sm:text-xs font-medium uppercase tracking-[0.12em] text-purple-600 truncate">
             {categoryName}
           </p>
         )}
         {(product.title || product.name) && (
-          <h3 className="text-xs sm:text-sm font-bold text-card-light-text-primary truncate mt-0.5">
+          <h3 className="font-playfair text-sm sm:text-base font-medium text-card-light-text-primary truncate mt-0.5 leading-snug">
             {product.title || product.name}
           </h3>
         )}
@@ -155,7 +155,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               From
             </span>
           )}
-          <p className="text-base sm:text-lg font-extrabold text-pink-500 whitespace-nowrap">
+          <p className="text-base sm:text-lg font-semibold tracking-tight text-pink-500 whitespace-nowrap">
             {formatCurrency(displayFinalPrice, currency, { showDecimals: false })}
           </p>
           {hasAnyDiscount && (

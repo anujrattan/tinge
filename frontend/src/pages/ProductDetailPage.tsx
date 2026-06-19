@@ -80,9 +80,29 @@ export const ProductDetailPage: React.FC = () => {
   const [showSizeGuide, setShowSizeGuide] = useState(false);
   const [sizeError, setSizeError] = useState(false);
   const sizeRef = useRef<HTMLDivElement>(null);
+  const colorSwitchRef = useRef(false);
+
+  const applyColorVariant = (variant: Product) => {
+    setProduct(variant);
+    setSelectedImage(variant.main_image_url || variant.imageUrl || '');
+    setSelectedSize(variant.variants?.sizes?.[0] ?? '');
+    setSizeError(false);
+    setAddedToCart(false);
+  };
+
+  const handleColorVariantSelect = (variant: Product) => {
+    if (variant.id === product?.id) return;
+    colorSwitchRef.current = true;
+    applyColorVariant(variant);
+    navigate(`/product/${variant.id}`, { replace: true });
+  };
 
   useEffect(() => {
     if (!id) return;
+    if (colorSwitchRef.current) {
+      colorSwitchRef.current = false;
+      return;
+    }
     const fetchProduct = async () => {
       setLoading(true);
       const data = await api.getProductById(id);
@@ -403,21 +423,28 @@ export const ProductDetailPage: React.FC = () => {
                     colorVariantProducts.map((variant) => {
                       const isActive = variant.id === product.id;
                       const variantColor = variant.color || '';
+                      const colorLabel = getColorName(variantColor);
                       return (
-                        <button
-                          key={variant.id}
-                          type="button"
-                          onClick={() => { if (!isActive) navigate(`/product/${variant.id}`); }}
-                          className={`w-8 h-8 rounded-full border-2 flex-shrink-0 transition-all ${
-                            isActive
-                              ? 'border-brand-ink dark:border-brand-cream shadow ring-2 ring-brand-ink/15 dark:ring-brand-cream/15 cursor-default'
-                              : 'border-white/50 opacity-60 hover:opacity-100 hover:border-brand-ink/40 dark:hover:border-brand-cream/40'
-                          }`}
-                          style={{ backgroundColor: getCssColorValue(variantColor) }}
-                          title={`${getColorName(variantColor)}${isActive ? ' (current)' : ''}`}
-                          aria-label={`View ${getColorName(variantColor)} color`}
-                          disabled={isActive}
-                        />
+                        <div key={variant.id} className="relative group">
+                          <button
+                            type="button"
+                            onClick={() => { if (!isActive) handleColorVariantSelect(variant); }}
+                            className={`w-8 h-8 rounded-full border-2 flex-shrink-0 transition-all ${
+                              isActive
+                                ? 'border-brand-ink dark:border-brand-cream shadow ring-2 ring-brand-ink/15 dark:ring-brand-cream/15 cursor-default'
+                                : 'border-white/50 opacity-60 hover:opacity-100 hover:border-brand-ink/40 dark:hover:border-brand-cream/40'
+                            }`}
+                            style={{ backgroundColor: getCssColorValue(variantColor) }}
+                            aria-label={`View ${colorLabel} color`}
+                            disabled={isActive}
+                          />
+                          <span
+                            role="tooltip"
+                            className="pointer-events-none absolute bottom-[calc(100%+6px)] left-1/2 -translate-x-1/2 z-20 whitespace-nowrap rounded px-2 py-1 text-[11px] font-medium leading-none bg-brand-ink text-white dark:bg-brand-cream dark:text-brand-ink opacity-0 invisible group-hover:opacity-100 group-hover:visible"
+                          >
+                            {colorLabel}{isActive ? ' (current)' : ''}
+                          </span>
+                        </div>
                       );
                     })
                   ) : (

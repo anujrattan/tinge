@@ -11,9 +11,10 @@ import {
   verifyPaymentSignature,
   verifyWebhookSignature,
   getPaymentDetails,
-  processRefund,
 } from "../services/razorpay.js";
 import { config } from "../config/index.js";
+import { authenticateToken, requireAdmin } from "../middleware/auth.js";
+import { executePaymentRefund } from "../services/refunds.js";
 
 const router = Router();
 
@@ -815,6 +816,8 @@ interface RefundRequest {
 
 router.post(
   "/refund",
+  authenticateToken,
+  requireAdmin,
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { paymentId, amount, notes }: RefundRequest = req.body;
@@ -826,59 +829,24 @@ router.post(
         });
       }
 
-      // Find payment record
-      const { data: paymentRecord } = await supabaseAdmin
-        .from("payments")
-        .select("id, order_id, razorpay_payment_id, amount, status")
-        .eq("razorpay_payment_id", paymentId)
-        .single();
-
-      if (!paymentRecord) {
-        return res.status(404).json({
-          success: false,
-          message: "Payment not found",
-        });
-      }
-
-      if (paymentRecord.status !== "captured") {
-        return res.status(400).json({
-          success: false,
-          message: "Only captured payments can be refunded",
-        });
-      }
-
-      // Process refund through Razorpay
-      const refund = await processRefund(
-        paymentRecord.razorpay_payment_id,
+      const result = await executePaymentRefund({
+        razorpayPaymentId: paymentId,
         amount,
-        notes
-      );
-
-      // Update payment status
-      await supabaseAdmin
-        .from("payments")
-        .update({
-          status: amount && amount < paymentRecord.amount ? "partially_refunded" : "refunded",
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", paymentRecord.id);
-
-      // Update order payment status
-      await supabaseAdmin
-        .from("orders")
-        .update({
-          payment_status: "refunded",
-        })
-        .eq("id", paymentRecord.order_id);
+        notes,
+      });
 
       res.json({
         success: true,
         message: "Refund processed successfully",
-        refund: refund,
+        refund: result.refund,
+        payment_status: result.paymentStatus,
       });
     } catch (error: any) {
       console.error("Error processing refund:", error);
-      next(error);
+      res.status(400).json({
+        success: false,
+        message: error.message || "Refund failed",
+      });
     }
   }
 );

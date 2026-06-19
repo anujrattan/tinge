@@ -1438,6 +1438,9 @@ router.put("/:orderNumber/status", authenticate, requireAdmin, async (req: Reque
     // Only update status if it changed
     if (order.status !== status) {
       updateData.status = status;
+      if (status === "delivered") {
+        updateData.delivered_at = new Date().toISOString();
+      }
     }
     
     // Add tracking info if status is "shipped" or "delivered" and fields are provided

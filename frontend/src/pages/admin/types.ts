@@ -1,2 +1,2 @@
-export type AdminTab = 'categories' | 'collections' | 'products' | 'orders' | 'analytics' | 'content' | 'systems';
+export type AdminTab = 'categories' | 'collections' | 'products' | 'orders' | 'returns' | 'analytics' | 'content' | 'systems';
 

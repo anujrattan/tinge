@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button, Input } from '../components/ui';
 import { RateProductModal } from '../components/RateProductModal';
+import { ReturnRequestModal } from '../components/ReturnRequestModal';
 import { StarRating } from '../components/StarRating';
 import api from '../services/api';
 import { useApp } from '../context/AppContext';
@@ -37,6 +38,9 @@ export const OrderDetailsPage: React.FC = () => {
   const [ratingModalOpen, setRatingModalOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<{ id: string; name: string; imageUrl?: string } | null>(null);
   const [isRetryingPayment, setIsRetryingPayment] = useState(false);
+  const [showReturnModal, setShowReturnModal] = useState(false);
+  const [orderReturns, setOrderReturns] = useState<any[]>([]);
+  const [canRequestReturn, setCanRequestReturn] = useState(false);
   const cancellationHandledRef = useRef(false);
 
   const resolveEmail = useCallback(() => {
@@ -107,6 +111,25 @@ export const OrderDetailsPage: React.FC = () => {
           }
         } catch (err) {
           console.error('Failed to load ratings:', err);
+        }
+
+        if (response.order.status === 'delivered') {
+          try {
+            const [returnsRes, eligibilityRes] = await Promise.all([
+              api.getOrderReturns(orderNumber, email || undefined),
+              api.getReturnEligibility(orderNumber, email || undefined),
+            ]);
+            setOrderReturns(returnsRes.returns || []);
+            const hasEligible = (eligibilityRes.items || []).some((i: any) => i.eligible);
+            setCanRequestReturn(hasEligible);
+          } catch (err) {
+            console.error('Failed to load returns:', err);
+            setOrderReturns([]);
+            setCanRequestReturn(false);
+          }
+        } else {
+          setOrderReturns([]);
+          setCanRequestReturn(false);
         }
       } else if (!silent) {
         setError('We couldn’t find an order with that number and email. Please check and try again.');
@@ -498,15 +521,25 @@ export const OrderDetailsPage: React.FC = () => {
             {/* Action buttons */}
             <div className="flex flex-wrap items-center gap-3">
               {order.status === 'delivered' && (
-                <button
-                  onClick={handleDownloadInvoice}
-                  className="group inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/15 text-sm font-medium text-brand-secondary hover:text-brand-primary hover:bg-white/10 hover:border-white/25 transition-all duration-200"
-                >
-                  <svg className="w-4 h-4 transition-transform group-hover:-translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                  Download Invoice
-                </button>
+                <>
+                  {canRequestReturn && (
+                    <button
+                      onClick={() => setShowReturnModal(true)}
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/15 text-sm font-medium text-brand-secondary hover:text-brand-primary hover:bg-white/10 hover:border-white/25 transition-all duration-200"
+                    >
+                      Request return
+                    </button>
+                  )}
+                  <button
+                    onClick={handleDownloadInvoice}
+                    className="group inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/15 text-sm font-medium text-brand-secondary hover:text-brand-primary hover:bg-white/10 hover:border-white/25 transition-all duration-200"
+                  >
+                    <svg className="w-4 h-4 transition-transform group-hover:-translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Download Invoice
+                  </button>
+                </>
               )}
               {needsRetryPayment && (
                 <button
@@ -787,6 +820,34 @@ export const OrderDetailsPage: React.FC = () => {
               </div>
             </div>
 
+            {orderReturns.length > 0 && (
+              <div className="backdrop-blur-xl bg-white/5 border border-white/15 rounded-2xl overflow-hidden shadow-xl shadow-black/10">
+                <div className="px-6 py-4 border-b border-white/10">
+                  <h2 className="text-base font-semibold text-brand-primary">Return requests</h2>
+                </div>
+                <div className="divide-y divide-white/10">
+                  {orderReturns.map((ret: any) => (
+                    <div key={ret.id} className="px-6 py-4 flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-medium text-brand-primary">
+                          {ret.return_number || 'Pending review'}
+                        </p>
+                        <p className="text-xs text-brand-secondary mt-0.5 capitalize">
+                          {ret.type} · {ret.reason?.replace(/_/g, ' ')}
+                        </p>
+                        {ret.return_ship_instructions && ret.status === 'approved' && (
+                          <p className="text-xs text-brand-secondary mt-2">{ret.return_ship_instructions}</p>
+                        )}
+                      </div>
+                      <span className="text-xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                        {ret.status?.replace(/_/g, ' ')}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Shipping address */}
             {order.user && (
               <div className="backdrop-blur-xl bg-white/5 border border-white/15 rounded-2xl p-6 shadow-xl shadow-black/10">
@@ -945,6 +1006,19 @@ export const OrderDetailsPage: React.FC = () => {
             setUserRatings((prev) => ({ ...prev, [selectedProduct.id]: rating }));
             setRatingModalOpen(false);
             setSelectedProduct(null);
+          }}
+        />
+      )}
+
+      {orderNumberParam && (
+        <ReturnRequestModal
+          isOpen={showReturnModal}
+          onClose={() => setShowReturnModal(false)}
+          orderNumber={orderNumberParam}
+          email={resolveEmail()}
+          onSuccess={() => {
+            const email = resolveEmail();
+            fetchOrderDetails(orderNumberParam, email || undefined, { silent: true });
           }}
         />
       )}

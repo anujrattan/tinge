@@ -64,7 +64,8 @@ export default {
         'badge-sunset-end':   '#FFC371',
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
+        // DM Sans pairs cleanly with Playfair Display — warm, modern, readable at small sizes
+        sans: ['"DM Sans"', 'system-ui', 'sans-serif'],
         display: ['Sora', 'sans-serif'],
         playfair: ['"Playfair Display"', 'Georgia', 'serif'],
         grotesk: ['"Space Grotesk"', 'sans-serif'],

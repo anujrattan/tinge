@@ -65,7 +65,7 @@ export const Footer: React.FC = () => {
                 />
               </div>
             </Link>
-            <p className="text-sm max-w-xs">
+            <p className="text-sm max-w-xs leading-relaxed text-brand-secondary">
               Your premium destination for quality clothing. Premium threads that match your energy.
             </p>
             <div className="flex items-center gap-3 mt-6">
@@ -80,50 +80,50 @@ export const Footer: React.FC = () => {
           <div className="grid grid-cols-2 gap-6 md:hidden col-span-1">
             {/* Column 2: Shop */}
             <div>
-              <h4 className="font-display font-bold text-brand-primary text-base mb-3 flex items-center gap-1.5"><ZapIcon className="w-4 h-4 text-brand-accent" /> Shop</h4>
+              <h4 className="font-playfair font-medium text-brand-primary text-base mb-3 flex items-center gap-1.5"><ZapIcon className="w-4 h-4 text-brand-accent" /> Shop</h4>
               <ul className="space-y-2">
                 <li className="flex items-center gap-1.5">
                   <FlameIcon className="w-3.5 h-3.5 text-brand-secondary"/>
-                  <Link to="/new-arrivals" className="hover:text-brand-primary transition-colors cursor-pointer text-sm">New Arrivals</Link>
+                  <Link to="/new-arrivals" className="hover:text-brand-primary transition-colors cursor-pointer text-sm font-medium tracking-wide">New Arrivals</Link>
                 </li>
                 <li className="flex items-center gap-1.5">
                   <TrendingUpIcon className="w-3.5 h-3.5 text-brand-secondary"/>
-                  <Link to="/best-sellers" className="hover:text-brand-primary transition-colors cursor-pointer text-sm">Best Sellers</Link>
+                  <Link to="/best-sellers" className="hover:text-brand-primary transition-colors cursor-pointer text-sm font-medium tracking-wide">Best Sellers</Link>
                 </li>
                 <li className="flex items-center gap-1.5">
                   <TagIcon className="w-3.5 h-3.5 text-brand-secondary"/>
-                  <Link to="/sale" className="hover:text-brand-primary transition-colors cursor-pointer text-sm">Sale Items</Link>
+                  <Link to="/sale" className="hover:text-brand-primary transition-colors cursor-pointer text-sm font-medium tracking-wide">Sale Items</Link>
                 </li>
                 <li className="flex items-center gap-1.5">
                   <Wand2Icon className="w-3.5 h-3.5 text-brand-secondary"/>
-                  <Link to="/categories" className="hover:text-brand-primary transition-colors cursor-pointer text-sm">All Products</Link>
+                  <Link to="/categories" className="hover:text-brand-primary transition-colors cursor-pointer text-sm font-medium tracking-wide">All Products</Link>
                 </li>
               </ul>
             </div>
 
             {/* Column 3: Support */}
             <div>
-              <h4 className="font-display font-bold text-brand-primary text-base mb-3 flex items-center gap-1.5"><HeartIcon className="w-4 h-4 text-brand-accent" /> Support</h4>
+              <h4 className="font-playfair font-medium text-brand-primary text-base mb-3 flex items-center gap-1.5"><HeartIcon className="w-4 h-4 text-brand-accent" /> Support</h4>
               <ul className="space-y-2">
                 <li className="flex items-center gap-1.5">
                   <RulerIcon className="w-3.5 h-3.5 text-brand-secondary"/>
-                  <Link to="/size-guide" className="hover:text-brand-primary transition-colors cursor-pointer text-sm">Size Guide</Link>
+                  <Link to="/size-guide" className="hover:text-brand-primary transition-colors cursor-pointer text-sm font-medium tracking-wide">Size Guide</Link>
                 </li>
                 <li className="flex items-center gap-1.5">
                   <TruckIcon className="w-3.5 h-3.5 text-brand-secondary"/>
-                  <Link to="/shipping" className="hover:text-brand-primary transition-colors cursor-pointer text-sm">Shipping Info</Link>
+                  <Link to="/shipping" className="hover:text-brand-primary transition-colors cursor-pointer text-sm font-medium tracking-wide">Shipping Info</Link>
                 </li>
                 <li className="flex items-center gap-1.5">
                   <Undo2Icon className="w-3.5 h-3.5 text-brand-secondary"/>
-                  <Link to="/return-policy" className="hover:text-brand-primary transition-colors cursor-pointer text-sm">Return Policy</Link>
+                  <Link to="/return-policy" className="hover:text-brand-primary transition-colors cursor-pointer text-sm font-medium tracking-wide">Return Policy</Link>
                 </li>
                 <li className="flex items-center gap-1.5">
                   <HelpCircleIcon className="w-3.5 h-3.5 text-brand-secondary"/>
-                  <Link to="/faq" className="hover:text-brand-primary transition-colors cursor-pointer text-sm">FAQ</Link>
+                  <Link to="/faq" className="hover:text-brand-primary transition-colors cursor-pointer text-sm font-medium tracking-wide">FAQ</Link>
                 </li>
                 <li className="flex items-center gap-1.5">
                   <TruckIcon className="w-3.5 h-3.5 text-brand-secondary"/>
-                  <Link to="/guest-order-lookup" className="hover:text-brand-primary transition-colors cursor-pointer text-sm">Track Order</Link>
+                  <Link to="/guest-order-lookup" className="hover:text-brand-primary transition-colors cursor-pointer text-sm font-medium tracking-wide">Track Order</Link>
                 </li>
               </ul>
             </div>
@@ -131,64 +131,67 @@ export const Footer: React.FC = () => {
 
           {/* Desktop: Shop */}
           <div className="hidden md:block">
-            <h4 className="font-display font-bold text-brand-primary text-lg mb-4 flex items-center gap-2"><ZapIcon className="w-5 h-5 text-brand-accent" /> Shop</h4>
+            <h4 className="font-playfair font-medium text-brand-primary text-lg mb-4 flex items-center gap-2"><ZapIcon className="w-5 h-5 text-brand-accent" /> Shop</h4>
             <ul className="space-y-3">
               <li className="flex items-center gap-2">
                 <FlameIcon className="w-4 h-4 text-brand-secondary"/>
-                <Link to="/new-arrivals" className="hover:text-brand-primary transition-colors cursor-pointer">New Arrivals</Link>
+                <Link to="/new-arrivals" className="hover:text-brand-primary transition-colors cursor-pointer font-medium tracking-wide">New Arrivals</Link>
               </li>
               <li className="flex items-center gap-2">
                 <TrendingUpIcon className="w-4 h-4 text-brand-secondary"/>
-                <Link to="/best-sellers" className="hover:text-brand-primary transition-colors cursor-pointer">Best Sellers</Link>
+                <Link to="/best-sellers" className="hover:text-brand-primary transition-colors cursor-pointer font-medium tracking-wide">Best Sellers</Link>
               </li>
               <li className="flex items-center gap-2">
                 <TagIcon className="w-4 h-4 text-brand-secondary"/>
-                <Link to="/sale" className="hover:text-brand-primary transition-colors cursor-pointer">Sale Items</Link>
+                <Link to="/sale" className="hover:text-brand-primary transition-colors cursor-pointer font-medium tracking-wide">Sale Items</Link>
               </li>
               <li className="flex items-center gap-2">
                 <Wand2Icon className="w-4 h-4 text-brand-secondary"/>
-                <Link to="/categories" className="hover:text-brand-primary transition-colors cursor-pointer">All Products</Link>
+                <Link to="/categories" className="hover:text-brand-primary transition-colors cursor-pointer font-medium tracking-wide">All Products</Link>
               </li>
             </ul>
           </div>
 
           {/* Desktop: Support */}
           <div className="hidden md:block">
-            <h4 className="font-display font-bold text-brand-primary text-lg mb-4 flex items-center gap-2"><HeartIcon className="w-5 h-5 text-brand-accent" /> Support</h4>
+            <h4 className="font-playfair font-medium text-brand-primary text-lg mb-4 flex items-center gap-2"><HeartIcon className="w-5 h-5 text-brand-accent" /> Support</h4>
             <ul className="space-y-3">
               <li className="flex items-center gap-2">
                 <RulerIcon className="w-4 h-4 text-brand-secondary"/>
-                <Link to="/size-guide" className="hover:text-brand-primary transition-colors cursor-pointer">Size Guide</Link>
+                <Link to="/size-guide" className="hover:text-brand-primary transition-colors cursor-pointer font-medium tracking-wide">Size Guide</Link>
               </li>
               <li className="flex items-center gap-2">
                 <TruckIcon className="w-4 h-4 text-brand-secondary"/>
-                <Link to="/shipping" className="hover:text-brand-primary transition-colors cursor-pointer">Shipping Info</Link>
+                <Link to="/shipping" className="hover:text-brand-primary transition-colors cursor-pointer font-medium tracking-wide">Shipping Info</Link>
               </li>
               <li className="flex items-center gap-2">
                 <Undo2Icon className="w-4 h-4 text-brand-secondary"/>
-                <Link to="/return-policy" className="hover:text-brand-primary transition-colors cursor-pointer">Return Policy</Link>
+                <Link to="/return-policy" className="hover:text-brand-primary transition-colors cursor-pointer font-medium tracking-wide">Return Policy</Link>
               </li>
               <li className="flex items-center gap-2">
                 <HelpCircleIcon className="w-4 h-4 text-brand-secondary"/>
-                <Link to="/faq" className="hover:text-brand-primary transition-colors cursor-pointer">FAQ</Link>
+                <Link to="/faq" className="hover:text-brand-primary transition-colors cursor-pointer font-medium tracking-wide">FAQ</Link>
               </li>
               <li className="flex items-center gap-2">
                 <TruckIcon className="w-4 h-4 text-brand-secondary"/>
-                <Link to="/guest-order-lookup" className="hover:text-brand-primary transition-colors cursor-pointer">Track Order</Link>
+                <Link to="/guest-order-lookup" className="hover:text-brand-primary transition-colors cursor-pointer font-medium tracking-wide">Track Order</Link>
               </li>
             </ul>
           </div>
 
           {/* Column 4: Newsletter */}
           <div className="md:col-span-2 lg:col-span-1">
-            <h4 className="font-display font-bold text-brand-primary text-lg mb-4 flex items-center gap-2"><MailIcon className="w-5 h-5 text-brand-accent" /> Stay Updated</h4>
+            <h4 className="font-playfair font-medium text-brand-primary text-lg mb-4 flex items-center gap-2"><MailIcon className="w-5 h-5 text-brand-accent" /> Stay Updated</h4>
             <p className="text-sm mb-4">Get the latest drops, exclusive offers, and design inspiration delivered to your inbox.</p>
             {footerSubscribed ? (
               <p className="text-sm text-brand-primary font-medium">
                 You're on the list — we'll be in touch before the next drop.
               </p>
             ) : (
-              <form className="flex items-center" onSubmit={handleFooterNewsletterSubmit}>
+              <form
+                className="flex items-stretch overflow-hidden rounded-lg border border-gray-300 dark:border-white/20 bg-white dark:bg-brand-bg focus-within:border-brand-accent focus-within:ring-2 focus-within:ring-brand-accent/25"
+                onSubmit={handleFooterNewsletterSubmit}
+              >
                 <input
                   type="email"
                   name="email"
@@ -197,13 +200,13 @@ export const Footer: React.FC = () => {
                   placeholder="Enter your email"
                   autoComplete="email"
                   disabled={footerLoading}
-                  className="bg-brand-bg border border-white/20 rounded-l-lg w-full px-3 py-2 text-sm text-brand-primary placeholder:text-brand-secondary focus:outline-none focus:ring-2 focus:ring-brand-accent disabled:opacity-50"
+                  className="flex-1 min-w-0 bg-transparent border-0 px-3 py-2 text-sm text-brand-primary placeholder:text-brand-secondary/70 focus:outline-none focus:ring-0 disabled:opacity-50"
                 />
                 <button
                   type="submit"
                   disabled={footerLoading}
                   aria-label="Subscribe to newsletter"
-                  className="bg-brand-accent hover:bg-brand-accent-hover text-white px-3 py-2 rounded-r-lg disabled:opacity-50 transition-colors"
+                  className="bg-brand-accent hover:bg-brand-accent-hover text-white px-3 py-2 flex-shrink-0 border-l border-gray-300 dark:border-white/20 disabled:opacity-50 transition-colors"
                 >
                   <SendIcon className={`w-5 h-5 ${footerLoading ? 'opacity-50' : ''}`} />
                 </button>
@@ -221,13 +224,13 @@ export const Footer: React.FC = () => {
         <div className="mt-16 border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center text-sm gap-4">
           <p className="order-2 md:order-1 text-center md:text-left">&copy; {new Date().getFullYear()} Tinge Clothing. All rights reserved. <span className="inline-flex items-center gap-1">Made with <HeartIcon className="w-4 h-4 text-[#FF7A59] animate-heartbeat inline-block" /> for fashion lovers</span></p>
           <div className="flex flex-wrap gap-4 order-1 md:order-2 justify-center">
-            <Link to="/privacy-policy" className="hover:text-brand-primary transition-colors">Privacy Policy</Link>
-            <Link to="/terms-of-service" className="hover:text-brand-primary transition-colors">Terms of Service</Link>
-            <Link to="/return-policy" className="hover:text-brand-primary transition-colors">Return Policy</Link>
-            <Link to="/cookie-policy" className="hover:text-brand-primary transition-colors">Cookie Policy</Link>
+            <Link to="/privacy-policy" className="hover:text-brand-primary transition-colors font-medium tracking-wide">Privacy Policy</Link>
+            <Link to="/terms-of-service" className="hover:text-brand-primary transition-colors font-medium tracking-wide">Terms of Service</Link>
+            <Link to="/return-policy" className="hover:text-brand-primary transition-colors font-medium tracking-wide">Return Policy</Link>
+            <Link to="/cookie-policy" className="hover:text-brand-primary transition-colors font-medium tracking-wide">Cookie Policy</Link>
             <button
               onClick={() => setShowCookiePreferences(true)}
-              className="hover:text-brand-primary transition-colors cursor-pointer"
+              className="hover:text-brand-primary transition-colors cursor-pointer font-medium tracking-wide"
             >
               Cookie Settings
             </button>

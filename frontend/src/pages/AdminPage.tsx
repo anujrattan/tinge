@@ -15,10 +15,13 @@ import { CategoriesView } from "./admin/components/CategoriesView";
 import { ProductsView } from "./admin/components/ProductsView";
 import { OrdersView } from "./admin/components/OrdersView";
 import { OrderDetailView } from "./admin/components/OrderDetailView";
+import { ReturnsView } from "./admin/components/ReturnsView";
+import { ReturnDetailView } from "./admin/components/ReturnDetailView";
 import { ContentView } from "./admin/components/ContentView";
 import { SystemsGoView } from "./admin/components/SystemsGoView";
 import { useAdminData } from "./admin/hooks/useAdminData";
 import { useAdminOrders } from "./admin/hooks/useAdminOrders";
+import { useAdminReturns } from "./admin/hooks/useAdminReturns";
 import { AdminTab } from "./admin/types";
 import { Modal } from "../components/Modal";
 import { ArrowLeftIcon } from "../components/icons";
@@ -105,16 +108,31 @@ export const AdminPage: React.FC = () => {
     saveOrderChanges,
   } = useAdminOrders();
 
+  const {
+    returns: adminReturns,
+    selectedReturn,
+    loading: returnsLoading,
+    isSaving: returnsSaving,
+    statusFilter,
+    setStatusFilter,
+    fetchReturns,
+    selectReturn,
+    clearSelection: clearReturnSelection,
+    updateReturnStatus,
+  } = useAdminReturns();
+
   // Refetch data when switching tabs
   useEffect(() => {
     if (activeTab === "products" && !productsLoading) {
       refetchAll();
     } else if (activeTab === "orders") {
       fetchOrders();
+    } else if (activeTab === "returns") {
+      fetchReturns(statusFilter || undefined);
     } else if (activeTab === "collections") {
       fetchCollections();
     }
-  }, [activeTab]);
+  }, [activeTab, statusFilter]);
 
   const handleDeleteClick = (id: string) => {
     setProductIdToDelete(id);
@@ -436,6 +454,34 @@ export const AdminPage: React.FC = () => {
                       onSelectOrder={selectOrder}
                     />
                   )
+                ) : activeTab === "returns" ? (
+                  <>
+                    <ReturnsView
+                      returns={adminReturns}
+                      loading={returnsLoading}
+                      statusFilter={statusFilter}
+                      onStatusFilterChange={setStatusFilter}
+                      onSelectReturn={selectReturn}
+                    />
+                    {selectedReturn && (
+                      <ReturnDetailView
+                        returnRequest={selectedReturn}
+                        currency={currency}
+                        onClose={clearReturnSelection}
+                        onSave={async (returnId, payload) => {
+                          const result = await updateReturnStatus(returnId, payload);
+                          if (result.success) {
+                            showToast(result.message || "Return updated", "success");
+                            fetchReturns(statusFilter || undefined);
+                          } else {
+                            showToast(result.message || "Update failed", "error");
+                          }
+                          return result;
+                        }}
+                        isSaving={returnsSaving}
+                      />
+                    )}
+                  </>
                 ) : activeTab === "content" ? (
                   <ContentView />
                 ) : activeTab === "systems" ? (

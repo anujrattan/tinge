@@ -24,6 +24,7 @@ import colorRoutes from "./routes/colors.js";
 import printroveRoutes from "./routes/printrove.js";
 import healthRoutes from "./routes/health.js";
 import newsletterRoutes from "./routes/newsletter.js";
+import returnsRoutes from "./routes/returns.js";
 
 export function createApp() {
   const app = express();
@@ -60,6 +61,7 @@ export function createApp() {
   app.use("/api/blog", blogRoutes);
   app.use("/api/faqs", faqRoutes);
   app.use("/api/newsletter", newsletterRoutes);
+  app.use("/api/returns", returnsRoutes);
 
   app.use(notFound);
   app.use(errorHandler);

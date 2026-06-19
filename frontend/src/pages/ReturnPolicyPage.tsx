@@ -81,9 +81,9 @@ export const ReturnPolicyPage: React.FC = () => {
                   <li className="flex gap-4">
                     <span className="flex-shrink-0 w-8 h-8 bg-brand-accent text-white rounded-full flex items-center justify-center font-bold text-sm">1</span>
                     <div>
-                      <p className="text-brand-primary font-semibold">Contact Customer Support</p>
+                      <p className="text-brand-primary font-semibold">Request from your order page</p>
                       <p className="text-brand-secondary text-sm mt-1">
-                        Email us at <span className="text-brand-accent">support@tingeclothing.com</span> or call <span className="text-brand-accent">+91-XXXXXXXXXX</span> within 7 days of delivery.
+                        Sign in or use guest order lookup, open your delivered order, and tap <strong>Request return</strong> within 7 days of delivery. You can also email <span className="text-brand-accent">support@tingeclothing.com</span> if you need help.
                       </p>
                     </div>
                   </li>

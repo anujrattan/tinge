@@ -159,6 +159,36 @@ export const uploadProductImage = async (
  * @param url - Full public URL from Supabase Storage
  * @returns File path relative to bucket (e.g., "categories/1234_category.jpg" or "products/main/1234_product.jpg")
  */
+/**
+ * Upload return evidence photo
+ */
+export const uploadReturnPhoto = async (
+  fileBuffer: Buffer,
+  orderNumberPrefix: string,
+  contentType: string = 'image/jpeg'
+): Promise<string> => {
+  const timestamp = Date.now();
+  const sanitized = orderNumberPrefix.replace(/[^a-zA-Z0-9.-]/g, '_');
+  let extension = 'jpg';
+  if (contentType === 'image/png') extension = 'png';
+  else if (contentType === 'image/webp') extension = 'webp';
+  const filePath = `returns/${timestamp}_${sanitized}.${extension}`;
+
+  const { error } = await supabaseAdmin.storage
+    .from(STORAGE_BUCKET)
+    .upload(filePath, fileBuffer, { contentType, upsert: false });
+
+  if (error) {
+    throw new Error(`Failed to upload return photo: ${error.message}`);
+  }
+
+  const { data: urlData } = supabaseAdmin.storage.from(STORAGE_BUCKET).getPublicUrl(filePath);
+  if (!urlData?.publicUrl) {
+    throw new Error('Failed to get public URL for return photo');
+  }
+  return urlData.publicUrl;
+};
+
 export const extractFilePathFromUrl = (url: string): string | null => {
   try {
     // Supabase Storage URLs typically look like:

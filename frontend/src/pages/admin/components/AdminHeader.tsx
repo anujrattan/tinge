@@ -19,6 +19,8 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ activeTab, onAddNew })
         return 'Products';
       case 'orders':
         return 'Orders';
+      case 'returns':
+        return 'Returns';
       case 'analytics':
         return 'Analytics';
       case 'content':
@@ -40,6 +42,8 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ activeTab, onAddNew })
         return 'Manage your product catalog';
       case 'orders':
         return 'View and manage customer orders';
+      case 'returns':
+        return 'Review return requests and process refunds';
       case 'analytics':
         return 'Monitor order flow, revenue and partner performance';
       case 'content':
@@ -53,6 +57,7 @@ export const AdminHeader: React.FC<AdminHeaderProps> = ({ activeTab, onAddNew })
 
   const showAddButton =
     activeTab !== 'orders' &&
+    activeTab !== 'returns' &&
     activeTab !== 'analytics' &&
     activeTab !== 'content' &&
     activeTab !== 'systems';

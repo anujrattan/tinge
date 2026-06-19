@@ -17,7 +17,8 @@ const EMAIL_LOGO_URL =
 export type EmailIntent =
   | "order_confirmation_customer"
   | "order_confirmation_admin"
-  | "order_status_update_customer";
+  | "order_status_update_customer"
+  | "return_status_update_customer";
 
 export interface SendEmailOptions {
   intent: EmailIntent;
@@ -671,6 +672,111 @@ function buildOrderStatusUpdateCustomerEmail(data: any): {
   return { subject, html };
 }
 
+function buildReturnStatusUpdateCustomerEmail(data: any): {
+  subject: string;
+  html: string;
+} {
+  const returnRequest = data.returnRequest || {};
+  const order = data.order || {};
+  const orderItem = data.orderItem || {};
+  const orderNumber = order.order_number || "";
+  const status = returnRequest.status || "updated";
+  const ran = returnRequest.return_number || "Pending approval";
+  const logoUrl = EMAIL_LOGO_URL;
+
+  const statusMessages: Record<string, { title: string; message: string; color: string }> = {
+    pending_review: {
+      title: "Return request received",
+      message: "We have received your return request and our team is reviewing it.",
+      color: "#f59e0b",
+    },
+    approved: {
+      title: "Return approved",
+      message: `Your return has been approved. Your Return Authorization Number (RAN) is ${ran}. Please follow the return instructions below.`,
+      color: "#10b981",
+    },
+    awaiting_shipment: {
+      title: "Awaiting your return shipment",
+      message: "Please ship the item back using the instructions we provided.",
+      color: "#3b82f6",
+    },
+    in_transit: {
+      title: "Return in transit",
+      message: "We are tracking your return shipment.",
+      color: "#3b82f6",
+    },
+    received: {
+      title: "Return received",
+      message: "We have received your returned item and are inspecting it.",
+      color: "#8b5cf6",
+    },
+    completed: {
+      title: "Return completed",
+      message:
+        returnRequest.type === "exchange"
+          ? "Your exchange has been processed. We will ship your replacement shortly."
+          : "Your refund has been processed. It may take 5-7 business days to reflect in your account.",
+      color: "#10b981",
+    },
+    rejected: {
+      title: "Return request declined",
+      message:
+        returnRequest.rejection_reason ||
+        "Unfortunately we could not approve this return request. Contact support if you have questions.",
+      color: "#ef4444",
+    },
+    cancelled: {
+      title: "Return cancelled",
+      message: "Your return request has been cancelled.",
+      color: "#6b7280",
+    },
+  };
+
+  const statusInfo = statusMessages[status] || {
+    title: "Return update",
+    message: `Your return status is now: ${status}.`,
+    color: "#6b7280",
+  };
+
+  const shipBlock =
+    status === "approved" && (returnRequest.return_ship_to || returnRequest.return_ship_instructions)
+      ? `
+        <div style="background-color:#f0fdf4;border:1px solid #10b981;padding:16px;border-radius:6px;margin:16px 0;">
+          <p style="margin:0 0 8px 0;font-size:14px;color:#065f46;font-weight:600;">Return instructions</p>
+          ${returnRequest.return_ship_to ? `<p style="margin:4px 0;font-size:14px;color:#047857;"><strong>Ship to:</strong> ${returnRequest.return_ship_to}</p>` : ""}
+          ${returnRequest.return_ship_instructions ? `<p style="margin:8px 0 0 0;font-size:14px;color:#047857;line-height:1.5;">${returnRequest.return_ship_instructions}</p>` : ""}
+          <p style="margin:12px 0 0 0;font-size:13px;color:#047857;">Include your RAN <strong>${ran}</strong> inside the package.</p>
+        </div>
+      `
+      : "";
+
+  const subject = `Return update — Order #${orderNumber}`;
+
+  const html = `
+    <!DOCTYPE html>
+    <html><body style="margin:0;padding:24px;background:#f3f4f6;font-family:Inter,sans-serif;">
+      <table width="100%" style="max-width:640px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;">
+        <tr><td style="background:linear-gradient(90deg,#FF7A59,#FFC371);padding:20px 24px;">
+          <img src="${logoUrl}" alt="Tinge" style="max-width:72px;height:auto;" />
+        </td></tr>
+        <tr><td style="padding:24px;">
+          <h1 style="margin:0 0 12px 0;font-size:20px;color:#111827;">${statusInfo.title}</h1>
+          <p style="margin:0 0 16px 0;font-size:15px;color:#4b5563;line-height:1.6;">${statusInfo.message}</p>
+          <p style="margin:0 0 4px 0;font-size:13px;color:#6b7280;">Order #${orderNumber}</p>
+          <p style="margin:0 0 4px 0;font-size:13px;color:#6b7280;">Item: ${orderItem.product_name || "Product"}${orderItem.size ? ` · ${orderItem.size}` : ""}</p>
+          <p style="margin:0;font-size:13px;color:${statusInfo.color};font-weight:600;">Status: ${status.replace(/_/g, " ")}</p>
+          ${shipBlock}
+          <p style="margin:24px 0 0 0;">
+            <a href="${config.frontendUrl}/order-details/${orderNumber}" style="display:inline-block;padding:12px 24px;background:#1E1B22;color:#fff;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600;">View order</a>
+          </p>
+        </td></tr>
+      </table>
+    </body></html>
+  `;
+
+  return { subject, html };
+}
+
 function buildEmail(intent: EmailIntent, data: any): {
   subject: string;
   html: string;
@@ -682,6 +788,8 @@ function buildEmail(intent: EmailIntent, data: any): {
       return buildOrderConfirmationAdminEmail(data);
     case "order_status_update_customer":
       return buildOrderStatusUpdateCustomerEmail(data);
+    case "return_status_update_customer":
+      return buildReturnStatusUpdateCustomerEmail(data);
     default:
       return {
         subject: "Luxe Threads notification",

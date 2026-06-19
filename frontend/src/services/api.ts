@@ -31,7 +31,7 @@ const apiCall = async (endpoint: string, options: RequestInit = {}) => {
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ error: 'Request failed' }));
-    throw new Error(error.error || `HTTP error! status: ${response.status}`);
+    throw new Error(error.message || error.error || `HTTP error! status: ${response.status}`);
   }
 
   return response.json();
@@ -489,6 +489,80 @@ const api = {
         return apiCall(`/orders/${orderNumber}/partner-order-id`, {
           method: 'PUT',
           body: JSON.stringify({ partner_order_id }),
+        });
+      },
+
+      // Returns
+      getReturnEligibility: async (orderNumber: string, email?: string): Promise<any> => {
+        const params = new URLSearchParams();
+        if (email) params.append('email', email);
+        const qs = params.toString();
+        return apiCall(`/returns/eligibility/${encodeURIComponent(orderNumber)}${qs ? `?${qs}` : ''}`);
+      },
+
+      getOrderReturns: async (orderNumber: string, email?: string): Promise<any> => {
+        const params = new URLSearchParams();
+        if (email) params.append('email', email);
+        const qs = params.toString();
+        return apiCall(`/returns/order/${encodeURIComponent(orderNumber)}${qs ? `?${qs}` : ''}`);
+      },
+
+      createReturnRequest: async (payload: {
+        order_number: string;
+        order_item_id: string;
+        type: 'refund' | 'exchange';
+        reason: string;
+        reason_detail?: string;
+        exchange_size?: string;
+        exchange_color?: string;
+        quantity?: number;
+        photo_urls?: string[];
+        email?: string;
+      }): Promise<any> => {
+        return apiCall('/returns', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+      },
+
+      uploadReturnPhoto: async (imageData: string, order_number?: string): Promise<any> => {
+        return apiCall('/returns/upload-photo', {
+          method: 'POST',
+          body: JSON.stringify({ imageData, order_number }),
+        });
+      },
+
+      getAdminReturns: async (status?: string): Promise<any> => {
+        const params = new URLSearchParams();
+        if (status) params.append('status', status);
+        const qs = params.toString();
+        return apiCall(`/returns${qs ? `?${qs}` : ''}`);
+      },
+
+      updateReturnStatus: async (
+        returnId: string,
+        payload: {
+          status: string;
+          notes?: string;
+          return_ship_to?: string;
+          return_ship_instructions?: string;
+          rejection_reason?: string;
+          partner_claim_ref?: string;
+          partner_filed?: boolean;
+          manual_refund_ref?: string;
+          process_refund?: boolean;
+        }
+      ): Promise<any> => {
+        return apiCall(`/returns/${returnId}/status`, {
+          method: 'PUT',
+          body: JSON.stringify(payload),
+        });
+      },
+
+      processReturnRefund: async (returnId: string, manual_refund_ref?: string): Promise<any> => {
+        return apiCall(`/returns/${returnId}/refund`, {
+          method: 'POST',
+          body: JSON.stringify({ manual_refund_ref }),
         });
       },
 

@@ -91,10 +91,10 @@ export const ProductCardPreview: React.FC<ProductCardPreviewProps> = ({ formData
         )}
       </div>
       <div className="p-3 flex flex-col">
-        <p className="text-xs font-bold uppercase tracking-wider text-purple-600">
+        <p className="text-xs font-medium uppercase tracking-[0.12em] text-purple-600">
           {categoryName.toUpperCase().replace('-', ' ')}
         </p>
-        <h3 className="text-base font-bold text-card-light-text-primary truncate mt-0.5">
+        <h3 className="font-playfair text-base font-medium text-card-light-text-primary truncate mt-0.5 leading-snug">
           {formData.title || 'Product Title'}
         </h3>
         {isBulletDescription ? (
@@ -112,7 +112,7 @@ export const ProductCardPreview: React.FC<ProductCardPreviewProps> = ({ formData
         )}
         
         <div className="flex items-baseline gap-1.5 mt-1.5 flex-nowrap overflow-hidden">
-          <p className="text-2xl font-extrabold text-pink-500 whitespace-nowrap">
+          <p className="text-2xl font-semibold tracking-tight text-pink-500 whitespace-nowrap">
             {formatCurrency(displayFinalPrice, DEFAULT_CURRENCY, { showDecimals: false })}
           </p>
           {hasAnyDiscount && (
