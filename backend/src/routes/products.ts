@@ -123,6 +123,7 @@ const transformProduct = (dbProduct: any, category?: any) => {
     size_chart_profile: dbProduct.size_chart_profile || undefined,
     design_family: dbProduct.design_family || undefined,
     is_active: dbProduct.is_active !== false,
+    is_featured: dbProduct.is_featured === true,
     category_name: category?.name || dbProduct.category_name || undefined,
     category_product_type:
       category?.product_type === 'poster' ? 'poster' : 'apparel',
@@ -482,6 +483,41 @@ router.get('/best-sellers', async (req: Request, res: Response, next: NextFuncti
   }
 });
 
+// Get featured art (live products with is_featured; newest listings first)
+router.get('/featured', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const limitRaw = parseInt(req.query.limit as string, 10);
+    const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 200) : 200;
+
+    const { data: products, error } = await supabaseAdmin
+      .from('products')
+      .select(`
+        *,
+        categories:category_id (
+          id,
+          name,
+          slug,
+          product_type
+        )
+      `)
+      .eq('is_active', true)
+      .eq('is_featured', true)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+
+    const transformed = (products || [])
+      .filter((p: any) => p.categories?.is_active !== false)
+      .map((p) => transformProduct(p, p.categories));
+
+    res.json(transformed);
+  } catch (error: any) {
+    console.error('Error fetching featured products:', error);
+    next(error);
+  }
+});
+
 // Get new arrivals (live products only; order by updated_at so recently published drafts appear)
 router.get('/new-arrivals', async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -804,12 +840,13 @@ router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res: 
       pricing_validation,
       size_chart_profile,
       design_family,
+      is_featured,
     } = req.body;
-    
+
     const sizesArray = normalizeSizeList(Array.isArray(sizes) ? sizes : (sizes ? [sizes] : []));
     const parsedSizePrices = parseSizePricesMap(size_prices, sizesArray);
     const variantsPayload = buildVariantsPayload(sizesArray, parsedSizePrices);
-    
+
     console.log('📝 Creating product with data:', { title, sizes: sizesArray, color: color || null });
     
     const tempSlug = title.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') || 'product';
@@ -923,6 +960,7 @@ router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res: 
       productData.sale_discount_percentage = parsedSaleDiscountPercentage;
     }
     if (usp_tag) productData.usp_tag = usp_tag;
+    if (is_featured !== undefined) productData.is_featured = Boolean(is_featured);
     if (rating !== undefined) productData.rating = parseFloat(rating);
     if (review_count !== undefined) productData.review_count = parseInt(review_count);
     if (fulfillment_partner) productData.fulfillment_partner = fulfillment_partner;
@@ -1062,8 +1100,9 @@ router.put('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res
       pricing_validation,
       size_chart_profile,
       design_family,
+      is_featured,
     } = req.body;
-    
+
     const sizesArray = normalizeSizeList(Array.isArray(sizes) ? sizes : (sizes ? [sizes] : []));
     const parsedSizePrices = parseSizePricesMap(size_prices, sizesArray);
     const variantsPayload = buildVariantsPayload(sizesArray, parsedSizePrices);
@@ -1114,6 +1153,7 @@ router.put('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res
       productData.sale_discount_percentage = sale_discount_percentage !== null ? parseFloat(sale_discount_percentage) : null;
     }
     if (usp_tag !== undefined) productData.usp_tag = usp_tag || null;
+    if (is_featured !== undefined) productData.is_featured = Boolean(is_featured);
     if (main_image_url || req.body.main_image_url) productData.main_image_url = main_image_url || req.body.main_image_url;
     if (rating !== undefined) productData.rating = rating ? parseFloat(rating) : null;
     if (review_count !== undefined) productData.review_count = parseInt(review_count);

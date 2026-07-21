@@ -27,6 +27,7 @@ import { AboutPage } from "./pages/AboutPage";
 import { ContactPage } from "./pages/ContactPage";
 import { BestSellersPage } from "./pages/BestSellersPage";
 import { NewArrivalsPage } from "./pages/NewArrivalsPage";
+import { FeaturedArtPage } from "./pages/FeaturedArtPage";
 import { SaleItemsPage } from "./pages/SaleItemsPage";
 import { FAQPage } from "./pages/FAQPage";
 import { CollectionsPage } from "./pages/CollectionsPage";
@@ -121,6 +122,7 @@ const AppLayout: React.FC = () => {
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/best-sellers" element={<BestSellersPage />} />
           <Route path="/new-arrivals" element={<NewArrivalsPage />} />
+          <Route path="/featured-art" element={<FeaturedArtPage />} />
           <Route path="/sale" element={<SaleItemsPage />} />
           <Route path="/faq" element={<FAQPage />} />
           <Route path="/collections" element={<CollectionsPage />} />

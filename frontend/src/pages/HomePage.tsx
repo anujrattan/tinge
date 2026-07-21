@@ -9,12 +9,9 @@ import {
   ArrowRightIcon,
   FlameIcon,
   TagIcon,
-  GlobeIcon,
-  Wand2Icon,
-  SparklesIcon,
-  RecycleIcon,
-  RocketIcon,
 } from "../components/icons";
+import { TingeDifferenceShowcase } from "../components/TingeDifferenceShowcase";
+import { DesignPhilosophyJourney } from "../components/DesignPhilosophyJourney";
 import { RotatingText } from "../components/RotatingText";
 import { NewsletterSignup } from "../components/NewsletterSignup";
 import { SEOHead } from "../components/SEOHead";
@@ -24,11 +21,19 @@ import {
   WebsiteSchema,
 } from "../components/StructuredData";
 import { shuffleArray } from "../utils/shuffle";
+import { allocateExclusiveGrids } from "../utils/homepageProductAllocation";
+import { FeaturedArtCarousel } from "../components/FeaturedArtCarousel";
+
+const SECTION_SIZE = 8;
+/** Enough headroom for Best Sellers + New Arrivals after excluding featured IDs */
+const POOL_FETCH_LIMIT = 24;
+const FEATURED_CAROUSEL_LIMIT = 8;
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const [collections, setCollections] = useState<Collection[]>([]);
   const [collectionsLoading, setCollectionsLoading] = useState(true);
+  const [featuredArt, setFeaturedArt] = useState<Product[]>([]);
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [newArrivals, setNewArrivals] = useState<Product[]>([]);
   const [hasMoreBestSellers, setHasMoreBestSellers] = useState(false);
@@ -36,79 +41,40 @@ export const HomePage: React.FC = () => {
 
   useEffect(() => {
     const fetchFeatured = async () => {
-      const displayLimit = 8;
-
-      const [collectionsData, bestSellers, arrivals] = await Promise.all([
+      const [collectionsData, curatedFeatured, bestSellers, arrivals] = await Promise.all([
         api.getCollections(),
-        api.getBestSellers(displayLimit + 1),
-        api.getNewArrivals(displayLimit + 1),
+        api.getFeaturedProducts(FEATURED_CAROUSEL_LIMIT),
+        api.getBestSellers(POOL_FETCH_LIMIT),
+        api.getNewArrivals(POOL_FETCH_LIMIT),
       ]);
       const visible = (collectionsData || []).filter((c) => c.isActive !== false);
       setCollections(visible.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)));
       setCollectionsLoading(false);
-      const shuffledBest = shuffleArray(bestSellers);
-      const shuffledNew = shuffleArray(arrivals);
-      setFeaturedProducts(shuffledBest.slice(0, displayLimit));
-      setHasMoreBestSellers(shuffledBest.length > displayLimit);
-      setNewArrivals(shuffledNew.slice(0, displayLimit));
-      setHasMoreNewArrivals(shuffledNew.length > displayLimit);
+
+      const featured = curatedFeatured || [];
+      setFeaturedArt(featured);
+
+      const grids = allocateExclusiveGrids(
+        shuffleArray(bestSellers || []),
+        shuffleArray(arrivals || []),
+        featured.map((p) => p.id),
+        SECTION_SIZE,
+      );
+      setFeaturedProducts(grids.bestSellers);
+      setNewArrivals(grids.newArrivals);
+      setHasMoreBestSellers(grids.hasMoreBestSellers);
+      setHasMoreNewArrivals(grids.hasMoreNewArrivals);
     };
     fetchFeatured();
   }, []);
 
-  const benefits = [
-    {
-      icon: <GlobeIcon className="w-8 h-8 text-brand-accent" />,
-      title: "Designed for Escape",
-      description:
-        "Inspired by road trips, campfires, sunsets and exploration.",
-    },
-    {
-      icon: <Wand2Icon className="w-8 h-8 text-brand-accent" />,
-      title: "Wearable Art",
-      description:
-        "Graphics created to tell stories, not follow trends.",
-    },
-    {
-      icon: <SparklesIcon className="w-8 h-8 text-brand-accent" />,
-      title: "Small Batch Drops",
-      description:
-        "Curated collections instead of endless catalogs.",
-    },
-    {
-      icon: <RecycleIcon className="w-8 h-8 text-brand-accent" />,
-      title: "Made on Demand",
-      description:
-        "Made only when ordered to reduce waste.",
-    },
-  ];
-
-  const philosophy = [
-    {
-      icon: <FlameIcon className="w-7 h-7 text-[#FF7A59]" />,
-      title: "Escape",
-      description: "Designs inspired by movement and adventure.",
-    },
-    {
-      icon: <RocketIcon className="w-7 h-7 text-[#FF7A59]" />,
-      title: "Horizon",
-      description:
-        "Space for curiosity — break routine, roam farther, discover what's next.",
-    },
-    {
-      icon: <Wand2Icon className="w-7 h-7 text-[#FF7A59]" />,
-      title: "Unordinary",
-      description: "Created for people who don't blend in.",
-    },
-  ];
-
   // SEO Data
   const seoData = {
-    title: "Luxe Threads - Premium Apparel & Custom Clothing Online",
+    title: "Tinge Clothing — Art Prints & Accessories",
     description:
-      "Shop premium apparel and custom clothing at Luxe Threads. Designer t-shirts, luxury fashion, and print-on-demand apparel. Free shipping on orders over ₹500.",
+      "Collect stories. Display what moves you. Shop curated art prints and adventure-inspired accessories from Tinge — made on demand, shipped across India.",
     keywords:
-      "premium apparel, luxury clothing, custom t-shirts, designer fashion, print on demand, luxury fashion online, custom clothing, designer t-shirts",
+      "art prints, curated art, wall art, adventure accessories, collectible prints, high-quality prints, curated drops, Tinge Clothing",
     type: "website" as const,
   };
 
@@ -132,7 +98,7 @@ export const HomePage: React.FC = () => {
               <source media="(max-width: 767px)" srcSet="/Hero-Banner-Updated-Mobile.png" />
               <img
                 src="/Hero-Banner-Updated.png"
-                alt="Luxe Threads lifestyle hero"
+                alt="Tinge art prints and accessories"
                 className="hero-banner-image absolute inset-0 w-full h-full object-cover object-top md:object-center animate-cinematicZoom"
                 loading="eager"
                 decoding="async"
@@ -147,12 +113,12 @@ export const HomePage: React.FC = () => {
               className="absolute inset-0 md:hidden pointer-events-none"
               style={{
                 background:
-                  "linear-gradient(to top, rgba(0,0,0,0.48) 0%, rgba(0,0,0,0.22) 30%, transparent 55%)",
+                  "linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.45) 35%, rgba(0,0,0,0.15) 60%, transparent 80%)",
               }}
             />
-            {/* Desktop: minimal tint — preserve original image color */}
-            <div aria-hidden="true" className="hidden md:block absolute inset-0 bg-gradient-to-br from-black/12 via-transparent to-transparent pointer-events-none" />
-            <div aria-hidden="true" className="hidden md:block absolute inset-0 bg-gradient-to-t from-black/28 via-transparent to-transparent pointer-events-none" />
+            {/* Desktop: left-side scrim so copy stays readable on bright sunset areas */}
+            <div aria-hidden="true" className="hidden md:block absolute inset-0 bg-gradient-to-r from-black/55 via-black/25 to-transparent pointer-events-none" />
+            <div aria-hidden="true" className="hidden md:block absolute inset-0 bg-gradient-to-t from-black/35 via-transparent to-transparent pointer-events-none" />
 
             {/* ── Film grain ───────────────────────────────────────────────────── */}
             <div
@@ -207,59 +173,61 @@ export const HomePage: React.FC = () => {
              * Desktop: justify-center — block floats in the left-center of the image.
              */}
             <div className="relative h-full flex flex-col justify-end pb-10 px-5 md:pb-0 md:px-0 md:justify-center md:container md:mx-auto md:px-8 pt-24 md:pt-0">
-              <div className="w-full md:max-w-3xl">
+              <div className="w-full md:max-w-3xl hero-copy-panel">
 
-                {/* Eyebrow tagline — visible on mobile as an orientation cue */}
-                <p
-                  className="text-[10px] md:text-xs font-bold uppercase tracking-[0.28em] mb-3 md:mb-4"
-                  style={{ color: "rgba(255,153,102,0.90)" }}
-                >
-                  New Season · Collectible Drops
+                {/* Eyebrow */}
+                <p className="hero-eyebrow inline-flex items-center gap-3 text-[10px] md:text-xs font-bold uppercase tracking-[0.28em] mb-3 md:mb-4">
+                  <span aria-hidden className="inline-block h-px w-8 md:w-12 bg-gradient-to-r from-[#FF9966] to-transparent" />
+                  Art Prints & Accessories
                 </p>
 
                 {/* Headline */}
-                <h1
-                  className="text-[2.65rem] leading-[1.08] sm:text-5xl md:text-8xl font-display font-extrabold tracking-tight"
-                  style={{ color: "#F7F3EA" }}
-                >
-                  <span className="hero-wear-your-line block">Wear Your</span>
-                  <span className="block">
+                <h1 className="font-playfair text-[2.35rem] leading-[1.12] sm:text-[2.75rem] md:text-7xl lg:text-8xl font-medium tracking-tight">
+                  <span className="hero-headline-accent block">Collect Stories.</span>
+                  <span className="block mt-1 md:mt-3 text-[1.85rem] sm:text-[2.25rem] md:text-6xl lg:text-7xl leading-[1.15]">
                     <RotatingText
-                      words={["Escape", "Orbit", "Adventure"]}
+                      words={["Display What Moves You.", "Bring It Home."]}
                       interval={3000}
-                      className="bg-gradient-to-r from-[#FF9966] via-[#FF5E62] to-[#FFC371] bg-clip-text text-transparent"
+                      typingSpeed={55}
+                      className="hero-headline-rotate"
                     />
                   </span>
                 </h1>
 
                 {/* Subheading */}
-                <p
-                  className="mt-3 md:mt-6 text-sm sm:text-base md:text-2xl max-w-sm md:max-w-2xl leading-relaxed"
-                  style={{ color: "rgba(247,243,234,0.80)" }}
-                >
-                  Retro-inspired graphics and collectible drops made for people who never stay still.
+                <p className="hero-subtext mt-4 md:mt-6 text-sm sm:text-base md:text-xl max-w-sm md:max-w-xl leading-relaxed">
+                  Adventure doesn&apos;t end at the trail. Curated art on high-density,
+                  high-quality prints — made to give your room decor that extra oomph.
                 </p>
 
-                {/* CTAs — full-width on mobile for thumb-friendly tap targets */}
+                {/* CTAs */}
                 <div className="mt-5 md:mt-10 flex flex-col sm:flex-row gap-3">
                   <button
                     onClick={() => navigate("/collections")}
-                    className="w-full sm:w-auto min-h-[52px] px-8 py-3.5 rounded-full text-base font-bold tracking-wide transition-all duration-200 bg-[#FF7A59] hover:bg-[#FF5E62] text-[#FFF8EE] active:scale-[0.97] shadow-[0_4px_24px_rgba(255,94,98,0.40)]"
+                    className="w-full sm:w-auto min-h-[52px] px-8 py-3.5 rounded-full text-base font-bold tracking-wide transition-all duration-200 bg-[#FF7A59] hover:bg-[#FF5E62] text-[#FFF8EE] active:scale-[0.97] shadow-[0_4px_24px_rgba(0,0,0,0.35)]"
                   >
-                    Explore Drops
+                    Explore Art Prints
                   </button>
                   <button
-                    onClick={() => navigate("/best-sellers")}
-                    className="w-full sm:w-auto min-h-[52px] px-8 py-3.5 rounded-full text-base font-bold tracking-wide transition-all duration-200 bg-black/45 backdrop-blur-md border border-white/15 text-[#F7F3EA] hover:bg-black/55 hover:border-white/25 active:scale-[0.97]"
+                    onClick={() => navigate("/categories")}
+                    className="w-full sm:w-auto min-h-[52px] px-8 py-3.5 rounded-full text-base font-bold tracking-wide transition-all duration-200 bg-[#1E1B22]/85 backdrop-blur-md border border-[#1E1B22]/30 text-[#F7F3EA] hover:bg-[#1E1B22] active:scale-[0.97] shadow-[0_4px_20px_rgba(0,0,0,0.25)]"
                   >
-                    Shop Best Sellers
+                    Shop Accessories
                   </button>
                 </div>
 
-                {/* Trust micro-copy — dark ink + light halo for legibility on light hero areas */}
-                <p className="mt-3 text-xs font-semibold tracking-wide text-[#1E1B22]/90 drop-shadow-[0_1px_3px_rgba(255,255,255,0.85)]">
-                  Easy 7-day returns · Premium fabrics
-                </p>
+                {/* Upcoming launch badge — apparel is the next drop, keep it visible */}
+                <div className="mt-5 md:mt-6 inline-flex items-center gap-2.5 rounded-full bg-[#1E1B22]/75 backdrop-blur-md border border-[#FFC371]/45 pl-3.5 pr-4 py-2 shadow-[0_4px_18px_rgba(0,0,0,0.35)]">
+                  <span className="relative flex h-2.5 w-2.5" aria-hidden>
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FFC371] opacity-70" />
+                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#FFC371]" />
+                  </span>
+                  <span className="text-xs sm:text-sm font-semibold tracking-wide text-[#FFE0B0]">
+                    Coming Soon
+                    <span className="mx-1.5 text-[#FFC371]/60">·</span>
+                    <span className="text-[#FFF8EE]">Tees &amp; Apparel Drops</span>
+                  </span>
+                </div>
 
               </div>
             </div>
@@ -281,7 +249,7 @@ export const HomePage: React.FC = () => {
                 </span>
               </h2>
               <p className="mt-2 text-brand-secondary leading-relaxed">
-                Explore our curated drops – each collection blends styles, colors, and fits.
+                Curated art prints and accessories — each drop tells a story worth displaying.
               </p>
             </div>
             {collections.length > 0 && (
@@ -334,7 +302,7 @@ export const HomePage: React.FC = () => {
                   <div className="p-5 flex items-center justify-between gap-3">
                     <p className="text-sm text-brand-secondary line-clamp-2">
                       {collection.description ||
-                        "A tightly curated mix of fits, colors, and textures designed to work together."}
+                        "A curated set of prints and pieces built around one visual story."}
                     </p>
                     <Button
                       variant="outline"
@@ -355,6 +323,43 @@ export const HomePage: React.FC = () => {
           ) : null}
         </section>
 
+        {/* Featured Art — curated carousel (newest listings first) */}
+        {featuredArt.length > 0 && (
+          <section
+            className="bg-white dark:bg-brand-surface/40 py-12 md:py-16"
+            aria-label="Featured art"
+          >
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="mb-8 md:mb-10 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+                <div>
+                  <span className="text-[11px] font-semibold text-[#FF7A59] uppercase tracking-[0.28em]">
+                    The Gallery
+                  </span>
+                  <h2 className="font-playfair text-3xl md:text-4xl font-medium tracking-tight text-brand-primary mt-2">
+                    Featured{" "}
+                    <span className="italic bg-gradient-to-r from-[#FF7A59] to-[#FFC371] bg-clip-text text-transparent">
+                      Art
+                    </span>
+                  </h2>
+                  <p className="mt-2 text-brand-secondary leading-relaxed max-w-xl">
+                    A short list of pieces worth living with — swipe or scroll through, then see them all.
+                  </p>
+                </div>
+                <Button
+                  onClick={() => navigate("/featured-art")}
+                  variant="outline"
+                  className="hidden sm:flex items-center gap-2 self-start sm:self-auto"
+                >
+                  See all
+                  <ArrowRightIcon className="w-4 h-4" />
+                </Button>
+              </div>
+
+              <FeaturedArtCarousel products={featuredArt} seeAllTo="/featured-art" />
+            </div>
+          </section>
+        )}
+
         {/* Best Sellers */}
         <section className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-8 flex items-end justify-between">
@@ -372,7 +377,7 @@ export const HomePage: React.FC = () => {
                 </span>
               </h2>
               <p className="mt-2 text-brand-secondary leading-relaxed">
-                Discover the pieces everyone is talking about.
+                The prints and pieces everyone&apos;s bringing home.
               </p>
             </div>
             {hasMoreBestSellers && (
@@ -422,7 +427,7 @@ export const HomePage: React.FC = () => {
                 </span>
               </h2>
               <p className="mt-2 text-brand-secondary leading-relaxed">
-                Be the first to discover our latest additions.
+                Fresh drops — be first to discover what&apos;s new.
               </p>
             </div>
             {hasMoreNewArrivals && newArrivals.length > 0 && (
@@ -461,37 +466,29 @@ export const HomePage: React.FC = () => {
           )}
         </section>
 
-        {/* The Tinge Difference */}
+        {/* The Tinge Difference — interactive showcase */}
         <section className="bg-white dark:bg-brand-surface/50">
-          <div className="container mx-auto px-4 py-8 md:py-16 sm:px-6 lg:px-8">
-            <div className="text-center mb-8 md:mb-12">
+          <div className="container mx-auto px-4 py-10 md:py-16 sm:px-6 lg:px-8">
+            <div className="mb-8 md:mb-12 max-w-2xl">
               <span className="text-[11px] font-semibold text-[#FF7A59] uppercase tracking-[0.22em]">
                 Why Tinge
               </span>
               <h2 className="font-playfair text-3xl md:text-4xl font-medium tracking-tight text-brand-primary mt-2">
                 The Tinge Difference
               </h2>
+              <p className="mt-3 text-brand-secondary leading-relaxed">
+                Four things we refuse to compromise on. Explore each one — or
+                let them tell their own story.
+              </p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-10 text-center">
-              {benefits.map((benefit) => (
-                <div key={benefit.title} className="flex flex-col items-center">
-                  <div className="flex-shrink-0">{benefit.icon}</div>
-                  <h3 className="mt-3 md:mt-4 text-lg font-playfair font-medium text-brand-primary">
-                    {benefit.title}
-                  </h3>
-                  <p className="mt-1 md:mt-2 text-sm text-brand-secondary leading-relaxed max-w-xs">
-                    {benefit.description}
-                  </p>
-                </div>
-              ))}
-            </div>
+            <TingeDifferenceShowcase />
           </div>
         </section>
 
-        {/* Design Philosophy */}
+        {/* Design Philosophy — three-step journey */}
         <section className="bg-gradient-to-b from-white to-[#FAFAFA] dark:from-brand-surface/30 dark:to-brand-bg py-12 md:py-20">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="max-w-3xl mx-auto text-center mb-10 md:mb-14">
+            <div className="max-w-3xl mx-auto text-center mb-12 md:mb-16">
               <p className="text-[11px] font-semibold text-[#FF7A59] uppercase tracking-[0.28em]">
                 Why Tinge
               </p>
@@ -499,30 +496,10 @@ export const HomePage: React.FC = () => {
                 Design Philosophy
               </h2>
               <p className="mt-5 text-lg md:text-xl text-brand-secondary leading-relaxed font-playfair italic">
-                Wander farther. Own less. Wear what matters.
+                Collect what moves you. Display what matters.
               </p>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
-              {philosophy.map((pillar, index) => (
-                <div
-                  key={pillar.title}
-                  className="group relative flex flex-col rounded-2xl border border-gray-200/80 dark:border-white/10 bg-white dark:bg-brand-surface/60 p-6 md:p-8 shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden"
-                >
-                  <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#FF7A59] via-[#FF5E62] to-[#FFC371] opacity-80 group-hover:opacity-100 transition-opacity" />
-                  <span className="text-[10px] font-bold text-brand-secondary/50 tracking-[0.2em] mb-4">
-                    {String(index + 1).padStart(2, "0")}
-                  </span>
-                  <div className="mb-4">{pillar.icon}</div>
-                  <h3 className="font-playfair text-2xl md:text-[1.65rem] font-medium text-brand-primary">
-                    {pillar.title}
-                  </h3>
-                  <p className="mt-3 text-sm md:text-base text-brand-secondary leading-relaxed">
-                    {pillar.description}
-                  </p>
-                </div>
-              ))}
-            </div>
+            <DesignPhilosophyJourney />
           </div>
         </section>
 

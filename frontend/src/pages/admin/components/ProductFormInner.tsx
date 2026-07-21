@@ -61,6 +61,7 @@ export const ProductFormInner: React.FC<{
     on_sale: product?.on_sale || false,
     sale_discount_percentage: product?.sale_discount_percentage || 0,
     usp_tag: product?.usp_tag || '',
+    is_featured: product?.is_featured === true,
     main_image_url: prefill?.main_image_url || product?.main_image_url || product?.imageUrl || '',
     category_id: product?.category_id || categories[0]?.id || '',
     collection_id: product?.collection_id || '',
@@ -470,6 +471,7 @@ export const ProductFormInner: React.FC<{
         on_sale: formData.on_sale || false,
         sale_discount_percentage: formData.on_sale && formData.sale_discount_percentage > 0 ? Number(formData.sale_discount_percentage) : null,
         usp_tag: formData.usp_tag || null,
+        is_featured: Boolean(formData.is_featured),
         sizes: publishSizes,
         ...(sizePricesForApi ? { size_prices: sizePricesForApi } : {}),
         color: isPoster
@@ -1098,6 +1100,22 @@ export const ProductFormInner: React.FC<{
                 className={formInputClass}
               />
             </FormField>
+
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-lg border border-gray-200 dark:border-white/15 bg-white dark:bg-brand-surface px-4 py-3">
+              <label className="flex items-center gap-3 cursor-pointer flex-1">
+                <input
+                  type="checkbox"
+                  name="is_featured"
+                  checked={Boolean(formData.is_featured)}
+                  onChange={handleChange}
+                  className="w-4 h-4 rounded border-gray-300 dark:border-white/30 text-brand-accent focus:ring-brand-accent"
+                />
+                <span className="text-sm font-medium text-brand-primary">Feature on homepage</span>
+              </label>
+              <p className="text-xs text-brand-secondary leading-relaxed sm:max-w-xs">
+                Adds this listing to Featured Art. Order on the site is by listing creation date (newest first).
+              </p>
+            </div>
 
           {/* Product Variants (apparel only) */}
           {!isPoster && (

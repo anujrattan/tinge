@@ -13,9 +13,11 @@ import { getListingSellingPrice, hasVariableSizePricing } from '../utils/sizePri
 
 interface ProductCardProps {
   product: Product;
+  /** Optional badge (e.g. best-seller rank) stacked above the discount pill in the top-left corner */
+  cornerBadge?: React.ReactNode;
 }
 
-export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+export const ProductCard: React.FC<ProductCardProps> = ({ product, cornerBadge }) => {
   const navigate = useNavigate();
   const { currency, isInWishlist, addToWishlist, removeFromWishlist } = useApp();
   const { showToast } = useToast();
@@ -93,13 +95,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <span className="text-gray-400 dark:text-gray-500 text-sm">No image</span>
           </div>
         )}
-        {/* Top Left: Discount Pill */}
-        <div className="absolute top-1.5 left-1.5 flex flex-col gap-1 max-w-[45%]">
+        {/* Top Left: Save pill (leftmost) + optional corner badge side by side */}
+        <div className="absolute top-1.5 left-1.5 flex flex-row flex-wrap items-center gap-1 max-w-[calc(100%-3.25rem)] sm:max-w-[58%]">
           {discountText && (
-            <div className="text-[9px] sm:text-[10px] font-semibold text-white bg-badge-pink-bg rounded-full px-1.5 sm:px-2 py-0.5 shadow-md truncate">
-              {discountText}
+            <div className="shrink-0 text-[9px] sm:text-[10px] font-semibold text-white bg-badge-pink-bg rounded-full px-1.5 sm:px-2 py-0.5 shadow-md">
+              <span className="block max-w-[7.5rem] sm:max-w-[9rem] truncate">{discountText}</span>
             </div>
           )}
+          {cornerBadge}
         </div>
         {/* Top Right: Sale Badge & Wishlist */}
         <div className="absolute top-1.5 right-1.5 flex flex-col gap-1 items-end">

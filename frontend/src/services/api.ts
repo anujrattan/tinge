@@ -392,6 +392,11 @@ const api = {
     return await apiCall(`/products/new-arrivals${queryParams}`);
   },
 
+  getFeaturedProducts: async (limit?: number): Promise<Product[]> => {
+    const queryParams = limit ? `?limit=${limit}` : '';
+    return await apiCall(`/products/featured${queryParams}`);
+  },
+
       getSaleItems: async (): Promise<Product[]> => {
         return await apiCall('/products/sale');
       },

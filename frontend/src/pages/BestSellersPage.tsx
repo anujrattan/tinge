@@ -1,48 +1,26 @@
-import React, { useState, useEffect } from 'react';
-import { Product } from '../types';
+import React, { useCallback } from 'react';
 import api from '../services/api';
-import { ProductCard } from '../components/ProductCard';
+import { ProductShowcasePage } from '../components/ProductShowcasePage';
+import { TrendingUpIcon } from '../components/Icons';
 
 export const BestSellersPage: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchProducts = async () => {
-      setLoading(true);
-      // Request enough rows for a full grid; API default limit is 8 (home strip only).
-      const data = await api.getBestSellers(200);
-      setProducts(data);
-      setLoading(false);
-    };
-    fetchProducts();
-  }, []);
+  // API default limit is 8 (home strip only); request enough rows for a full grid.
+  const fetchProducts = useCallback(() => api.getBestSellers(200), []);
 
   return (
-    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12 animate-fadeIn">
-      <div className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-display font-bold tracking-tight text-brand-primary">Best Sellers</h1>
-        <p className="mt-2 text-brand-secondary font-sans">Discover the pieces everyone is talking about.</p>
-      </div>
-      
-      {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {[...Array(8)].map((_, i) => (
-            <div key={i} className="bg-brand-surface animate-pulse aspect-[4/5] rounded-lg"></div>
-          ))}
-        </div>
-      ) : products.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {products.map(product => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-20">
-          <p className="text-brand-secondary">No best sellers found.</p>
-        </div>
-      )}
-    </div>
+    <ProductShowcasePage
+      icon={TrendingUpIcon}
+      eyebrow="Loved by collectors"
+      title="Best Sellers"
+      description="The pieces people keep coming back for — ranked by what's actually flying off our shelves."
+      countAdjective="trending"
+      fetchProducts={fetchProducts}
+      showRanks
+      emptyTitle="Nothing trending yet"
+      emptyDescription="Check back soon — the first drops are on their way."
+      ctaPrompt="Looking for something quieter?"
+      ctaLabel="Browse the curated gallery"
+      ctaTo="/featured-art"
+    />
   );
 };
-
