@@ -163,7 +163,7 @@ export const ContentView: React.FC = () => {
           <div>
             <h3 className="text-lg font-display font-semibold text-brand-primary">Blog Posts</h3>
             <p className="text-sm text-brand-secondary">
-              Create and update articles for the Luxe Threads Journal.
+              Create and update articles for the Tinge Journal.
             </p>
           </div>
           <Button

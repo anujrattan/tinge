@@ -17,7 +17,7 @@ export const PrivacyPolicyPage: React.FC = () => {
             <section className="mb-8">
               <h2 className="text-2xl font-bold text-brand-primary mb-4">1. Introduction</h2>
               <p className="text-brand-secondary leading-relaxed mb-4">
-                Welcome to Tinge Clothing ("we," "our," or "us"). We are committed to protecting your personal information and your right to privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website and use our services.
+                Welcome to Tinge ("we," "our," or "us"). We are committed to protecting your personal information and your right to privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you visit our website and use our services.
               </p>
               <p className="text-brand-secondary leading-relaxed">
                 By using our website, you consent to the data practices described in this policy. If you do not agree with this policy, please do not access or use our services.
@@ -132,7 +132,7 @@ export const PrivacyPolicyPage: React.FC = () => {
                 <li><strong>Withdraw Consent:</strong> Withdraw consent for marketing communications</li>
               </ul>
               <p className="text-brand-secondary leading-relaxed mt-4">
-                To exercise these rights, please contact us at [support@tingeclothing.com].
+                To exercise these rights, please contact us at support@tinge.in.
               </p>
             </section>
 
@@ -170,8 +170,8 @@ export const PrivacyPolicyPage: React.FC = () => {
                 If you have any questions, concerns, or requests regarding this Privacy Policy or our data practices, please contact us at:
               </p>
               <div className="bg-white dark:bg-brand-bg p-6 rounded-lg border border-gray-200 dark:border-white/10">
-                <p className="text-brand-primary font-semibold mb-2">Tinge Clothing</p>
-                <p className="text-brand-secondary">Email: support@tingeclothing.com</p>
+                <p className="text-brand-primary font-semibold mb-2">Tinge</p>
+                <p className="text-brand-secondary">Email: support@tinge.in</p>
                 <p className="text-brand-secondary">Phone: +91-XXXXXXXXXX</p>
                 <p className="text-brand-secondary">Address: [To be updated upon registration]</p>
               </div>

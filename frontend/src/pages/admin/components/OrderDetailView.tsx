@@ -289,60 +289,14 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
             </span>
           </div>
           <div>
-            <p className="text-sm text-brand-secondary mb-2">Fulfillment Partner</p>
-            <Select
-              options={[
-                { value: '', label: 'Not Assigned' },
-                { value: 'Qikink', label: 'Qikink' },
-                { value: 'Printrove', label: 'Printrove' },
-              ]}
-              value={currentValues.fulfillment_partner || ''}
-              onChange={handleFulfillmentPartnerChange}
-              disabled={isSaving}
-              className="min-w-[180px] border-2 border-gray-300 dark:border-white/30 rounded-lg"
-            />
+            <p className="text-sm text-brand-secondary mb-1">Fulfillment</p>
+            <span className="inline-flex px-3 py-1 rounded-full text-sm font-medium bg-sky-500/20 text-sky-300">
+              In-house
+            </span>
+            <p className="text-xs text-brand-muted mt-1">
+              Print and ship from the studio. Update status and tracking below.
+            </p>
           </div>
-          {currentValues.fulfillment_partner && (
-            <div className="md:col-span-2 mt-1 grid grid-cols-1 md:grid-cols-2 gap-3">
-              {/* Left: Partner Variant IDs (read-only) */}
-              <div className="p-3 rounded-lg border-2 border-gray-300 dark:border-white/30">
-                <p className="text-xs font-medium text-brand-primary mb-2">
-                  Printrove Partner Variant IDs (read-only)
-                </p>
-                <div className="space-y-1.5 max-h-36 overflow-auto">
-                  {(order.items || []).map((item: any, idx: number) => {
-                    const product = orderProducts[item.product_id];
-                    const partnerVariantId = getPartnerVariantIdForItem(item, product);
-                    return (
-                      <div key={`${item.product_id}-${item.size}-${idx}`} className="text-xs">
-                        <span className="text-brand-secondary">
-                          {item.product_name} · {item.size} · {item.color}
-                        </span>
-                        <div className="mt-0.5 px-2 py-1 rounded-md border-2 border-gray-300 dark:border-white/30 font-mono text-brand-primary break-all">
-                          {partnerVariantId || 'Not mapped'}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Right: Partner Order ID input */}
-              <div>
-                <p className="text-sm text-brand-secondary mb-2">
-                  {currentValues.fulfillment_partner} Order ID
-                </p>
-                <Input
-                  type="text"
-                  value={currentValues.partner_order_id || ''}
-                  onChange={(e) => handlePartnerOrderIdChange(e.target.value)}
-                  placeholder={`Enter ${currentValues.fulfillment_partner} order ID`}
-                  disabled={isSaving}
-                  className="w-full border-2 border-gray-300 dark:border-white/30 rounded-lg"
-                />
-              </div>
-            </div>
-          )}
           <div>
             <p className="text-sm text-brand-secondary mb-1">Date</p>
             <p className="text-sm text-brand-primary">
@@ -600,39 +554,45 @@ export const OrderDetailView: React.FC<OrderDetailViewProps> = ({
               </p>
             )}
 
-            {/* Tracking Number + URL — read-only, populated by Printrove after order creation */}
+            {/* Tracking Number + URL — editable inputs */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2 border-t border-white/10">
               <div>
                 <label className="block text-xs text-brand-secondary mb-1">Tracking Number</label>
-                <div className="w-full px-3 py-2 rounded-lg border-2 border-gray-300 dark:border-white/30 bg-gray-50 dark:bg-white/5 text-sm font-mono text-brand-primary min-h-[38px]">
-                  {currentValues.tracking_number || (
-                    <span className="text-gray-400 text-xs font-sans">Populated after Printrove order is created</span>
-                  )}
-                </div>
+                <Input
+                  type="text"
+                  value={currentValues.tracking_number || ''}
+                  onChange={(e) => handleTrackingNumberChange(e.target.value)}
+                  placeholder="e.g. 1234567890"
+                  disabled={isSaving}
+                  className="font-mono text-sm border-2 border-gray-300 dark:border-white/30 rounded-lg"
+                />
               </div>
               <div>
                 <label className="block text-xs text-brand-secondary mb-1">Tracking URL</label>
-                {currentValues.tracking_url ? (
+                <Input
+                  type="url"
+                  value={currentValues.tracking_url || ''}
+                  onChange={(e) => handleTrackingUrlChange(e.target.value)}
+                  placeholder="https://track.delhivery.com/..."
+                  disabled={isSaving}
+                  className="text-sm border-2 border-gray-300 dark:border-white/30 rounded-lg"
+                />
+                {currentValues.tracking_url && (
                   <a
                     href={currentValues.tracking_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 w-full px-3 py-2 rounded-lg border-2 border-cyan-500/40 bg-cyan-500/5 text-sm text-cyan-500 hover:text-cyan-400 hover:border-cyan-500/60 transition-colors truncate"
+                    className="inline-flex items-center gap-1 mt-1 text-xs text-cyan-400 hover:text-cyan-300"
                   >
-                    <span className="truncate">{currentValues.tracking_url}</span>
-                    <span className="flex-shrink-0 text-[10px]">↗</span>
+                    Open link ↗
                   </a>
-                ) : (
-                  <div className="w-full px-3 py-2 rounded-lg border-2 border-gray-300 dark:border-white/30 bg-gray-50 dark:bg-white/5 text-sm min-h-[38px]">
-                    <span className="text-gray-400 text-xs">Populated after Printrove order is created</span>
-                  </div>
                 )}
               </div>
             </div>
             {(currentValues.status === 'shipped' || currentValues.status === 'delivered') &&
-              !currentValues.shipping_partner && !currentValues.tracking_number && !currentValues.tracking_url && (
+              !currentValues.shipping_partner && !currentValues.tracking_number && (
               <p className="text-xs text-amber-500">
-                ⚠ Select a courier before marking the order as Shipped.
+                ⚠ Enter a courier and tracking number before marking the order as Shipped.
               </p>
             )}
 

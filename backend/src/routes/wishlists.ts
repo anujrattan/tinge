@@ -35,7 +35,7 @@ router.get("/", authenticateOrGuest, async (req: Request, res: Response, next: N
       const products = await Promise.all(
         productIds.map(async (productId) => {
           const { data: product } = await supabaseAdmin
-            .from("products")
+            .from("tinge_products")
             .select("*")
             .eq("id", productId)
             .eq("is_active", true)
@@ -79,7 +79,7 @@ router.get("/", authenticateOrGuest, async (req: Request, res: Response, next: N
       
       // Get user record
       const { data: user, error: userError } = await supabaseAdmin
-        .from("users")
+        .from("tinge_users")
         .select("id")
         .eq("auth_user_id", userId)
         .single();
@@ -100,7 +100,7 @@ router.get("/", authenticateOrGuest, async (req: Request, res: Response, next: N
 
       // Get wishlist from DB
       const { data: wishlistItems, error: wishlistError } = await supabaseAdmin
-        .from("wishlists")
+        .from("tinge_wishlists")
         .select(`
           id,
           product_id,
@@ -162,7 +162,7 @@ router.get("/", authenticateOrGuest, async (req: Request, res: Response, next: N
     const products = await Promise.all(
       productIds.map(async (productId) => {
         const { data: product } = await supabaseAdmin
-          .from("products")
+          .from("tinge_products")
           .select("*")
           .eq("id", productId)
           .eq("is_active", true)
@@ -220,7 +220,7 @@ router.post("/", authenticateOrGuest, async (req: Request, res: Response, next: 
 
     // Check if product exists and is active
     const { data: product, error: productError } = await supabaseAdmin
-      .from("products")
+      .from("tinge_products")
       .select("id, is_active")
       .eq("id", product_id)
       .single();
@@ -244,7 +244,7 @@ router.post("/", authenticateOrGuest, async (req: Request, res: Response, next: 
     let dbUserId: string | null = null;
     if (!authReq.isGuest && authReq.userId) {
       const { data: user } = await supabaseAdmin
-        .from("users")
+        .from("tinge_users")
         .select("id")
         .eq("auth_user_id", authReq.userId)
         .single();
@@ -286,7 +286,7 @@ router.post("/", authenticateOrGuest, async (req: Request, res: Response, next: 
     // Add to DB only when we have a valid profile row
     if (dbUserId) {
       const { error: insertError } = await supabaseAdmin
-        .from("wishlists")
+        .from("tinge_wishlists")
         .insert({ user_id: dbUserId, product_id });
 
       if (insertError && insertError.code !== "23505") {
@@ -321,14 +321,14 @@ router.delete("/:productId", authenticateOrGuest, async (req: Request, res: Resp
     // For authenticated users: also remove from DB
     if (!authReq.isGuest && authReq.userId) {
       const { data: user } = await supabaseAdmin
-        .from("users")
+        .from("tinge_users")
         .select("id")
         .eq("auth_user_id", authReq.userId)
         .single();
 
       if (user) {
         await supabaseAdmin
-          .from("wishlists")
+          .from("tinge_wishlists")
           .delete()
           .eq("user_id", user.id)
           .eq("product_id", productId);

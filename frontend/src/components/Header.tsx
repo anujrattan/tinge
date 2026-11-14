@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
   ShoppingBagIcon,
@@ -150,6 +150,69 @@ export const Header: React.FC<HeaderProps> = ({
     return location.pathname.startsWith(path);
   };
 
+  type NavKey = "home" | "shop" | "collections";
+
+  const getActiveNavKey = (): NavKey | null => {
+    if (location.pathname === "/") return "home";
+    if (
+      location.pathname.startsWith("/categories") ||
+      location.pathname.startsWith("/category/")
+    ) {
+      return "shop";
+    }
+    if (location.pathname.startsWith("/collections")) return "collections";
+    return null;
+  };
+
+  const navPillRef = useRef<HTMLDivElement>(null);
+  const homeTabRef = useRef<HTMLAnchorElement>(null);
+  const shopTabRef = useRef<HTMLButtonElement>(null);
+  const collectionsTabRef = useRef<HTMLAnchorElement>(null);
+  const [navIndicator, setNavIndicator] = useState({
+    left: 0,
+    top: 0,
+    width: 0,
+    height: 0,
+    ready: false,
+  });
+
+  const updateNavIndicator = useCallback(() => {
+    const key = getActiveNavKey();
+    const pill = navPillRef.current;
+    const target =
+      key === "home"
+        ? homeTabRef.current
+        : key === "shop"
+          ? shopTabRef.current
+          : key === "collections"
+            ? collectionsTabRef.current
+            : null;
+
+    if (!pill || !target) {
+      setNavIndicator((prev) => ({ ...prev, ready: false }));
+      return;
+    }
+
+    const pillRect = pill.getBoundingClientRect();
+    const tabRect = target.getBoundingClientRect();
+    setNavIndicator({
+      left: tabRect.left - pillRect.left,
+      top: tabRect.top - pillRect.top,
+      width: tabRect.width,
+      height: tabRect.height,
+      ready: true,
+    });
+  }, [location.pathname]);
+
+  useLayoutEffect(() => {
+    updateNavIndicator();
+  }, [updateNavIndicator, useHeroNavStyle, theme]);
+
+  useEffect(() => {
+    window.addEventListener("resize", updateNavIndicator);
+    return () => window.removeEventListener("resize", updateNavIndicator);
+  }, [updateNavIndicator]);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -228,21 +291,25 @@ export const Header: React.FC<HeaderProps> = ({
   const accountPillClasses = `hidden md:inline-flex ${accountPillBase}`;
   const accountButtonClasses = `inline-flex ${accountPillBase}`;
 
-  // Nav link text colors: white when over dark hero, theme-aware when scrolled
+  // Nav link text colors — active background is handled by the sliding pill indicator
   const getNavLinkClasses = (isActiveLink: boolean) => {
     if (useHeroNavStyle) {
       return isActiveLink
-        ? "text-white bg-white/20"
+        ? "text-white"
         : "text-white/80 hover:text-white hover:bg-white/10";
     }
     return theme === "dark"
       ? isActiveLink
-        ? "text-white bg-white/20"
+        ? "text-white"
         : "text-white/80 hover:text-white hover:bg-white/10"
       : isActiveLink
-      ? "text-slate-900 bg-black/10"
+      ? "text-slate-900"
       : "text-slate-700 hover:text-slate-900 hover:bg-black/5";
   };
+
+  const navIndicatorBg = useHeroNavStyle || theme === "dark"
+    ? "bg-white/20"
+    : "bg-black/10";
 
   return (
     <>
@@ -256,7 +323,7 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="h-16 w-20 sm:h-11 sm:w-24 md:h-16 md:w-28 overflow-visible flex items-center justify-center">
               <img
                 src={encodeURI("/Tinge Clothing - Logo - No background.png")}
-                alt="Tinge Clothing Logo"
+                alt="Tinge Logo"
                 className="h-full w-full object-cover"
                 loading="eager"
                 decoding="async"
@@ -272,10 +339,23 @@ export const Header: React.FC<HeaderProps> = ({
           <nav className="hidden md:flex items-center justify-center overflow-visible">
             <div className={navPillShellClasses}>
               <div className={navPillBgClasses} aria-hidden="true" />
-              <div className={navPillClasses}>
+              <div ref={navPillRef} className={navPillClasses}>
+              {/* Sliding active-tab indicator — matches outer rounded-full glass pill */}
+              <span
+                aria-hidden="true"
+                className={`pointer-events-none absolute rounded-full ${navIndicatorBg} transition-[left,top,width,height,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]`}
+                style={{
+                  left: navIndicator.left,
+                  top: navIndicator.top,
+                  width: navIndicator.width,
+                  height: navIndicator.height,
+                  opacity: navIndicator.ready ? 1 : 0,
+                }}
+              />
               <Link
+                ref={homeTabRef}
                 to="/"
-                className={`px-3 md:px-4 py-1.5 text-sm font-semibold transition-colors rounded-lg whitespace-nowrap ${getNavLinkClasses(
+                className={`relative z-[1] px-3 md:px-4 py-1.5 text-sm font-semibold transition-colors rounded-full whitespace-nowrap ${getNavLinkClasses(
                   isActive("/")
                 )}`}
               >
@@ -289,7 +369,9 @@ export const Header: React.FC<HeaderProps> = ({
                 onMouseLeave={() => setShopDropdownOpen(false)}
               >
                 <button
-                  className={`px-3 md:px-4 py-1.5 text-sm font-semibold transition-colors rounded-lg flex items-center gap-1 ${getNavLinkClasses(
+                  ref={shopTabRef}
+                  type="button"
+                  className={`relative z-[1] px-3 md:px-4 py-1.5 text-sm font-semibold transition-colors rounded-full flex items-center gap-1 ${getNavLinkClasses(
                     isActive("/categories") ||
                       location.pathname.startsWith("/category/")
                   )}`}
@@ -339,12 +421,29 @@ export const Header: React.FC<HeaderProps> = ({
               </div>
 
               <Link
+                ref={collectionsTabRef}
                 to="/collections"
-                className={`px-3 md:px-4 py-1.5 text-sm font-semibold transition-colors rounded-lg whitespace-nowrap ${getNavLinkClasses(
+                className={`relative z-[1] px-3 md:px-4 py-1.5 text-sm font-semibold transition-colors rounded-full whitespace-nowrap ${getNavLinkClasses(
                   isActive("/collections")
                 )}`}
               >
                 Collections
+              </Link>
+              <Link
+                to="/prints"
+                className={`relative z-[1] px-3 md:px-4 py-1.5 text-sm font-semibold transition-colors rounded-full whitespace-nowrap ${getNavLinkClasses(
+                  isActive("/prints")
+                )}`}
+              >
+                Prints
+              </Link>
+              <Link
+                to="/custom-design"
+                className={`relative z-[1] px-3 md:px-4 py-1.5 text-sm font-semibold transition-colors rounded-full whitespace-nowrap ${getNavLinkClasses(
+                  isActive("/custom-design")
+                )}`}
+              >
+                Your art
               </Link>
               </div>
             </div>
@@ -840,6 +939,20 @@ export const Header: React.FC<HeaderProps> = ({
                   </span>
                   <span className="text-sm font-semibold flex-1">Collections</span>
                   <ArrowRightIcon className={`w-4 h-4 transition-transform flex-shrink-0 ${isActive("/collections") ? "text-purple-500 translate-x-0.5" : "text-brand-secondary/40 group-hover:translate-x-0.5 group-hover:text-brand-secondary"}`} />
+                </Link>
+                <Link
+                  to="/prints"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3.5 rounded-2xl text-brand-secondary hover:text-brand-primary hover:bg-gray-100/80 dark:hover:bg-white/5"
+                >
+                  <span className="text-sm font-semibold flex-1">Prints</span>
+                </Link>
+                <Link
+                  to="/custom-design"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3.5 rounded-2xl text-brand-secondary hover:text-brand-primary hover:bg-gray-100/80 dark:hover:bg-white/5"
+                >
+                  <span className="text-sm font-semibold flex-1">Your art</span>
                 </Link>
               </div>
 

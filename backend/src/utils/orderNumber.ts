@@ -5,10 +5,11 @@
  * Example: TC-241229-0001, TC-241229-0002, etc.
  * 
  * Uses database-level atomic sequence increment for reliability and thread-safety.
- * The sequence is tracked in order_sequences table and uses PostgreSQL's atomic operations
+ * The sequence is tracked in tinge_order_sequences and uses PostgreSQL's atomic operations
  * to handle concurrent order creation reliably.
  */
 
+import { TingeRpc, TingeTables } from "../config/tables.js";
 import { supabaseAdmin } from "../services/supabase.js";
 
 const ORDER_NUMBER_PREFIX = "TC";
@@ -17,7 +18,7 @@ const ORDER_NUMBER_PREFIX = "TC";
  * Generate a unique order number for today
  * Format: TC-{yymmdd}-{sequence}
  * 
- * Uses database function get_next_order_sequence() for atomic increment.
+ * Uses database function tinge_get_next_order_sequence() for atomic increment.
  * This ensures no race conditions and reliable sequence tracking even with concurrent requests.
  * 
  * @returns Promise<string> - Unique order number
@@ -33,12 +34,12 @@ export async function generateOrderNumber(): Promise<string> {
   try {
     // Primary method: Use RPC function for atomic sequence increment
     // This is the most reliable as it uses PostgreSQL's atomic operations
-    const { data, error } = await supabaseAdmin.rpc('get_next_order_sequence', {
+    const { data, error } = await supabaseAdmin.rpc(TingeRpc.getNextOrderSequence, {
       p_date_key: dateKey
     });
 
     if (error) {
-      console.error("Error calling get_next_order_sequence RPC:", error);
+      console.error("Error calling tinge_get_next_order_sequence RPC:", error);
       
       // Fallback: Manual increment with optimistic locking for race condition handling
       let attempts = 0;
@@ -49,7 +50,7 @@ export async function generateOrderNumber(): Promise<string> {
         
         // Get current sequence
         const { data: existing, error: fetchError } = await supabaseAdmin
-          .from('order_sequences')
+          .from(TingeTables.orderSequences)
           .select('sequence_number')
           .eq('date_key', dateKey)
           .single();
@@ -65,7 +66,7 @@ export async function generateOrderNumber(): Promise<string> {
         if (!existing) {
           // Try to insert new sequence (will fail if another request already inserted)
           const { error: insertError } = await supabaseAdmin
-            .from('order_sequences')
+            .from(TingeTables.orderSequences)
             .insert({ date_key: dateKey, sequence_number: 1 });
           
           if (!insertError) {
@@ -78,7 +79,7 @@ export async function generateOrderNumber(): Promise<string> {
           // Update existing sequence with optimistic locking
           // Only update if sequence_number hasn't changed (prevents race conditions)
           const { error: updateError } = await supabaseAdmin
-            .from('order_sequences')
+            .from(TingeTables.orderSequences)
             .update({ 
               sequence_number: newSequence, 
               last_updated: new Date().toISOString() 

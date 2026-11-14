@@ -110,18 +110,6 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
             {showDrafts ? ' (hide)' : ' (show)'}
           </button>
         )}
-        {onSyncFromPrintrove && (
-          <Button
-            variant="secondary"
-            onClick={onSyncFromPrintrove}
-            className="bg-indigo-500/15 text-indigo-500 dark:text-indigo-400 hover:bg-indigo-500/25 border border-indigo-500/30 flex-shrink-0"
-          >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            Sync from Printrove
-          </Button>
-        )}
     </div>
   );
 
@@ -185,7 +173,7 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                       <p className="text-brand-secondary mb-6">
                         {searchQuery.trim()
                           ? 'Try a different search term.'
-                          : 'Create a product manually or use Sync from Printrove above to import listings as drafts.'}
+                          : 'Create an artwork listing with material and sizes.'}
                       </p>
                       {!searchQuery.trim() && (
                         <Button onClick={onAddNew} className="bg-gradient-to-r from-purple-500 to-pink-500">
@@ -277,7 +265,6 @@ export const ProductsView: React.FC<ProductsViewProps> = ({
                 <td className="px-6 py-4 text-center">
                   {product.variants && (
                     <span className="inline-flex items-center justify-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-blue-500/10 text-blue-400">
-                      {product.variants.sizes?.length || 0} sizes{product.color ? ` · ${product.color}` : ''}
                     </span>
                   )}
                 </td>

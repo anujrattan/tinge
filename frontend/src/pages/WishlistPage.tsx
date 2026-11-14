@@ -79,7 +79,7 @@ export const WishlistPage: React.FC = () => {
         ...product,
         quantity: 1,
         selectedSize: product.variants?.sizes?.[0] || '',
-        selectedColor: product.color || '',
+        selectedColor: '',
       });
       
       // Remove from wishlist
@@ -99,7 +99,7 @@ export const WishlistPage: React.FC = () => {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'My Wishlist - Luxe Threads',
+          title: 'My Wishlist | Tinge',
           text: `Check out my wishlist with ${wishlist.length} items!`,
           url: wishlistUrl,
         });
@@ -257,17 +257,6 @@ export const WishlistPage: React.FC = () => {
                   )}
                 </div>
 
-                {product.color && (
-                  <div className="mt-3 flex items-center gap-2">
-                    <span className="text-xs text-brand-secondary">Color:</span>
-                    <span
-                      className="w-4 h-4 rounded-full border border-gray-300"
-                      style={{ backgroundColor: getCssColorValue(product.color) }}
-                      title={getColorName(product.color)}
-                    />
-                    <span className="text-xs text-brand-secondary">{getColorName(product.color)}</span>
-                  </div>
-                )}
 
                 {/* Action Buttons */}
                 <div className="mt-4 flex gap-2">

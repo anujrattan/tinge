@@ -17,7 +17,7 @@ export const TermsOfServicePage: React.FC = () => {
             <section className="mb-8">
               <h2 className="text-2xl font-bold text-brand-primary mb-4">1. Agreement to Terms</h2>
               <p className="text-brand-secondary leading-relaxed mb-4">
-                Welcome to Tinge Clothing. These Terms of Service ("Terms") govern your access to and use of our website, products, and services. By accessing or using our services, you agree to be bound by these Terms and our Privacy Policy.
+                Welcome to Tinge. These Terms of Service ("Terms") govern your access to and use of our website, products, and services. By accessing or using our services, you agree to be bound by these Terms and our Privacy Policy.
               </p>
               <p className="text-brand-secondary leading-relaxed">
                 If you do not agree to these Terms, you may not access or use our services. We reserve the right to modify these Terms at any time, and your continued use of our services constitutes acceptance of any changes.
@@ -110,10 +110,10 @@ export const TermsOfServicePage: React.FC = () => {
                 You may cancel your order at any time <strong>before it is confirmed</strong> by our team via phone call. Once the order is confirmed, cancellation is not permitted as the order enters the fulfillment process.
               </p>
               <p className="text-brand-secondary leading-relaxed mb-4">
-                To cancel an order before confirmation, please contact us immediately at support@tingeclothing.com or +91-XXXXXXXXXX.
+                To cancel an order before confirmation, please contact us immediately at support@tinge.in or +91-XXXXXXXXXX.
               </p>
 
-              <h3 className="text-xl font-semibold text-brand-primary mb-3 mt-6">6.2 Cancellation by Tinge Clothing</h3>
+              <h3 className="text-xl font-semibold text-brand-primary mb-3 mt-6">6.2 Cancellation by Tinge</h3>
               <p className="text-brand-secondary leading-relaxed mb-4">
                 We reserve the right to cancel any order for reasons including but not limited to:
               </p>
@@ -154,7 +154,7 @@ export const TermsOfServicePage: React.FC = () => {
             <section className="mb-8">
               <h2 className="text-2xl font-bold text-brand-primary mb-4">8. Intellectual Property</h2>
               <p className="text-brand-secondary leading-relaxed mb-4">
-                All content on our website, including but not limited to text, images, logos, designs, graphics, and software, is the property of Tinge Clothing or our licensors and is protected by Indian and international copyright, trademark, and intellectual property laws.
+                All content on our website, including but not limited to text, images, logos, designs, graphics, and software, is the property of Tinge or our licensors and is protected by Indian and international copyright, trademark, and intellectual property laws.
               </p>
               <p className="text-brand-secondary leading-relaxed">
                 You may not reproduce, distribute, modify, or create derivative works from our content without our express written permission.
@@ -182,7 +182,7 @@ export const TermsOfServicePage: React.FC = () => {
             <section className="mb-8">
               <h2 className="text-2xl font-bold text-brand-primary mb-4">10. Limitation of Liability</h2>
               <p className="text-brand-secondary leading-relaxed mb-4">
-                To the fullest extent permitted by law, Tinge Clothing shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including but not limited to loss of profits, data, or goodwill, arising from:
+                To the fullest extent permitted by law, Tinge shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including but not limited to loss of profits, data, or goodwill, arising from:
               </p>
               <ul className="list-disc list-inside text-brand-secondary space-y-2 ml-4">
                 <li>Your use or inability to use our services</li>
@@ -199,7 +199,7 @@ export const TermsOfServicePage: React.FC = () => {
             <section className="mb-8">
               <h2 className="text-2xl font-bold text-brand-primary mb-4">11. Indemnification</h2>
               <p className="text-brand-secondary leading-relaxed">
-                You agree to indemnify, defend, and hold harmless Tinge Clothing, its officers, directors, employees, and agents from any claims, liabilities, damages, losses, and expenses (including legal fees) arising from your violation of these Terms, your use of our services, or your violation of any rights of another party.
+                You agree to indemnify, defend, and hold harmless Tinge, its officers, directors, employees, and agents from any claims, liabilities, damages, losses, and expenses (including legal fees) arising from your violation of these Terms, your use of our services, or your violation of any rights of another party.
               </p>
             </section>
 
@@ -208,7 +208,7 @@ export const TermsOfServicePage: React.FC = () => {
               
               <h3 className="text-xl font-semibold text-brand-primary mb-3 mt-6">12.1 Informal Resolution</h3>
               <p className="text-brand-secondary leading-relaxed mb-4">
-                In the event of any dispute, claim, or controversy, you agree to first contact us at support@tingeclothing.com to attempt to resolve the issue informally.
+                In the event of any dispute, claim, or controversy, you agree to first contact us at support@tinge.in to attempt to resolve the issue informally.
               </p>
 
               <h3 className="text-xl font-semibold text-brand-primary mb-3 mt-6">12.2 Arbitration</h3>
@@ -232,7 +232,7 @@ export const TermsOfServicePage: React.FC = () => {
             <section className="mb-8">
               <h2 className="text-2xl font-bold text-brand-primary mb-4">14. Entire Agreement</h2>
               <p className="text-brand-secondary leading-relaxed">
-                These Terms, together with our Privacy Policy and Return Policy, constitute the entire agreement between you and Tinge Clothing regarding your use of our services and supersede any prior agreements.
+                These Terms, together with our Privacy Policy and Return Policy, constitute the entire agreement between you and Tinge regarding your use of our services and supersede any prior agreements.
               </p>
             </section>
 
@@ -249,8 +249,8 @@ export const TermsOfServicePage: React.FC = () => {
                 If you have any questions about these Terms, please contact us:
               </p>
               <div className="bg-white dark:bg-brand-bg p-6 rounded-lg border border-gray-200 dark:border-white/10">
-                <p className="text-brand-primary font-semibold mb-2">Tinge Clothing</p>
-                <p className="text-brand-secondary">Email: support@tingeclothing.com</p>
+                <p className="text-brand-primary font-semibold mb-2">Tinge</p>
+                <p className="text-brand-secondary">Email: support@tinge.in</p>
                 <p className="text-brand-secondary">Phone: +91-XXXXXXXXXX</p>
                 <p className="text-brand-secondary">Address: [To be updated upon registration]</p>
               </div>

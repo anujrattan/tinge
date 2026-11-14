@@ -2,7 +2,17 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Button, Input } from '../components/ui';
 import { PaymentMethodSelector } from '../components/PaymentMethodSelector';
-import { UserIcon, MailIcon, SmartphoneIcon, MapPinIcon, ChevronDownIcon } from '../components/icons';
+import {
+  UserIcon,
+  MailIcon,
+  SmartphoneIcon,
+  MapPinIcon,
+  ChevronDownIcon,
+  ShieldIcon,
+  PackageIcon,
+  SparklesIcon,
+  CheckCircleIcon,
+} from '../components/icons';
 import { useToast } from '../context/ToastContext';
 import api from '../services/api';
 import { useApp } from '../context/AppContext';
@@ -176,64 +186,51 @@ const CheckoutForm: React.FC<{
     >
       {/* When address is saved and not editing, show condensed summary instead of full form fields */}
       {isAddressSaved && !isEditing ? (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
+        <div className="space-y-5">
+          <div className="flex items-center justify-between gap-4">
             <div>
-              <h2 className="font-playfair text-xl font-medium tracking-tight text-brand-primary">Delivery Details</h2>
-              <p className="text-xs text-brand-secondary mt-1">Review your contact and shipping information.</p>
+              <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-brand-coral">Step 01 · Confirmed</p>
+              <h2 className="mt-1 font-playfair text-2xl font-medium tracking-tight text-brand-primary">Delivery details</h2>
             </div>
-            <Button
+            <button
               type="button"
               onClick={handleEdit}
-              variant="outline"
-              className="text-xs sm:text-sm whitespace-nowrap"
+              className="min-h-[40px] cursor-pointer rounded-full border border-hairline px-4 text-[13px] font-medium text-brand-primary transition-colors hover:border-brand-ink dark:hover:border-brand-cream"
             >
-              Edit Address
-            </Button>
+              Edit
+            </button>
           </div>
 
-          <div className="rounded-xl border-2 border-gray-200 dark:border-white/20 bg-gradient-to-br from-blue-50/30 to-indigo-50/30 dark:from-blue-950/20 dark:to-indigo-950/20 p-6 space-y-5 shadow-sm">
-            {/* Contact Information Section */}
+          <div className="rounded-2xl border border-hairline p-5 sm:p-6 grid gap-6 sm:grid-cols-2">
             <div>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center">
-                  <UserIcon className="w-4 h-4 text-blue-600 dark:text-blue-400" />
-                </div>
-                <h3 className="text-[11px] font-semibold text-brand-primary uppercase tracking-[0.22em]">Contact Information</h3>
-              </div>
-              <div className="ml-10 space-y-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-brand-primary">
-                    {formData.firstName} {formData.lastName}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-brand-secondary">
-                  <MailIcon className="w-3.5 h-3.5 text-blue-500" />
-                  <span className="break-all">{formData.email}</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-brand-secondary">
-                  <SmartphoneIcon className="w-3.5 h-3.5 text-blue-500" />
-                  <span>{formData.countryCode} {formData.phone}</span>
-                </div>
+              <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-brand-secondary flex items-center gap-2">
+                <UserIcon className="w-3.5 h-3.5 text-brand-primary" /> Contact
+              </p>
+              <div className="mt-3 space-y-1.5 text-sm">
+                <p className="font-medium text-brand-primary">
+                  {formData.firstName} {formData.lastName}
+                </p>
+                <p className="text-brand-secondary flex items-center gap-2 break-all">
+                  <MailIcon className="w-3.5 h-3.5 shrink-0" />
+                  {formData.email}
+                </p>
+                <p className="text-brand-secondary flex items-center gap-2">
+                  <SmartphoneIcon className="w-3.5 h-3.5 shrink-0" />
+                  {formData.countryCode} {formData.phone}
+                </p>
               </div>
             </div>
 
-            <div className="h-px bg-gradient-to-r from-transparent via-gray-300 dark:via-white/20 to-transparent" />
-
-            {/* Shipping Address Section */}
-            <div>
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
-                  <MapPinIcon className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                </div>
-                <h3 className="text-[11px] font-semibold text-brand-primary uppercase tracking-[0.22em]">Shipping Address</h3>
-              </div>
-              <div className="ml-10 space-y-2">
-                <p className="text-sm text-brand-primary font-medium">
+            <div className="sm:border-l sm:border-hairline sm:pl-6">
+              <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-brand-secondary flex items-center gap-2">
+                <MapPinIcon className="w-3.5 h-3.5 text-brand-primary" /> Shipping to
+              </p>
+              <div className="mt-3 space-y-1 text-sm">
+                <p className="font-medium text-brand-primary">
                   {formData.address}
                   {formData.address2 ? `, ${formData.address2}` : ''}
                 </p>
-                <p className="text-sm text-brand-secondary">
+                <p className="text-brand-secondary">
                   {formData.city}, {formData.state} {formData.zip}
                 </p>
               </div>
@@ -435,9 +432,12 @@ const CheckoutForm: React.FC<{
         </>
       )}
       
-      {/* Payment Method Selection - Only show after address is saved AND not currently editing */}
       {isAddressSaved && !isEditing && (
-        <div className="hidden lg:block">
+        <div className="hidden lg:block pt-2 space-y-6">
+          <div>
+            <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-brand-coral">Step 02</p>
+            <h2 className="mt-1 font-playfair text-2xl font-medium tracking-tight text-brand-primary">Payment method</h2>
+          </div>
           <PaymentMethodSelector
             selectedMethod={paymentMethod}
             onMethodChange={onPaymentMethodChange}
@@ -445,23 +445,25 @@ const CheckoutForm: React.FC<{
             currency={currency}
             prepaidOffers={['Free Shipping', 'Instant confirmation', 'No extra charges']}
           />
-        
-          {/* Place Order Button - Shows after address is saved and payment method selected */}
-          <Button 
+
+          <button
             type="button"
             onClick={handlePlaceOrder}
-            className="w-full md:w-1/2 md:mx-auto py-3 mt-6"
+            className="flex min-h-[54px] w-full cursor-pointer items-center justify-center rounded-full bg-brand-ink px-8 text-[15px] font-medium text-brand-cream transition-colors hover:bg-black dark:bg-brand-cream dark:text-brand-ink dark:hover:bg-white"
           >
             {paymentMethod === 'COD' ? 'Place Order' : 'Proceed to Payment'}
-          </Button>
+          </button>
         </div>
       )}
-      
-      {/* Save Address Button - Shows when editing (new address or re-editing saved address) */}
+
       {(!isAddressSaved || (isAddressSaved && isEditing)) && (
-        <Button type="submit" className="w-full py-3" disabled={isSaving}>
-          {isSaving ? 'Saving...' : 'Save Address'}
-        </Button>
+        <button
+          type="submit"
+          disabled={isSaving}
+          className="flex min-h-[52px] w-full cursor-pointer items-center justify-center rounded-full bg-brand-ink px-8 text-[15px] font-medium text-brand-cream transition-colors hover:bg-black disabled:opacity-50 dark:bg-brand-cream dark:text-brand-ink dark:hover:bg-white"
+        >
+          {isSaving ? 'Saving…' : 'Continue to Payment'}
+        </button>
       )}
     </form>
   );
@@ -582,24 +584,13 @@ export const CheckoutPage: React.FC = () => {
           index,
           title: item.name || item.title || `Item ${index + 1}`,
           missingSize: !String(item.selectedSize || '').trim(),
-          missingColor:
-            item.category_product_type !== 'poster' &&
-            !String(item.selectedColor || '').trim(),
         }))
-        .filter((item) => item.missingSize || item.missingColor);
+        .filter((item) => item.missingSize);
 
       if (invalidItems.length > 0) {
         const details = invalidItems
           .slice(0, 3)
-          .map((item) => {
-            const missing = [
-              item.missingSize ? 'size' : '',
-              item.missingColor ? 'color' : '',
-            ]
-              .filter(Boolean)
-              .join(' & ');
-            return `${item.title} (missing ${missing})`;
-          })
+          .map((item) => `${item.title} (missing size)`)
           .join(', ');
 
         showToast(
@@ -697,7 +688,8 @@ export const CheckoutPage: React.FC = () => {
           }
 
           const { orderId: razorpayOrderId, keyId, amount } = razorpayResponse.razorpay;
-          const callbackUrl = `${process.env.VITE_API_BASE_URL || 'http://localhost:3001'}/api/payments/callback`;
+          const apiBase = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:3001/api';
+          const callbackUrl = `${String(apiBase).replace(/\/$/, '')}/payments/callback`;
           const emailParam = addressData.email
             ? `email=${encodeURIComponent(addressData.email)}&`
             : '';
@@ -712,7 +704,7 @@ export const CheckoutPage: React.FC = () => {
             'key_id': keyId,
             'amount': amount.toString(),
             'order_id': razorpayOrderId,
-            'name': 'Tinge Clothing',
+            'name': 'Tinge',
             'description': `Order #${result.orderNumber}`,
             'prefill[name]': `${addressData.firstName} ${addressData.lastName}`,
             'prefill[email]': addressData.email,
@@ -748,99 +740,138 @@ export const CheckoutPage: React.FC = () => {
   
   if (cart.length === 0) {
     return (
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-        <h1 className="font-playfair text-2xl font-medium tracking-tight text-brand-primary">Your cart is empty.</h1>
-        <Button onClick={() => navigate('/')} className="mt-6">Go to Homepage</Button>
+      <div className="container mx-auto px-4 sm:px-6 lg:px-10 py-24 text-center max-w-lg">
+        <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-brand-secondary">Checkout</p>
+        <h1 className="mt-3 font-playfair text-3xl sm:text-4xl font-medium tracking-tight text-brand-primary">
+          Your bag is empty.
+        </h1>
+        <p className="mt-3 text-[15px] text-brand-secondary">
+          Explore the gallery or upload your own artwork to get started.
+        </p>
+        <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="min-h-[48px] cursor-pointer rounded-full bg-brand-ink px-7 text-sm font-medium text-brand-cream dark:bg-brand-cream dark:text-brand-ink"
+          >
+            Browse Art
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/custom-design')}
+            className="min-h-[48px] cursor-pointer rounded-full border border-hairline px-7 text-sm font-medium text-brand-primary"
+          >
+            Upload Your Art
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-brand-bg">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-x-12">
-          <main className="lg:col-span-3 bg-brand-surface p-8 rounded-lg shadow-sm border border-white/10">
+    <div className="bg-brand-bg pb-20">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-10 pt-8 lg:pt-12">
+        {/* Clean editorial checkout header */}
+        <div className="mb-8 lg:mb-10 pb-6 border-b border-hairline flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+          <div>
+            <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-brand-coral">Checkout</p>
+            <h1 className="mt-2 font-playfair text-3xl sm:text-4xl font-medium tracking-tight text-brand-primary">
+              Complete your order
+            </h1>
+          </div>
+          <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-brand-secondary flex items-center gap-2">
+            <ShieldIcon className="w-3.5 h-3.5 text-emerald-500" />
+            256-bit SSL · Razorpay Protected
+          </p>
+        </div>
+
+        {/* Balanced 12-col split: 7 cols shipping & payment, 5 cols sticky order summary */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+          <main className="lg:col-span-7 rounded-2xl border border-hairline bg-white dark:bg-brand-surface p-6 sm:p-8">
             {isSubmitting ? (
-              <div className="text-center py-10">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500 mb-4"></div>
-                <p className="text-brand-primary">
-                  {paymentMethod === 'COD' 
-                    ? 'Placing your order...' 
-                    : 'Redirecting to payment gateway...'}
+              <div className="text-center py-16">
+                <div className="inline-block animate-spin rounded-full h-9 w-9 border-2 border-hairline border-t-brand-coral mb-4" />
+                <p className="font-playfair text-xl text-brand-primary">
+                  {paymentMethod === 'COD'
+                    ? 'Confirming your order…'
+                    : 'Connecting to Razorpay…'}
                 </p>
               </div>
             ) : (
               <>
                 {/* Address Selection for Logged-in Users */}
                 {isAuthenticated && savedAddresses.length > 0 && !useNewAddress && (
-                  <div className="mb-6">
-                    <h2 className="font-playfair text-xl font-medium tracking-tight text-brand-primary mb-4">Select Delivery Address</h2>
+                  <div className="mb-8">
+                    <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-brand-coral">Step 01</p>
+                    <h2 className="mt-1 font-playfair text-2xl font-medium tracking-tight text-brand-primary mb-4">
+                      Select delivery address
+                    </h2>
                     <div className="space-y-3 mb-4">
-                      {savedAddresses.map((address) => (
-                        <label
-                          key={address.id}
-                          className={`flex items-start p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                            selectedAddressId === address.id
-                              ? 'border-purple-500 bg-purple-500/10'
-                              : 'border-white/20 bg-brand-surface hover:border-purple-500/50'
-                          }`}
-                        >
-                          <input
-                            type="radio"
-                            name="address"
-                            value={address.id}
-                            checked={selectedAddressId === address.id}
-                            onChange={(e) => {
-                              setSelectedAddressId(e.target.value);
-                              setUseNewAddress(false);
-                            }}
-                            className="mt-1 mr-3 w-4 h-4 text-purple-600 focus:ring-purple-500"
-                          />
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                              {address.is_primary && (
-                                <span className="text-xs font-medium text-purple-500 bg-purple-500/10 px-2 py-0.5 rounded">
-                                  Primary
-                                </span>
-                              )}
-                              {address.label && (
-                                <span className="text-sm font-semibold text-brand-primary">
-                                  {address.label}
-                                </span>
+                      {savedAddresses.map((address) => {
+                        const active = selectedAddressId === address.id;
+                        return (
+                          <label
+                            key={address.id}
+                            className={`flex items-start p-4 sm:p-5 rounded-2xl border cursor-pointer transition-all ${
+                              active
+                                ? 'border-brand-ink dark:border-brand-cream shadow-[inset_0_0_0_1px_currentColor] text-brand-primary'
+                                : 'border-hairline hover:border-brand-secondary'
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="address"
+                              value={address.id}
+                              checked={active}
+                              onChange={(e) => {
+                                setSelectedAddressId(e.target.value);
+                                setUseNewAddress(false);
+                              }}
+                              className="mt-1 mr-3.5 h-4 w-4 accent-brand-coral"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex flex-wrap items-center gap-2 mb-1">
+                                {address.is_primary && (
+                                  <span className="font-mono text-[10px] uppercase tracking-[0.12em] rounded-full border border-hairline px-2.5 py-0.5 text-brand-coral">
+                                    Primary
+                                  </span>
+                                )}
+                                {address.label && (
+                                  <span className="text-xs font-semibold text-brand-primary">{address.label}</span>
+                                )}
+                              </div>
+                              <p className="text-brand-primary font-medium text-[15px]">
+                                {address.first_name} {address.last_name}
+                              </p>
+                              <p className="text-sm text-brand-secondary mt-0.5">
+                                {address.address1}
+                                {address.address2 && `, ${address.address2}`}
+                              </p>
+                              <p className="text-sm text-brand-secondary">
+                                {address.city}, {address.province} {address.zip}
+                              </p>
+                              {address.phone && (
+                                <p className="text-xs text-brand-secondary mt-1.5 font-mono">{address.phone}</p>
                               )}
                             </div>
-                            <p className="text-brand-primary font-medium">
-                              {address.first_name} {address.last_name}
-                            </p>
-                            <p className="text-sm text-brand-secondary">
-                              {address.address1}
-                              {address.address2 && `, ${address.address2}`}
-                            </p>
-                            <p className="text-sm text-brand-secondary">
-                              {address.city}, {address.province} {address.zip}
-                            </p>
-                            {address.phone && (
-                              <p className="text-sm text-brand-secondary mt-1">Phone: {address.phone}</p>
-                            )}
-                          </div>
-                        </label>
-                      ))}
+                          </label>
+                        );
+                      })}
                     </div>
-                    <Button
+                    <button
                       type="button"
-                      variant="outline"
                       onClick={() => {
                         setUseNewAddress(true);
                         setSelectedAddressId(null);
                       }}
-                      className="w-full mb-6"
+                      className="w-full min-h-[46px] cursor-pointer rounded-full border border-hairline text-sm font-medium text-brand-primary transition-colors hover:border-brand-ink dark:hover:border-brand-cream"
                     >
-                      + Use Different Delivery Address
-                    </Button>
+                      + Use a different delivery address
+                    </button>
                   </div>
                 )}
 
-                {/* Show form for new address or if no saved addresses */}
+                {/* Form for new address */}
                 {(useNewAddress || !isAuthenticated || savedAddresses.length === 0) && (
                   <CheckoutForm
                     onSubmit={handlePlaceOrder}
@@ -858,9 +889,13 @@ export const CheckoutPage: React.FC = () => {
                   />
                 )}
 
-                {/* Show payment method and submit button if address is selected */}
+                {/* Payment & Submit when saved address selected */}
                 {isAuthenticated && savedAddresses.length > 0 && !useNewAddress && selectedAddressId && (
-                  <div className="mt-6 hidden lg:block">
+                  <div className="mt-6 hidden lg:block space-y-6 pt-6 border-t border-hairline">
+                    <div>
+                      <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-brand-coral">Step 02</p>
+                      <h2 className="mt-1 font-playfair text-2xl font-medium tracking-tight text-brand-primary">Payment method</h2>
+                    </div>
                     <PaymentMethodSelector
                       selectedMethod={paymentMethod}
                       onMethodChange={setPaymentMethod}
@@ -868,155 +903,171 @@ export const CheckoutPage: React.FC = () => {
                       currency={currency}
                       prepaidOffers={['Free Shipping', 'Instant confirmation', 'No extra charges']}
                     />
-                    <Button
+                    <button
+                      type="button"
                       onClick={() => handlePlaceOrder({}, paymentMethod)}
-                      className="w-full md:w-1/2 md:mx-auto py-3 mt-6"
+                      className="flex min-h-[54px] w-full cursor-pointer items-center justify-center rounded-full bg-brand-ink px-8 text-[15px] font-medium text-brand-cream transition-colors hover:bg-black dark:bg-brand-cream dark:text-brand-ink dark:hover:bg-white"
                     >
                       {paymentMethod === 'COD' ? 'Place Order' : 'Proceed to Payment'}
-                    </Button>
+                    </button>
                   </div>
                 )}
               </>
             )}
           </main>
-          
-          {/* Order Summary - Desktop (right sidebar, sticky within container) */}
-          <aside className="hidden lg:block lg:col-span-2">
-            <div className="bg-brand-surface p-6 rounded-lg shadow-sm border border-white/10 lg:sticky lg:top-8 max-h-[calc(100vh-6rem)] overflow-y-auto">
-              <h2 className="font-playfair text-xl font-medium tracking-tight text-brand-primary">Order Summary</h2>
-              <ul className="mt-6 divide-y divide-white/10">
+
+          {/* Order Summary - Desktop */}
+          <aside className="hidden lg:block lg:col-span-5">
+            <div className="rounded-2xl border border-hairline bg-white dark:bg-brand-surface p-6 sm:p-7 lg:sticky lg:top-24 max-h-[calc(100vh-7rem)] overflow-y-auto">
+              <div className="flex items-baseline justify-between">
+                <h2 className="font-playfair text-2xl font-medium tracking-tight text-brand-primary">Order summary</h2>
+                <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-brand-secondary">
+                  {cart.reduce((s, i) => s + i.quantity, 0)} {cart.reduce((s, i) => s + i.quantity, 0) === 1 ? 'piece' : 'pieces'}
+                </span>
+              </div>
+
+              <ul className="mt-6 divide-y divide-hairline">
                 {cart.map(item => (
-                  <li key={item.id} className="flex items-center gap-4 py-4">
-                    <img
-                      src={item.imageUrl || item.main_image_url}
-                      alt={item.name || item.title}
-                      className="w-24 h-24 sm:w-28 sm:h-28 rounded-lg object-cover flex-shrink-0 bg-gray-100 border border-gray-200/70 dark:border-white/10"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-medium text-brand-primary line-clamp-2">{item.name || item.title}</h3>
-                      <p className="text-sm text-brand-secondary mt-1">Qty: {item.quantity}</p>
+                  <li key={`${item.id}-${item.selectedSize}`} className="flex items-center gap-4 py-4">
+                    <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-wall p-1.5">
+                      <img
+                        src={item.mockupImageUrl || item.imageUrl || item.main_image_url}
+                        alt={item.name || item.title}
+                        className="h-full w-full rounded-lg object-cover"
+                        loading="lazy"
+                        decoding="async"
+                      />
                     </div>
-                    <p className="text-sm font-semibold text-brand-primary flex-shrink-0">{formatCurrency(item.price * item.quantity, currency, { showDecimals: false })}</p>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-[15px] font-medium text-brand-primary line-clamp-2">{item.name || item.title}</h3>
+                      <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.1em] text-brand-secondary">
+                        {[item.material?.replace('_', ' '), item.selectedSize].filter(Boolean).join(' · ')}
+                      </p>
+                      <p className="text-xs text-brand-secondary mt-0.5">Qty {item.quantity}</p>
+                    </div>
+                    <p className="text-[15px] font-medium text-brand-primary tabular-nums shrink-0">
+                      {formatCurrency(item.price * item.quantity, currency, { showDecimals: false })}
+                    </p>
                   </li>
                 ))}
               </ul>
-              <div className="mt-6 pt-6 border-t border-white/10 space-y-2">
+
+              <div className="mt-5 pt-5 border-t border-hairline space-y-2.5">
                 {paymentMethod === 'Prepaid' ? (
                   <>
                     <div className="flex justify-between text-sm text-brand-secondary">
                       <span>Subtotal</span>
-                      <span className="line-through text-brand-secondary/80">{formatCurrency(subtotal, currency, { showDecimals: false })}</span>
+                      <span className="line-through tabular-nums">{formatCurrency(subtotal, currency, { showDecimals: false })}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-emerald-600 dark:text-emerald-400 font-medium">Extra 5% off (Prepaid)</span>
-                      <span className="text-emerald-600 dark:text-emerald-400 font-medium">-{formatCurrency(prepaidSavings, currency, { showDecimals: false })}</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-medium">Prepaid savings (5%)</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-medium tabular-nums">-{formatCurrency(prepaidSavings, currency, { showDecimals: false })}</span>
                     </div>
                     <div className="flex justify-between text-sm text-brand-secondary">
-                      <span>Price after discount</span>
-                      <span className="text-brand-primary font-medium">{formatCurrency(discountedSubtotal, currency, { showDecimals: false })}</span>
+                      <span>Discounted subtotal</span>
+                      <span className="text-brand-primary font-medium tabular-nums">{formatCurrency(discountedSubtotal, currency, { showDecimals: false })}</span>
                     </div>
                   </>
                 ) : (
                   <div className="flex justify-between text-sm text-brand-secondary">
                     <span>Subtotal</span>
-                    <span className="text-brand-primary">{formatCurrency(subtotal, currency, { showDecimals: false })}</span>
+                    <span className="text-brand-primary tabular-nums">{formatCurrency(subtotal, currency, { showDecimals: false })}</span>
                   </div>
                 )}
                 {paymentMethod === 'COD' && (
                   <div className="flex justify-between text-sm text-brand-secondary">
-                    <span>COD Handling Fee</span>
-                    <span className="text-brand-primary">{formatCurrency(COD_FEE, currency, { showDecimals: false })}</span>
+                    <span>COD handling</span>
+                    <span className="text-brand-primary tabular-nums">{formatCurrency(COD_FEE, currency, { showDecimals: false })}</span>
                   </div>
                 )}
-                {shippingCost > 0 && (
-                  <div className="flex justify-between text-sm text-brand-secondary">
-                    <span>Shipping</span>
-                    <span className="text-brand-primary">{formatCurrency(shippingCost, currency, { showDecimals: false })}</span>
-                  </div>
-                )}
-                <div className="flex justify-between text-base font-medium text-brand-primary pt-2 border-t border-white/10">
-                  <span>Total</span>
-                  <span>{formatCurrency(total, currency, { showDecimals: false })}</span>
+                <div className="flex justify-between text-sm text-brand-secondary">
+                  <span>Shipping</span>
+                  <span className="text-brand-primary">{shippingCost > 0 ? formatCurrency(shippingCost, currency, { showDecimals: false }) : 'Complimentary'}</span>
                 </div>
-                <p className="text-xs text-brand-secondary">
-                  Prices are inclusive of all applicable GST.
-                </p>
+                <div className="flex justify-between items-baseline text-lg font-medium text-brand-primary pt-3 border-t border-hairline">
+                  <span>Total</span>
+                  <span className="text-xl tabular-nums">{formatCurrency(total, currency, { showDecimals: false })}</span>
+                </div>
+                <p className="text-xs text-brand-secondary">Inclusive of all applicable GST.</p>
+              </div>
+
+              <div className="mt-6 pt-5 border-t border-hairline space-y-2.5 text-xs text-brand-secondary">
+                <div className="flex items-center gap-2.5">
+                  <ShieldIcon className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <span>100% Safe Transit Guarantee (Free 48h replacement)</span>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <PackageIcon className="w-4 h-4 text-brand-primary shrink-0" />
+                  <span>Printed in our studio on the exact material you picked</span>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <SparklesIcon className="w-4 h-4 text-brand-coral shrink-0" />
+                  <span>256-bit SSL secure checkout</span>
+                </div>
               </div>
             </div>
           </aside>
-          
-          {/* Order Summary & Payment - Mobile (below form) */}
-          <div className="lg:hidden mt-8">
-            {/* Order Summary */}
-            <div className="bg-brand-surface p-6 rounded-lg shadow-sm border border-white/10 mb-6">
-              <h2 className="font-playfair text-xl font-medium tracking-tight text-brand-primary">Order Summary</h2>
-              <ul className="mt-6 divide-y divide-white/10">
+
+          {/* Order Summary & Payment - Mobile */}
+          <div className="lg:hidden space-y-6">
+            <div className="rounded-2xl border border-hairline bg-white dark:bg-brand-surface p-5">
+              <h2 className="font-playfair text-xl font-medium tracking-tight text-brand-primary">Order summary</h2>
+              <ul className="mt-4 divide-y divide-hairline">
                 {cart.map(item => (
-                  <li key={item.id} className="flex items-center gap-4 py-4">
-                    <img
-                      src={item.imageUrl || item.main_image_url}
-                      alt={item.name || item.title}
-                      className="w-24 h-24 sm:w-28 sm:h-28 rounded-lg object-cover flex-shrink-0 bg-gray-100 border border-gray-200/70 dark:border-white/10"
-                      loading="lazy"
-                      decoding="async"
-                    />
+                  <li key={`${item.id}-${item.selectedSize}`} className="flex items-center gap-3.5 py-3.5">
+                    <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-wall p-1">
+                      <img
+                        src={item.mockupImageUrl || item.imageUrl || item.main_image_url}
+                        alt={item.name || item.title}
+                        className="h-full w-full rounded-lg object-cover"
+                        loading="lazy"
+                      />
+                    </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-sm font-medium text-brand-primary line-clamp-2">{item.name || item.title}</h3>
-                      <p className="text-sm text-brand-secondary mt-1">Qty: {item.quantity}</p>
+                      <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.1em] text-brand-secondary">
+                        {[item.material?.replace('_', ' '), item.selectedSize].filter(Boolean).join(' · ')} · Qty {item.quantity}
+                      </p>
                     </div>
-                    <p className="text-sm font-semibold text-brand-primary flex-shrink-0">{formatCurrency(item.price * item.quantity, currency, { showDecimals: false })}</p>
+                    <p className="text-sm font-medium text-brand-primary tabular-nums shrink-0">
+                      {formatCurrency(item.price * item.quantity, currency, { showDecimals: false })}
+                    </p>
                   </li>
                 ))}
               </ul>
-              <div className="mt-6 pt-6 border-t border-white/10 space-y-2">
+              <div className="mt-4 pt-4 border-t border-hairline space-y-2">
                 {paymentMethod === 'Prepaid' ? (
                   <>
                     <div className="flex justify-between text-sm text-brand-secondary">
                       <span>Subtotal</span>
-                      <span className="line-through text-brand-secondary/80">{formatCurrency(subtotal, currency, { showDecimals: false })}</span>
+                      <span className="line-through tabular-nums">{formatCurrency(subtotal, currency, { showDecimals: false })}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-emerald-600 dark:text-emerald-400 font-medium">Extra 5% off (Prepaid)</span>
-                      <span className="text-emerald-600 dark:text-emerald-400 font-medium">-{formatCurrency(prepaidSavings, currency, { showDecimals: false })}</span>
-                    </div>
-                    <div className="flex justify-between text-sm text-brand-secondary">
-                      <span>Price after discount</span>
-                      <span className="text-brand-primary font-medium">{formatCurrency(discountedSubtotal, currency, { showDecimals: false })}</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-medium">Prepaid savings (5%)</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-medium tabular-nums">-{formatCurrency(prepaidSavings, currency, { showDecimals: false })}</span>
                     </div>
                   </>
                 ) : (
                   <div className="flex justify-between text-sm text-brand-secondary">
                     <span>Subtotal</span>
-                    <span className="text-brand-primary">{formatCurrency(subtotal, currency, { showDecimals: false })}</span>
+                    <span className="text-brand-primary tabular-nums">{formatCurrency(subtotal, currency, { showDecimals: false })}</span>
                   </div>
                 )}
                 {paymentMethod === 'COD' && (
                   <div className="flex justify-between text-sm text-brand-secondary">
-                    <span>COD Handling Fee</span>
-                    <span className="text-brand-primary">{formatCurrency(COD_FEE, currency, { showDecimals: false })}</span>
+                    <span>COD handling</span>
+                    <span className="text-brand-primary tabular-nums">{formatCurrency(COD_FEE, currency, { showDecimals: false })}</span>
                   </div>
                 )}
-                {shippingCost > 0 && (
-                  <div className="flex justify-between text-sm text-brand-secondary">
-                    <span>Shipping</span>
-                    <span className="text-brand-primary">{formatCurrency(shippingCost, currency, { showDecimals: false })}</span>
-                  </div>
-                )}
-                <div className="flex justify-between text-base font-medium text-brand-primary pt-2 border-t border-white/10">
+                <div className="flex justify-between text-base font-medium text-brand-primary pt-2 border-t border-hairline">
                   <span>Total</span>
-                  <span>{formatCurrency(total, currency, { showDecimals: false })}</span>
+                  <span className="tabular-nums">{formatCurrency(total, currency, { showDecimals: false })}</span>
                 </div>
-                <p className="text-xs text-brand-secondary">
-                  Prices are inclusive of all applicable GST.
-                </p>
               </div>
             </div>
-            
-            {/* Payment Method - Mobile */}
+
             {!isSubmitting && (
-              <div className="bg-brand-surface p-6 rounded-lg shadow-sm border border-white/10">
+              <div className="rounded-2xl border border-hairline bg-white dark:bg-brand-surface p-5 space-y-5">
                 <PaymentMethodSelector
                   selectedMethod={paymentMethod}
                   onMethodChange={setPaymentMethod}
@@ -1024,25 +1075,21 @@ export const CheckoutPage: React.FC = () => {
                   currency={currency}
                   prepaidOffers={['Free Shipping', 'Instant confirmation', 'No extra charges']}
                 />
-                
-                {/* Place Order Button - Mobile */}
                 {((useNewAddress || !isAuthenticated || savedAddresses.length === 0) || (isAuthenticated && savedAddresses.length > 0 && !useNewAddress && selectedAddressId)) && (
-                  <Button
+                  <button
+                    type="button"
                     onClick={() => {
                       if (useNewAddress || !isAuthenticated || savedAddresses.length === 0) {
-                        // Trigger form submission via form element
                         const form = document.querySelector('form');
-                        if (form) {
-                          form.requestSubmit();
-                        }
+                        if (form) form.requestSubmit();
                       } else {
                         handlePlaceOrder({}, paymentMethod);
                       }
                     }}
-                    className="w-full py-3 mt-6"
+                    className="flex min-h-[52px] w-full cursor-pointer items-center justify-center rounded-full bg-brand-ink px-6 text-[15px] font-medium text-brand-cream dark:bg-brand-cream dark:text-brand-ink"
                   >
                     {paymentMethod === 'COD' ? 'Place Order' : 'Proceed to Payment'}
-                  </Button>
+                  </button>
                 )}
               </div>
             )}

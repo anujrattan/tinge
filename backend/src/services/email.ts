@@ -804,7 +804,7 @@ async function getAdminRecipientEmails(): Promise<string[]> {
   try {
     // First, get admin emails from user_profiles table
     const { data, error } = await supabaseAdmin
-      .from("user_profiles")
+      .from("tinge_user_profiles")
       .select("email, role")
       .eq("role", "admin");
 

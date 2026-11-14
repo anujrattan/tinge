@@ -28,7 +28,7 @@ const transformCollection = (dbCollection: any) => ({
 router.get('/', async (req, res, next) => {
   try {
     const { data, error } = await supabase
-      .from('collections')
+      .from('tinge_collections')
       .select('*')
       .eq('is_active', true)
       .order('sort_order', { ascending: true })
@@ -47,7 +47,7 @@ router.get('/', async (req, res, next) => {
 router.get('/admin/all', authenticateToken, requireAdmin, async (req: AuthRequest, res, next) => {
   try {
     const { data, error } = await supabase
-      .from('collections')
+      .from('tinge_collections')
       .select('*')
       .order('sort_order', { ascending: true })
       .order('created_at', { ascending: false });
@@ -67,7 +67,7 @@ router.get('/:slug', async (req, res, next) => {
     const { slug } = req.params;
 
     const { data, error } = await supabase
-      .from('collections')
+      .from('tinge_collections')
       .select('*')
       .eq('slug', slug)
       .eq('is_active', true)
@@ -125,7 +125,7 @@ router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res, 
     }
 
     const { data, error } = await supabase
-      .from('collections')
+      .from('tinge_collections')
       .insert([insertData])
       .select('*')
       .single();
@@ -147,7 +147,7 @@ router.put('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res
 
     // Fetch existing for image cleanup if needed
     const { data: existing } = await supabase
-      .from('collections')
+      .from('tinge_collections')
       .select('image_url, slug')
       .eq('id', id)
       .single();
@@ -206,7 +206,7 @@ router.put('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res
     }
 
     const { data, error } = await supabase
-      .from('collections')
+      .from('tinge_collections')
       .update(updateData)
       .eq('id', id)
       .select('*')
@@ -227,7 +227,7 @@ router.patch('/:id/toggle-active', authenticateToken, requireAdmin, async (req: 
     const { id } = req.params;
 
     const { data: collection, error: fetchError } = await supabase
-      .from('collections')
+      .from('tinge_collections')
       .select('is_active')
       .eq('id', id)
       .single();
@@ -240,7 +240,7 @@ router.patch('/:id/toggle-active', authenticateToken, requireAdmin, async (req: 
     const newStatus = !collection.is_active;
 
     const { data, error } = await supabase
-      .from('collections')
+      .from('tinge_collections')
       .update({ is_active: newStatus })
       .eq('id', id)
       .select('*')
@@ -262,7 +262,7 @@ router.delete('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, 
 
     // Unlink products (set collection_id to null)
     const { error: unlinkError } = await supabase
-      .from('products')
+      .from('tinge_products')
       .update({ collection_id: null })
       .eq('collection_id', id);
 
@@ -270,13 +270,13 @@ router.delete('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, 
 
     // Get collection image URL before deleting
     const { data: collection } = await supabase
-      .from('collections')
+      .from('tinge_collections')
       .select('image_url')
       .eq('id', id)
       .single();
 
     const { error } = await supabase
-      .from('collections')
+      .from('tinge_collections')
       .delete()
       .eq('id', id);
 

@@ -19,13 +19,13 @@ import { ReturnsView } from "./admin/components/ReturnsView";
 import { ReturnDetailView } from "./admin/components/ReturnDetailView";
 import { ContentView } from "./admin/components/ContentView";
 import { SystemsGoView } from "./admin/components/SystemsGoView";
+import { CustomArtView } from "./admin/components/CustomArtView";
 import { useAdminData } from "./admin/hooks/useAdminData";
 import { useAdminOrders } from "./admin/hooks/useAdminOrders";
 import { useAdminReturns } from "./admin/hooks/useAdminReturns";
 import { AdminTab } from "./admin/types";
 import { Modal } from "../components/Modal";
 import { ArrowLeftIcon } from "../components/icons";
-import { PrintroveSyncModal, PrintrovePrefill } from "./admin/components/PrintroveSyncModal";
 
 export const AdminPage: React.FC = () => {
   const { currency } = useApp();
@@ -53,8 +53,6 @@ export const AdminPage: React.FC = () => {
   const [categoryIdToDelete, setCategoryIdToDelete] = useState<string | null>(null);
   const [collectionIdToDelete, setCollectionIdToDelete] = useState<string | null>(null);
   const [collections, setCollections] = useState<Collection[]>([]);
-  const [showSyncModal, setShowSyncModal] = useState(false);
-  const [printrovePrefill, setPrintrovePrefill] = useState<PrintrovePrefill | null>(null);
   const [collectionsLoading, setCollectionsLoading] = useState<boolean>(false);
 
   // Use custom hooks for data management
@@ -200,15 +198,7 @@ export const AdminPage: React.FC = () => {
 
   const handleAddNew = () => {
     setEditingProduct(null);
-    setPrintrovePrefill(null);
-    setShowForm(true);
-  };
-
-  const handlePrefillFromPrintrove = (data: PrintrovePrefill) => {
-    setEditingProduct(null);
-    setPrintrovePrefill(data);
-    setShowSyncModal(false);
-    setShowForm(true);
+        setShowForm(true);
   };
 
   const handleSave = async () => {
@@ -218,8 +208,7 @@ export const AdminPage: React.FC = () => {
     setEditingProduct(null);
     setEditingCategory(null);
     setEditingCollection(null);
-    setPrintrovePrefill(null);
-    await Promise.all([refetchAll(), fetchCollections()]);
+        await Promise.all([refetchAll(), fetchCollections()]);
   };
 
   const handleCancel = () => {
@@ -229,8 +218,7 @@ export const AdminPage: React.FC = () => {
     setEditingProduct(null);
     setEditingCategory(null);
     setEditingCollection(null);
-    setPrintrovePrefill(null);
-  };
+      };
 
   const handleCategoryModalClose = () => {
     setShowCategoryModal(false);
@@ -361,14 +349,10 @@ export const AdminPage: React.FC = () => {
               // Product Form View (still full screen for now)
               <ProductForm
                 product={editingProduct}
-                prefill={printrovePrefill}
                 onSave={handleSave}
                 onCancel={handleCancel}
                 categories={categories}
                 collections={collections}
-                onProductTypeChange={(type) => {
-                  if (type === 'poster') setPrintrovePrefill(null);
-                }}
               />
             ) : (
               <>
@@ -424,7 +408,6 @@ export const AdminPage: React.FC = () => {
                     onEdit={handleEdit}
                     onDelete={handleDeleteClick}
                     onAddNew={handleAddNew}
-                    onSyncFromPrintrove={() => setShowSyncModal(true)}
                     searchQuery={productSearchQuery}
                     onSearchChange={setProductSearchQuery}
                     selectedIds={selectedProductIds}
@@ -454,6 +437,8 @@ export const AdminPage: React.FC = () => {
                       onSelectOrder={selectOrder}
                     />
                   )
+                ) : activeTab === "custom_art" ? (
+                  <CustomArtView currency={currency} />
                 ) : activeTab === "returns" ? (
                   <>
                     <ReturnsView
@@ -659,14 +644,6 @@ export const AdminPage: React.FC = () => {
             </div>
           </Modal>
 
-          {/* Printrove Sync Modal */}
-          {showSyncModal && (
-            <PrintroveSyncModal
-              onClose={() => setShowSyncModal(false)}
-              onPrefill={handlePrefillFromPrintrove}
-              onImportComplete={refetchAll}
-            />
-          )}
         </div>
       </div>
     </div>

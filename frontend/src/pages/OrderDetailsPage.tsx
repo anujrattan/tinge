@@ -260,7 +260,7 @@ export const OrderDetailsPage: React.FC = () => {
         key_id: keyId,
         amount: amountInPaise.toString(),
         order_id: razorpayOrderId,
-        name: 'Tinge Clothing',
+        name: 'Tinge',
         description: `Order #${order.order_number}`,
         callback_url: callbackUrl,
         cancel_url: cancelUrl,
@@ -347,14 +347,14 @@ export const OrderDetailsPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative mx-auto w-16 h-16 mb-6">
-            <div className="absolute inset-0 rounded-full border-2 border-white/10" />
-            <div className="absolute inset-0 rounded-full border-2 border-t-purple-500 animate-spin" />
-            <div className="absolute inset-2 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 backdrop-blur-sm" />
+      <div className="container mx-auto px-4 sm:px-6 lg:px-10 py-14 max-w-5xl space-y-6" aria-busy="true">
+        <div className="h-10 w-56 rounded-lg bg-wall motion-safe:animate-pulse" />
+        <div className="grid gap-8 lg:grid-cols-12">
+          <div className="lg:col-span-8 space-y-5">
+            <div className="h-44 rounded-2xl bg-wall motion-safe:animate-pulse" />
+            <div className="h-64 rounded-2xl bg-wall motion-safe:animate-pulse" />
           </div>
-          <p className="text-brand-secondary text-sm tracking-widest uppercase">Loading your order</p>
+          <div className="lg:col-span-4 h-72 rounded-2xl bg-wall motion-safe:animate-pulse" />
         </div>
       </div>
     );
@@ -370,73 +370,62 @@ export const OrderDetailsPage: React.FC = () => {
 
   if (showLookupForm && !order) {
     return (
-      <div className="min-h-[80vh] flex items-center justify-center px-4 py-20">
-        {/* Decorative blobs */}
-        <div className="fixed inset-0 overflow-hidden pointer-events-none" aria-hidden>
-          <div className="absolute -top-40 -right-40 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
-          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl" />
-        </div>
-
-        <div className="relative w-full max-w-md">
-          <div className="backdrop-blur-xl bg-white/5 dark:bg-white/5 border border-white/15 rounded-2xl shadow-2xl p-8">
-            {/* Icon accent */}
-            <div className="flex justify-center mb-6">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 border border-white/10 flex items-center justify-center">
-                <svg className="w-7 h-7 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-              </div>
+      <div className="min-h-[75vh] flex items-center justify-center px-4 py-16">
+        <div className="w-full max-w-md rounded-2xl border border-hairline bg-white dark:bg-brand-surface p-8">
+          <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-brand-coral text-center">Order Tracking</p>
+          <h1 className="mt-2 font-playfair text-3xl font-medium text-brand-primary text-center">
+            Find your order
+          </h1>
+          <p className="text-brand-secondary text-sm text-center mt-2 mb-7">
+            Enter your order number and the email used at checkout.
+          </p>
+          {error && (
+            <div className="mb-5 rounded-xl border border-amber-500/30 bg-amber-500/10 py-3 px-4">
+              <p className="text-amber-700 dark:text-amber-400 text-sm">{error}</p>
             </div>
-            <h1 className="text-2xl font-display font-bold text-brand-primary mb-1.5 text-center">Track Your Order</h1>
-            <p className="text-brand-secondary text-sm text-center mb-7">
-              Enter your order number and email address to view details.
-            </p>
-            {error && (
-              <div className="mb-5 flex items-start gap-3 bg-amber-500/10 border border-amber-500/20 rounded-xl py-3 px-4">
-                <svg className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                <p className="text-amber-600 dark:text-amber-400 text-sm">{error}</p>
-              </div>
-            )}
-            <form onSubmit={handleLookupSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="lookup-order-number" className="block text-xs uppercase tracking-widest text-brand-secondary mb-2 font-medium">
-                  Order Number
-                </label>
-                <Input
-                  id="lookup-order-number"
-                  type="text"
-                  value={lookupOrderNumber}
-                  onChange={(e) => setLookupOrderNumber(e.target.value)}
-                  placeholder="e.g. TC-241229-0001"
-                  required
-                />
-              </div>
-              <div>
-                <label htmlFor="lookup-email" className="block text-xs uppercase tracking-widest text-brand-secondary mb-2 font-medium">
-                  Email Address
-                </label>
-                <Input
-                  id="lookup-email"
-                  type="email"
-                  value={lookupEmail}
-                  onChange={(e) => setLookupEmail(e.target.value)}
-                  placeholder="your@email.com"
-                  required
-                />
-              </div>
-              <Button type="submit" className="w-full mt-2" disabled={loading}>
-                {loading ? 'Searching…' : 'View Order'}
-              </Button>
-            </form>
+          )}
+          <form onSubmit={handleLookupSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="lookup-order-number" className="block font-mono text-[11px] uppercase tracking-[0.14em] text-brand-secondary mb-2">
+                Order Number
+              </label>
+              <Input
+                id="lookup-order-number"
+                type="text"
+                value={lookupOrderNumber}
+                onChange={(e) => setLookupOrderNumber(e.target.value)}
+                placeholder="e.g. TC-261113-0001"
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="lookup-email" className="block font-mono text-[11px] uppercase tracking-[0.14em] text-brand-secondary mb-2">
+                Email Address
+              </label>
+              <Input
+                id="lookup-email"
+                type="email"
+                value={lookupEmail}
+                onChange={(e) => setLookupEmail(e.target.value)}
+                placeholder="you@example.com"
+                required
+              />
+            </div>
             <button
-              onClick={() => navigate('/')}
-              className="w-full mt-3 text-sm text-brand-secondary hover:text-brand-primary transition-colors text-center py-2"
+              type="submit"
+              disabled={loading}
+              className="flex min-h-[50px] w-full cursor-pointer items-center justify-center rounded-full bg-brand-ink text-sm font-medium text-brand-cream hover:bg-black disabled:opacity-50 dark:bg-brand-cream dark:text-brand-ink"
             >
-              ← Return to Home
+              {loading ? 'Searching…' : 'View Order'}
             </button>
-          </div>
+          </form>
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="w-full mt-4 text-sm text-brand-secondary hover:text-brand-primary transition-colors text-center py-2"
+          >
+            ← Back to gallery
+          </button>
         </div>
       </div>
     );
@@ -484,123 +473,95 @@ export const OrderDetailsPage: React.FC = () => {
   const PLACEHOLDER_TRACKING_URL = 'Pending updation';
 
   return (
-    <div className="relative min-h-screen">
-      {/* Ambient background blobs */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none" aria-hidden>
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-purple-500/5 rounded-full blur-3xl translate-x-1/3 -translate-y-1/3" />
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-pink-500/5 rounded-full blur-3xl -translate-x-1/3 translate-y-1/3" />
-      </div>
-
-      <div className="relative container mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-14">
-        {/* ── Page header ──────────────────────────────────────────────── */}
-        <div className="mb-8">
+    <div className="min-h-screen pb-20">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-10 py-8 lg:py-12 max-w-6xl">
+        {/* Page header */}
+        <div className="mb-8 pb-6 border-b border-hairline">
           <button
+            type="button"
             onClick={() => navigate(-1)}
-            className="group inline-flex items-center gap-2 text-sm text-brand-secondary hover:text-brand-primary transition-colors mb-5"
+            className="inline-flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.14em] text-brand-secondary hover:text-brand-primary transition-colors mb-5"
           >
-            <svg
-              className="w-4 h-4 transition-transform group-hover:-translate-x-1"
-              fill="none" stroke="currentColor" viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back
+            ← Back
           </button>
 
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-brand-secondary font-medium mb-1">Order Details</p>
-              <h1 className="text-3xl sm:text-4xl font-display font-bold text-brand-primary tracking-tight">
-                #{order.order_number}
+              <p className="font-mono text-[11px] uppercase tracking-[0.16em] text-brand-coral">Order Details</p>
+              <h1 className="mt-2 font-playfair text-3xl sm:text-4xl font-medium text-brand-primary tracking-tight">
+                Order #{order.order_number}
               </h1>
               <p className="text-sm text-brand-secondary mt-1.5">
                 Placed on {formatDate(order.created_at)}
               </p>
             </div>
 
-            {/* Action buttons */}
             <div className="flex flex-wrap items-center gap-3">
               {order.status === 'delivered' && (
                 <>
                   {canRequestReturn && (
                     <button
+                      type="button"
                       onClick={() => setShowReturnModal(true)}
-                      className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/15 text-sm font-medium text-brand-secondary hover:text-brand-primary hover:bg-white/10 hover:border-white/25 transition-all duration-200"
+                      className="min-h-[42px] cursor-pointer rounded-full border border-hairline px-5 text-sm font-medium text-brand-primary hover:border-brand-ink dark:hover:border-brand-cream transition-colors"
                     >
                       Request return
                     </button>
                   )}
                   <button
+                    type="button"
                     onClick={handleDownloadInvoice}
-                    className="group inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/15 text-sm font-medium text-brand-secondary hover:text-brand-primary hover:bg-white/10 hover:border-white/25 transition-all duration-200"
+                    className="inline-flex min-h-[42px] cursor-pointer items-center gap-2 rounded-full border border-hairline px-5 text-sm font-medium text-brand-primary hover:border-brand-ink dark:hover:border-brand-cream transition-colors"
                   >
-                    <svg className="w-4 h-4 transition-transform group-hover:-translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
                     Download Invoice
                   </button>
                 </>
               )}
               {needsRetryPayment && (
                 <button
+                  type="button"
                   onClick={handleRetryPayment}
                   disabled={isRetryingPayment}
-                  className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-sm font-semibold shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="inline-flex min-h-[44px] cursor-pointer items-center gap-2 rounded-full bg-brand-ink px-6 text-sm font-medium text-brand-cream hover:bg-black disabled:opacity-60 dark:bg-brand-cream dark:text-brand-ink"
                 >
-                  {isRetryingPayment ? (
-                    <>
-                      <div className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                      Redirecting…
-                    </>
-                  ) : (
-                    <>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                      </svg>
-                      Retry Payment
-                    </>
-                  )}
+                  {isRetryingPayment ? 'Redirecting…' : 'Complete Payment'}
                 </button>
               )}
             </div>
           </div>
         </div>
 
-        {/* ── Two-column layout on desktop ─────────────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* ── Left / main column ────────────────────────────────────── */}
-          <div className="lg:col-span-2 space-y-6">
-
-            {/* Status banner */}
-            <div className="backdrop-blur-xl bg-white/5 border border-white/15 rounded-2xl overflow-hidden shadow-xl shadow-black/10">
-              {/* Status pills row */}
-              <div className="grid grid-cols-3 divide-x divide-white/10">
+        {/* 12-col layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Main column */}
+          <div className="lg:col-span-8 space-y-6">
+            {/* Status + Progress Timeline */}
+            <div className="rounded-2xl border border-hairline bg-white dark:bg-brand-surface overflow-hidden">
+              <div className="grid grid-cols-3 divide-x divide-hairline">
                 {[
                   { label: 'Order Status', value: order.status, color: getStatusColor(order.status) },
                   { label: 'Payment', value: order.payment_status, color: getPaymentStatusColor(order.payment_status) },
                   {
                     label: 'Method',
                     value: order.gateway,
-                    color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20',
+                    color: 'border border-hairline text-brand-primary',
                   },
                 ].map(({ label, value, color }) => (
-                  <div key={label} className="flex flex-col items-center justify-center text-center px-4 py-5 gap-2">
-                    <p className="text-[10px] uppercase tracking-[0.18em] text-brand-secondary font-semibold">{label}</p>
-                    <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-bold tracking-wide ${color}`}>
-                      {value.charAt(0).toUpperCase() + value.slice(1)}
+                  <div key={label} className="flex flex-col items-center justify-center text-center px-3 py-5 gap-2">
+                    <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-brand-secondary">{label}</p>
+                    <span className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-semibold capitalize ${color}`}>
+                      {value}
                     </span>
                   </div>
                 ))}
               </div>
 
-              {/* Progress timeline – hidden for cancelled orders */}
               {!isCancelled && currentStepIndex >= 0 && (
-                <div className="border-t border-white/10 px-6 py-5">
+                <div className="border-t border-hairline px-6 py-6">
                   <div className="relative flex items-center justify-between">
-                    {/* connecting line */}
-                    <div className="absolute left-0 right-0 top-[18px] h-px bg-white/10" />
+                    <div className="absolute left-0 right-0 top-[18px] h-px bg-hairline" />
                     <div
-                      className="absolute left-0 top-[18px] h-px bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-700"
+                      className="absolute left-0 top-[18px] h-px bg-brand-coral transition-all duration-500"
                       style={{ width: `${(currentStepIndex / (STATUS_STEPS.length - 1)) * 100}%` }}
                     />
 
@@ -610,25 +571,21 @@ export const OrderDetailsPage: React.FC = () => {
                       return (
                         <div key={step} className="relative flex flex-col items-center gap-2 z-10">
                           <div
-                            className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold border transition-all duration-300 ${
+                            className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold border transition-all ${
                               done
-                                ? 'bg-gradient-to-br from-purple-500 to-pink-500 border-transparent text-white shadow-lg shadow-purple-500/30'
+                                ? 'bg-brand-ink border-brand-ink text-brand-cream dark:bg-brand-cream dark:border-brand-cream dark:text-brand-ink'
                                 : active
-                                ? 'bg-white/10 border-purple-500/60 text-purple-400 shadow-md shadow-purple-500/20 ring-2 ring-purple-500/20'
-                                : 'bg-white/5 border-white/15 text-brand-secondary'
+                                  ? 'bg-brand-coral border-brand-coral text-white ring-4 ring-brand-coral/20'
+                                  : 'bg-brand-bg border-hairline text-brand-secondary'
                             }`}
                           >
-                            {done ? (
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                              </svg>
-                            ) : (
-                              STEP_ICONS[step] || <span>{idx + 1}</span>
-                            )}
+                            {done ? '✓' : STEP_ICONS[step] || <span>{idx + 1}</span>}
                           </div>
-                          <span className={`text-[10px] uppercase tracking-wide font-medium hidden sm:block ${
-                            done || active ? 'text-brand-primary' : 'text-brand-secondary'
-                          }`}>
+                          <span
+                            className={`font-mono text-[10px] uppercase tracking-[0.12em] hidden sm:block ${
+                              done || active ? 'text-brand-primary' : 'text-brand-secondary'
+                            }`}
+                          >
                             {step}
                           </span>
                         </div>
@@ -638,140 +595,112 @@ export const OrderDetailsPage: React.FC = () => {
                 </div>
               )}
 
-              {/* Cancelled banner */}
               {isCancelled && (
-                <div className="border-t border-white/10 px-6 py-4 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-red-500/15 border border-red-500/20 flex items-center justify-center shrink-0">
-                    <svg className="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </div>
-                  <p className="text-sm text-red-400 font-medium">This order has been cancelled.</p>
+                <div className="border-t border-hairline px-6 py-4">
+                  <p className="text-sm text-red-500 font-medium">This order has been cancelled.</p>
                 </div>
               )}
             </div>
 
-            {/* Shipping & tracking — reflects admin updates; placeholders until filled */}
+            {/* Shipping & tracking */}
             {showShippingDetailsSection && (
-              <div className="backdrop-blur-xl bg-white/5 border border-white/15 rounded-2xl p-6 shadow-xl shadow-black/10">
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="w-9 h-9 rounded-xl bg-blue-500/15 border border-blue-500/20 flex items-center justify-center shrink-0">
-                    <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-base font-semibold text-brand-primary">Shipping and tracking</h3>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div className="rounded-2xl border border-hairline bg-white dark:bg-brand-surface p-6">
+                <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-brand-secondary">Fulfillment</p>
+                <h2 className="mt-1 font-playfair text-xl font-medium text-brand-primary mb-5">Shipping &amp; tracking</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                   <div>
-                    <p className="text-[10px] uppercase tracking-widest text-brand-secondary mb-1.5 font-medium">Courier</p>
-                    <p
-                      className={`font-semibold ${
-                        courierName ? 'text-brand-primary' : 'text-brand-secondary italic'
-                      }`}
-                    >
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-brand-secondary mb-1">Courier</p>
+                    <p className={`text-sm font-medium ${courierName ? 'text-brand-primary' : 'text-brand-secondary italic'}`}>
                       {courierName || PLACEHOLDER_COURIER}
                     </p>
                   </div>
                   <div>
-                    <p className="text-[10px] uppercase tracking-widest text-brand-secondary mb-1.5 font-medium">Tracking ID</p>
-                    <p
-                      className={`text-sm font-semibold ${
-                        trackingNo ? 'text-brand-primary font-mono' : 'text-brand-secondary italic'
-                      }`}
-                    >
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-brand-secondary mb-1">Tracking ID</p>
+                    <p className={`text-sm font-medium ${trackingNo ? 'text-brand-primary font-mono' : 'text-brand-secondary italic'}`}>
                       {trackingNo || PLACEHOLDER_TRACKING_ID}
                     </p>
                   </div>
-                </div>
-                <div className="mt-5">
-                  <p className="text-[10px] uppercase tracking-widest text-brand-secondary mb-2 font-medium">Tracking URL</p>
-                  {trackingLink ? (
-                    <a
-                      href={trackingLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 hover:border-blue-500/40 text-sm font-semibold transition-all duration-200"
-                    >
-                      Track your shipment
-                      <svg className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                      </svg>
-                    </a>
-                  ) : (
-                    <p className="text-sm font-semibold text-brand-secondary italic">{PLACEHOLDER_TRACKING_URL}</p>
-                  )}
+                  <div>
+                    <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-brand-secondary mb-1">Live tracking</p>
+                    {trackingLink ? (
+                      <a
+                        href={trackingLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-sm font-medium text-brand-coral hover:underline"
+                      >
+                        Track shipment →
+                      </a>
+                    ) : (
+                      <p className="text-sm text-brand-secondary italic">{PLACEHOLDER_TRACKING_URL}</p>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
 
             {/* Order items */}
-            <div className="backdrop-blur-xl bg-white/5 border border-white/15 rounded-2xl overflow-hidden shadow-xl shadow-black/10">
-              <div className="px-6 py-4 border-b border-white/10 flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-purple-500/15 border border-purple-500/20 flex items-center justify-center shrink-0">
-                  <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                  </svg>
-                </div>
-                <h2 className="text-base font-semibold text-brand-primary">
-                  {order.items?.length} {order.items?.length === 1 ? 'Item' : 'Items'}
+            <div className="rounded-2xl border border-hairline bg-white dark:bg-brand-surface overflow-hidden">
+              <div className="px-6 py-4 border-b border-hairline flex items-baseline justify-between">
+                <h2 className="font-playfair text-xl font-medium text-brand-primary">
+                  Pieces in this order
                 </h2>
+                <span className="font-mono text-[11px] uppercase tracking-[0.12em] text-brand-secondary">
+                  {order.items?.length} {order.items?.length === 1 ? 'item' : 'items'}
+                </span>
               </div>
 
-              <div className="divide-y divide-white/10">
+              <div className="divide-y divide-hairline">
                 {order.items?.map((item: any) => {
                   const product = products[item.product_id];
+                  const thumbSrc =
+                    item.mockup_image_url ||
+                    item.custom_image_url ||
+                    product?.main_image_url;
                   return (
-                    <div
-                      key={item.id}
-                      className="group flex gap-4 p-5 hover:bg-white/[0.03] transition-colors duration-200"
-                    >
-                      {/* Product image */}
-                      <div className="w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 rounded-xl overflow-hidden bg-white/5 border border-white/10 group-hover:border-white/20 transition-colors">
-                        {product?.main_image_url ? (
+                    <div key={item.id} className="flex gap-4 p-5 sm:p-6">
+                      <div className="w-20 h-20 sm:w-24 sm:h-24 shrink-0 rounded-xl overflow-hidden bg-wall p-1.5 flex items-center justify-center">
+                        {thumbSrc ? (
                           <img
-                            src={product.main_image_url}
+                            src={thumbSrc}
                             alt={item.product_name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            className="w-full h-full object-cover rounded-lg"
                             loading="lazy"
                             decoding="async"
                           />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <svg className="w-6 h-6 text-brand-secondary/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                          </div>
+                          <span className="font-mono text-[10px] text-brand-secondary">ART</span>
                         )}
                       </div>
 
-                      {/* Info */}
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-brand-primary mb-2.5 text-sm sm:text-base leading-snug">
+                        <h3 className="text-[15px] font-medium text-brand-primary leading-snug">
                           {item.product_name}
                         </h3>
-                        <div className="flex flex-wrap gap-1.5">
+                        <div className="mt-2 flex flex-wrap gap-2 font-mono text-[11px] uppercase tracking-[0.1em] text-brand-secondary">
+                          {item.material && (
+                            <span className="rounded-full border border-hairline px-2.5 py-0.5 text-brand-primary">
+                              {String(item.material).replace(/_/g, ' ')}
+                            </span>
+                          )}
                           {item.size && (
-                            <span className="px-2.5 py-0.5 rounded-lg bg-blue-500/10 border border-blue-500/20 text-[11px] font-semibold text-blue-500">
+                            <span className="rounded-full border border-hairline px-2.5 py-0.5">
                               {item.size}
                             </span>
                           )}
-                          {item.color && (
-                            <span className="px-2.5 py-0.5 rounded-lg bg-purple-500/10 border border-purple-500/20 text-[11px] font-semibold text-purple-400">
-                              {item.color}
+                          {item.custom_art_request_id && (
+                            <span className="rounded-full border border-brand-coral/40 px-2.5 py-0.5 text-brand-coral">
+                              Your Art
                             </span>
                           )}
-                          <span className="px-2.5 py-0.5 rounded-lg bg-white/5 border border-white/15 text-[11px] font-semibold text-brand-secondary">
-                            Qty {item.quantity}
-                          </span>
+                          <span className="px-1 py-0.5">Qty {item.quantity}</span>
                         </div>
 
-                        {/* Rating */}
                         {order.status === 'delivered' && item.product_id && (
                           <div className="mt-3">
                             {userRatings[item.product_id] ? (
                               <button
+                                type="button"
                                 onClick={() => {
                                   setSelectedProduct({
                                     id: item.product_id,
@@ -783,10 +712,11 @@ export const OrderDetailsPage: React.FC = () => {
                                 className="inline-flex items-center gap-2 text-xs text-brand-secondary hover:text-brand-primary transition-colors"
                               >
                                 <StarRating rating={userRatings[item.product_id]} readonly size="sm" />
-                                <span className="underline underline-offset-2 opacity-70 hover:opacity-100">Edit rating</span>
+                                <span className="underline underline-offset-2">Edit rating</span>
                               </button>
                             ) : (
                               <button
+                                type="button"
                                 onClick={() => {
                                   setSelectedProduct({
                                     id: item.product_id,
@@ -795,23 +725,19 @@ export const OrderDetailsPage: React.FC = () => {
                                   });
                                   setRatingModalOpen(true);
                                 }}
-                                className="inline-flex items-center gap-1.5 text-xs text-purple-400 hover:text-purple-300 transition-colors group/rate"
+                                className="inline-flex items-center gap-1.5 text-xs font-medium text-brand-coral hover:underline"
                               >
-                                <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                                </svg>
-                                Rate this product
+                                ★ Rate this piece
                               </button>
                             )}
                           </div>
                         )}
                       </div>
 
-                      {/* Price */}
                       <div className="text-right shrink-0">
-                        <p className="font-bold text-brand-primary">{formatPrice(item.total_price)}</p>
+                        <p className="text-[15px] font-medium text-brand-primary tabular-nums">{formatPrice(item.total_price)}</p>
                         {item.quantity > 1 && (
-                          <p className="text-xs text-brand-secondary mt-0.5">{formatPrice(item.unit_price)} each</p>
+                          <p className="text-xs text-brand-secondary mt-0.5 tabular-nums">{formatPrice(item.unit_price)} each</p>
                         )}
                       </div>
                     </div>
@@ -821,11 +747,11 @@ export const OrderDetailsPage: React.FC = () => {
             </div>
 
             {orderReturns.length > 0 && (
-              <div className="backdrop-blur-xl bg-white/5 border border-white/15 rounded-2xl overflow-hidden shadow-xl shadow-black/10">
-                <div className="px-6 py-4 border-b border-white/10">
-                  <h2 className="text-base font-semibold text-brand-primary">Return requests</h2>
+              <div className="rounded-2xl border border-hairline bg-white dark:bg-brand-surface overflow-hidden">
+                <div className="px-6 py-4 border-b border-hairline">
+                  <h2 className="font-playfair text-xl font-medium text-brand-primary">Return requests</h2>
                 </div>
-                <div className="divide-y divide-white/10">
+                <div className="divide-y divide-hairline">
                   {orderReturns.map((ret: any) => (
                     <div key={ret.id} className="px-6 py-4 flex flex-wrap items-center justify-between gap-3">
                       <div>
@@ -839,7 +765,7 @@ export const OrderDetailsPage: React.FC = () => {
                           <p className="text-xs text-brand-secondary mt-2">{ret.return_ship_instructions}</p>
                         )}
                       </div>
-                      <span className="text-xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
+                      <span className="font-mono text-[11px] uppercase tracking-[0.12em] px-2.5 py-1 rounded-full border border-hairline text-amber-600 dark:text-amber-400">
                         {ret.status?.replace(/_/g, ' ')}
                       </span>
                     </div>
@@ -850,38 +776,31 @@ export const OrderDetailsPage: React.FC = () => {
 
             {/* Shipping address */}
             {order.user && (
-              <div className="backdrop-blur-xl bg-white/5 border border-white/15 rounded-2xl p-6 shadow-xl shadow-black/10">
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/20 flex items-center justify-center shrink-0">
-                    <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  </div>
-                  <h2 className="text-base font-semibold text-brand-primary">Shipping Address</h2>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="rounded-2xl border border-hairline bg-white dark:bg-brand-surface p-6">
+                <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-brand-secondary">Delivery</p>
+                <h2 className="mt-1 font-playfair text-xl font-medium text-brand-primary mb-4">Shipping address</h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm">
                   <div className="space-y-0.5">
-                    <p className="font-bold text-brand-primary text-sm">
+                    <p className="font-medium text-brand-primary">
                       {order.user.first_name} {order.user.last_name}
                     </p>
-                    <p className="text-brand-secondary text-sm">{order.user.address1}</p>
-                    {order.user.address2 && <p className="text-brand-secondary text-sm">{order.user.address2}</p>}
-                    <p className="text-brand-secondary text-sm">
+                    <p className="text-brand-secondary">{order.user.address1}</p>
+                    {order.user.address2 && <p className="text-brand-secondary">{order.user.address2}</p>}
+                    <p className="text-brand-secondary">
                       {order.user.city}, {order.user.province} {order.user.zip}
                     </p>
-                    <p className="text-brand-secondary text-sm">{order.user.country_code}</p>
+                    <p className="text-brand-secondary">{order.user.country_code}</p>
                   </div>
-                  <div className="space-y-4 sm:pl-6 sm:border-l sm:border-white/10">
+                  <div className="space-y-3 sm:pl-6 sm:border-l sm:border-hairline">
                     {order.user.phone && (
                       <div>
-                        <p className="text-[10px] uppercase tracking-widest text-brand-secondary font-medium mb-1">Phone</p>
-                        <p className="text-brand-primary font-semibold text-sm">{order.user.phone}</p>
+                        <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-brand-secondary mb-0.5">Phone</p>
+                        <p className="text-brand-primary font-medium">{order.user.phone}</p>
                       </div>
                     )}
                     <div>
-                      <p className="text-[10px] uppercase tracking-widest text-brand-secondary font-medium mb-1">Email</p>
-                      <p className="text-brand-primary font-semibold text-sm break-all">{order.user.email}</p>
+                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-brand-secondary mb-0.5">Email</p>
+                      <p className="text-brand-primary font-medium break-all">{order.user.email}</p>
                     </div>
                   </div>
                 </div>
@@ -889,75 +808,51 @@ export const OrderDetailsPage: React.FC = () => {
             )}
           </div>
 
-          {/* ── Right / sidebar column ────────────────────────────────── */}
-          <div className="space-y-6">
-            {/* Order summary card */}
-            <div className="backdrop-blur-xl bg-white/5 border border-white/15 rounded-2xl overflow-hidden shadow-xl shadow-black/10">
-              <div className="px-6 py-4 border-b border-white/10 flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/20 flex items-center justify-center shrink-0">
-                  <svg className="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <h2 className="text-base font-semibold text-brand-primary">Order Summary</h2>
-              </div>
-
-              <div className="p-6 space-y-3">
+          {/* Sidebar */}
+          <div className="lg:col-span-4 space-y-6 lg:sticky lg:top-24">
+            <div className="rounded-2xl border border-hairline bg-white dark:bg-brand-surface p-6 space-y-4">
+              <h2 className="font-playfair text-xl font-medium text-brand-primary">Order summary</h2>
+              <div className="space-y-2.5 pt-2 border-t border-hairline">
                 {[
                   { label: 'Subtotal', value: formatPrice(order.subtotal), show: true },
-                  { label: 'Discount', value: `-${formatPrice(discountAmount)}`, show: discountAmount > 0, accent: 'text-emerald-400' },
+                  { label: 'Discount', value: `-${formatPrice(discountAmount)}`, show: discountAmount > 0, accent: 'text-emerald-600 dark:text-emerald-400' },
                   { label: 'Tax (GST)', value: formatPrice(order.tax_amount), show: order.tax_amount > 0 },
-                  { label: 'Shipping', value: order.shipping_cost > 0 ? formatPrice(order.shipping_cost) : 'Free', show: true },
+                  { label: 'Shipping', value: order.shipping_cost > 0 ? formatPrice(order.shipping_cost) : 'Complimentary', show: true },
                   { label: 'COD Fee', value: formatPrice(order.cod_fee), show: order.cod_fee > 0 && order.gateway === 'COD' },
                 ].filter((r) => r.show).map(({ label, value, accent }) => (
                   <div key={label} className="flex justify-between items-center text-sm">
                     <span className="text-brand-secondary">{label}</span>
-                    <span className={`font-medium ${accent || 'text-brand-primary'}`}>{value}</span>
+                    <span className={`font-medium tabular-nums ${accent || 'text-brand-primary'}`}>{value}</span>
                   </div>
                 ))}
 
-                <div className="!mt-5 pt-4 border-t border-white/15">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-bold text-brand-primary uppercase tracking-widest">Total</span>
-                    <span className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-                      {formatPrice(order.total_amount)}
-                    </span>
-                  </div>
+                <div className="pt-3 border-t border-hairline flex justify-between items-baseline">
+                  <span className="font-mono text-[11px] uppercase tracking-[0.14em] text-brand-secondary">Total</span>
+                  <span className="text-2xl font-medium text-brand-primary tabular-nums">
+                    {formatPrice(order.total_amount)}
+                  </span>
                 </div>
               </div>
             </div>
 
-            {/* Payment details card */}
             {order.payment && (
-              <div className="backdrop-blur-xl bg-white/5 border border-white/15 rounded-2xl overflow-hidden shadow-xl shadow-black/10">
-                <div className="px-6 py-4 border-b border-white/10 flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-pink-500/15 border border-pink-500/20 flex items-center justify-center shrink-0">
-                    <svg className="w-4 h-4 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                    </svg>
+              <div className="rounded-2xl border border-hairline bg-white dark:bg-brand-surface p-6 space-y-4">
+                <h2 className="font-playfair text-xl font-medium text-brand-primary">Payment</h2>
+                <div className="space-y-3 pt-2 border-t border-hairline text-sm">
+                  <div className="flex justify-between items-center">
+                    <span className="text-brand-secondary">Method</span>
+                    <span className="text-brand-primary font-medium">{order.payment.payment_method || order.gateway}</span>
                   </div>
-                  <h2 className="text-base font-semibold text-brand-primary">Payment</h2>
-                </div>
-
-                <div className="p-6 space-y-4">
-                  <div>
-                    <p className="text-[10px] uppercase tracking-widest text-brand-secondary font-medium mb-1.5">Method</p>
-                    <p className="text-brand-primary font-semibold text-sm">
-                      {order.payment.payment_method || order.gateway}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-[10px] uppercase tracking-widest text-brand-secondary font-medium mb-1.5">Status</p>
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${getPaymentStatusColor(order.payment.status)}`}>
-                      {order.payment.status.charAt(0).toUpperCase() + order.payment.status.slice(1)}
+                  <div className="flex justify-between items-center">
+                    <span className="text-brand-secondary">Status</span>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${getPaymentStatusColor(order.payment.status)}`}>
+                      {order.payment.status}
                     </span>
                   </div>
-
                   {order.payment.razorpay_payment_id && (
                     <div>
-                      <p className="text-[10px] uppercase tracking-widest text-brand-secondary font-medium mb-1.5">Transaction ID</p>
-                      <p className="text-brand-primary font-mono text-xs break-all leading-relaxed bg-white/5 rounded-lg px-3 py-2 border border-white/10">
+                      <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-brand-secondary mb-1">Transaction ID</p>
+                      <p className="text-brand-primary font-mono text-xs break-all bg-wall rounded-lg px-3 py-2">
                         {order.payment.razorpay_payment_id}
                       </p>
                     </div>
@@ -966,23 +861,16 @@ export const OrderDetailsPage: React.FC = () => {
               </div>
             )}
 
-            {/* Need help card */}
-            <div className="backdrop-blur-xl bg-gradient-to-br from-purple-500/5 to-pink-500/5 border border-white/10 rounded-2xl p-6 shadow-xl shadow-black/10">
-              <h3 className="text-sm font-semibold text-brand-primary mb-1.5">Need Help?</h3>
-              <p className="text-xs text-brand-secondary mb-4 leading-relaxed">
-                Have a question about your order? Our team is here to help.
+            <div className="rounded-2xl border border-hairline p-6">
+              <h3 className="text-sm font-medium text-brand-primary mb-1.5">Questions about your print?</h3>
+              <p className="text-xs text-brand-secondary mb-3 leading-relaxed">
+                Reach out to our studio team with your order number.
               </p>
               <a
-                href="mailto:support@tingeapparel.com"
-                className="group inline-flex items-center gap-2 text-xs text-purple-400 hover:text-purple-300 transition-colors font-medium"
+                href="mailto:support@tinge.in"
+                className="inline-flex items-center gap-2 text-xs font-medium text-brand-coral hover:underline"
               >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
-                support@tingeapparel.com
-                <svg className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-all -translate-x-1 group-hover:translate-x-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
+                support@tinge.in →
               </a>
             </div>
           </div>

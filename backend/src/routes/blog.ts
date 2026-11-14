@@ -13,7 +13,7 @@ router.get("/", async (req: Request, res: Response, next: NextFunction) => {
     const { limit = 20, offset = 0 } = req.query;
 
     const { data, error } = await supabaseAdmin
-      .from("blog_posts")
+      .from("tinge_blog_posts")
       .select(
         "id, slug, title, excerpt, cover_image, published_at, seo_title, seo_description"
       )
@@ -47,7 +47,7 @@ router.get("/:slug", async (req: Request, res: Response, next: NextFunction) => 
     const { slug } = req.params;
 
     const { data: post, error } = await supabaseAdmin
-      .from("blog_posts")
+      .from("tinge_blog_posts")
       .select("*")
       .eq("slug", slug)
       .eq("is_published", true)
@@ -80,7 +80,7 @@ router.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { data, error } = await supabaseAdmin
-        .from("blog_posts")
+        .from("tinge_blog_posts")
         .select("*")
         .order("created_at", { ascending: false });
 
@@ -130,7 +130,7 @@ router.post(
         is_published === true ? new Date().toISOString() : null;
 
       const { data, error } = await supabaseAdmin
-        .from("blog_posts")
+        .from("tinge_blog_posts")
         .insert({
           slug,
           title,
@@ -198,7 +198,7 @@ router.put(
       }
 
       const { data, error } = await supabaseAdmin
-        .from("blog_posts")
+        .from("tinge_blog_posts")
         .update(updateData)
         .eq("id", id)
         .select("*")
@@ -234,7 +234,7 @@ router.patch(
       const { id } = req.params;
 
       const { data: existing, error: fetchError } = await supabaseAdmin
-        .from("blog_posts")
+        .from("tinge_blog_posts")
         .select("id, is_published, published_at")
         .eq("id", id)
         .single();
@@ -249,7 +249,7 @@ router.patch(
       const newStatus = !existing.is_published;
 
       const { data, error } = await supabaseAdmin
-        .from("blog_posts")
+        .from("tinge_blog_posts")
         .update({
           is_published: newStatus,
           published_at:

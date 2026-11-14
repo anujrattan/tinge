@@ -45,10 +45,11 @@ API_BASE_URL=http://localhost:3001/api
 FRONTEND_URL=http://localhost:3000
 CORS_ORIGIN=http://localhost:3000
 
-# Supabase Configuration
+# Supabase (publishable + secret API keys)
+# https://supabase.com/docs/guides/getting-started/migrating-to-new-api-keys
 SUPABASE_URL=your_supabase_project_url
-SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+SUPABASE_SECRET_KEY=sb_secret_...
 
 # JWT Configuration
 JWT_SECRET=your_jwt_secret_key_change_in_production

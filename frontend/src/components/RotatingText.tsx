@@ -16,10 +16,19 @@ export const RotatingText: React.FC<RotatingTextProps> = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [displayedText, setDisplayedText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (words.length === 0) return;
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const apply = () => setReduceMotion(media.matches);
+    apply();
+    media.addEventListener('change', apply);
+    return () => media.removeEventListener('change', apply);
+  }, []);
+
+  useEffect(() => {
+    if (reduceMotion || words.length === 0) return;
 
     const currentWord = words[currentIndex];
     if (!currentWord) return;
@@ -63,11 +72,13 @@ export const RotatingText: React.FC<RotatingTextProps> = ({
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [displayedText, isDeleting, currentIndex, words, typingSpeed]);
+  }, [displayedText, isDeleting, currentIndex, words, typingSpeed, reduceMotion]);
 
   // Calculate max width based on longest word to prevent layout shift
   const longestWord = words.reduce((a, b) => a.length > b.length ? a : b, '');
   const maxWidth = longestWord.length * 0.7; // Approximate width in em
+
+  const visibleText = reduceMotion ? (words[0] ?? '') : displayedText;
 
   return (
     <span 
@@ -77,9 +88,12 @@ export const RotatingText: React.FC<RotatingTextProps> = ({
         textAlign: 'left'
       }}
     >
-      <span className={`inline-block ${className}`}>
-        {displayedText}
-        <span className="inline-block ml-0.5 align-middle animate-blink">|</span>
+      <span className="sr-only">{words.filter(Boolean).join('. ')}</span>
+      <span className={`inline-block ${className}`} aria-hidden="true">
+        {visibleText}
+        {!reduceMotion && (
+          <span className="inline-block ml-0.5 align-middle animate-blink">|</span>
+        )}
       </span>
     </span>
   );

@@ -5,7 +5,6 @@
 import { Router } from "express";
 import { authenticateToken, requireAdmin, AuthRequest } from "../middleware/auth.js";
 import { getHealthReport, runCrudSmokeTests } from "../services/health.js";
-import { runPrintroveProbeSuite } from "../services/printroveTests.js";
 
 const router = Router();
 
@@ -44,22 +43,6 @@ router.post(
         timestamp: new Date().toISOString(),
         tests,
       });
-    } catch (error) {
-      next(error);
-    }
-  }
-);
-
-/** Printrove API probe suite (mirrors /pt Command Center) — admin only */
-router.post(
-  "/printrove-tests",
-  authenticateToken,
-  requireAdmin,
-  async (_req: AuthRequest, res, next) => {
-    try {
-      const report = await runPrintroveProbeSuite();
-      const httpStatus = report.status === "error" ? 503 : 200;
-      res.status(httpStatus).json(report);
     } catch (error) {
       next(error);
     }

@@ -101,7 +101,7 @@ router.get(
       const windowOpen = order.status === "delivered" && isWithinReturnWindow(deliveredAt);
 
       const { data: items } = await supabaseAdmin
-        .from("order_items")
+        .from("tinge_order_items")
         .select("*")
         .eq("order_id", order.id);
 
@@ -156,7 +156,6 @@ router.post("/", requireAuth, async (req: Request, res: Response, next: NextFunc
       reason,
       reason_detail,
       exchange_size,
-      exchange_color,
       quantity = 1,
       photo_urls = [],
       email,
@@ -201,7 +200,7 @@ router.post("/", requireAuth, async (req: Request, res: Response, next: NextFunc
     }
 
     const { data: orderItem } = await supabaseAdmin
-      .from("order_items")
+      .from("tinge_order_items")
       .select("*")
       .eq("id", order_item_id)
       .single();
@@ -214,7 +213,7 @@ router.post("/", requireAuth, async (req: Request, res: Response, next: NextFunc
     const refundAmount = Number(orderItem.unit_price) * qty;
 
     const { data: created, error } = await supabaseAdmin
-      .from("return_requests")
+      .from("tinge_return_requests")
       .insert({
         order_id: order.id,
         order_item_id,
@@ -223,7 +222,6 @@ router.post("/", requireAuth, async (req: Request, res: Response, next: NextFunc
         reason,
         reason_detail: reason_detail?.trim() || null,
         exchange_size: exchange_size?.trim() || null,
-        exchange_color: exchange_color?.trim() || null,
         quantity: qty,
         refund_amount: refundAmount,
         photo_urls: Array.isArray(photo_urls) ? photo_urls : [],
@@ -297,7 +295,7 @@ router.get("/order/:orderNumber", async (req: Request, res: Response, next: Next
     }
 
     const { data: returns } = await supabaseAdmin
-      .from("return_requests")
+      .from("tinge_return_requests")
       .select("*")
       .eq("order_id", order.id)
       .order("created_at", { ascending: false });
@@ -316,7 +314,7 @@ router.get("/", requireAdminAuth, async (req: Request, res: Response, next: Next
     const { status, limit = "50", offset = "0" } = req.query;
 
     let query = supabaseAdmin
-      .from("return_requests")
+      .from("tinge_return_requests")
       .select("*")
       .order("created_at", { ascending: false })
       .range(Number(offset), Number(offset) + Number(limit) - 1);
@@ -331,12 +329,12 @@ router.get("/", requireAdminAuth, async (req: Request, res: Response, next: Next
     const enriched = await Promise.all(
       (returns || []).map(async (row) => {
         const { data: order } = await supabaseAdmin
-          .from("orders")
-          .select("order_number, status, fulfillment_partner, gateway, user_email, user_name")
+          .from("tinge_orders")
+          .select("order_number, status, gateway, user_email, user_name")
           .eq("id", row.order_id)
           .single();
         const { data: orderItem } = await supabaseAdmin
-          .from("order_items")
+          .from("tinge_order_items")
           .select("product_name, size, color, unit_price")
           .eq("id", row.order_item_id)
           .single();
@@ -360,7 +358,7 @@ router.get("/:returnNumber", async (req: Request, res: Response, next: NextFunct
     const auth = parseToken(req);
 
     const { data: returnRequest, error } = await supabaseAdmin
-      .from("return_requests")
+      .from("tinge_return_requests")
       .select("*")
       .eq("return_number", returnNumber)
       .maybeSingle();
@@ -370,7 +368,7 @@ router.get("/:returnNumber", async (req: Request, res: Response, next: NextFunct
     let row = returnRequest;
     if (!row && returnNumber.length === 36) {
       const { data: byId } = await supabaseAdmin
-        .from("return_requests")
+        .from("tinge_return_requests")
         .select("*")
         .eq("id", returnNumber)
         .maybeSingle();
@@ -382,7 +380,7 @@ router.get("/:returnNumber", async (req: Request, res: Response, next: NextFunct
     }
 
     const { data: order } = await supabaseAdmin
-      .from("orders")
+      .from("tinge_orders")
       .select("*")
       .eq("id", row.order_id)
       .single();
@@ -403,13 +401,13 @@ router.get("/:returnNumber", async (req: Request, res: Response, next: NextFunct
     }
 
     const { data: orderItem } = await supabaseAdmin
-      .from("order_items")
+      .from("tinge_order_items")
       .select("*")
       .eq("id", row.order_item_id)
       .single();
 
     const { data: history } = await supabaseAdmin
-      .from("return_status_history")
+      .from("tinge_return_status_history")
       .select("*")
       .eq("return_request_id", row.id)
       .order("created_at", { ascending: true });
@@ -448,7 +446,7 @@ router.put("/:id/status", requireAdminAuth, async (req: Request, res: Response, 
     }
 
     const { data: existing, error: fetchError } = await supabaseAdmin
-      .from("return_requests")
+      .from("tinge_return_requests")
       .select("*")
       .eq("id", id)
       .single();
@@ -458,13 +456,13 @@ router.put("/:id/status", requireAdminAuth, async (req: Request, res: Response, 
     }
 
     const { data: order } = await supabaseAdmin
-      .from("orders")
+      .from("tinge_orders")
       .select("*")
       .eq("id", existing.order_id)
       .single();
 
     const { data: orderItem } = await supabaseAdmin
-      .from("order_items")
+      .from("tinge_order_items")
       .select("*")
       .eq("id", existing.order_item_id)
       .single();
@@ -512,7 +510,7 @@ router.put("/:id/status", requireAdminAuth, async (req: Request, res: Response, 
     updateData.status = newStatus;
 
     const { data: updated, error: updateError } = await supabaseAdmin
-      .from("return_requests")
+      .from("tinge_return_requests")
       .update(updateData)
       .eq("id", id)
       .select("*")
@@ -558,7 +556,7 @@ router.post("/:id/refund", requireAdminAuth, async (req: Request, res: Response,
     const { manual_refund_ref } = req.body;
 
     const { data: returnRequest } = await supabaseAdmin
-      .from("return_requests")
+      .from("tinge_return_requests")
       .select("*")
       .eq("id", id)
       .single();
@@ -568,7 +566,7 @@ router.post("/:id/refund", requireAdminAuth, async (req: Request, res: Response,
     }
 
     const { data: order } = await supabaseAdmin
-      .from("orders")
+      .from("tinge_orders")
       .select("*")
       .eq("id", returnRequest.order_id)
       .single();

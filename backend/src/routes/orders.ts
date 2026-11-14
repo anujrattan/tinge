@@ -83,7 +83,7 @@ router.get("/", authenticate, requireAdmin, async (req: Request, res: Response, 
     const { status, limit = 50, offset = 0 } = req.query;
 
     let query = supabaseAdmin
-      .from("orders")
+      .from("tinge_orders")
       .select(`
         *,
         users:user_id (
@@ -117,7 +117,7 @@ router.get("/", authenticate, requireAdmin, async (req: Request, res: Response, 
     const ordersWithItems = await Promise.all(
       (orders || []).map(async (order: any) => {
         const { data: orderItems } = await supabaseAdmin
-          .from("order_items")
+          .from("tinge_order_items")
           .select("*")
           .eq("order_id", order.id);
 
@@ -152,9 +152,14 @@ interface CreateOrderRequest {
   userName: string;
   lineItems: Array<{
     variantId?: string; // Optional - can look up by productId + size + color
-    productId: string; // Required if variantId not provided
+    productId?: string | null; // Optional when customArtRequestId is provided
+    customArtRequestId?: string; // Link to tinge_custom_art_requests
+    productName?: string;
+    material?: string;
+    customImageUrl?: string;
+    mockupImageUrl?: string;
     size?: string; // Required if variantId not provided
-    color?: string; // Required if variantId not provided
+    color?: string; // Optional
     quantity: number;
     price: number; // Unit price
   }>;
@@ -236,7 +241,7 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
     if (orderData.userId) {
       // User is authenticated - try to find existing user by auth_user_id
       const { data: userByAuthId } = await supabaseAdmin
-        .from("users")
+        .from("tinge_users")
         .select("*")
         .eq("auth_user_id", orderData.userId)
         .single();
@@ -251,7 +256,7 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
     // If not found, try to find by email
     if (!userId) {
       const { data: userByEmail } = await supabaseAdmin
-        .from("users")
+        .from("tinge_users")
         .select("*")
         .eq("email", orderData.userEmail)
         .single();
@@ -301,7 +306,7 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
       
       if (Object.keys(updateData).length > 0) {
         const { error: updateError } = await supabaseAdmin
-          .from("users")
+          .from("tinge_users")
           .update(updateData)
           .eq("id", userId);
         
@@ -315,7 +320,7 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
     } else {
       // Create new user record
       const { data: newUser, error: userError } = await supabaseAdmin
-        .from("users")
+        .from("tinge_users")
         .insert({
           auth_user_id: orderData.userId || null,
           first_name: orderData.shippingAddress.firstName,
@@ -356,37 +361,76 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
       });
     }
 
-    // Validate each line item has required fields
+    // Validate each line item has required fields (catalog productId OR customArtRequestId, plus size)
     for (const item of orderData.lineItems) {
-      if (!item.productId || !item.size || !item.color) {
+      if ((!item.productId && !item.customArtRequestId) || !item.size) {
         return res.status(400).json({
           success: false,
-          message: "Each line item must have productId, size, and color",
+          message: "Each line item must have productId (or customArtRequestId) and size",
         });
       }
     }
 
-    // Fetch product details for order items
-    const productIds = [...new Set(orderData.lineItems.map((item) => item.productId))];
-    const { data: products, error: productsError } = await supabaseAdmin
-      .from("products")
-      // Include fulfillment_partner so we can auto-wire it onto the order
-      .select("id, title, variants, color, fulfillment_partner")
-      .in("id", productIds);
+    // Fetch catalog product details for non-custom items
+    const catalogProductIds = [
+      ...new Set(
+        orderData.lineItems
+          .filter((item) => !item.customArtRequestId && item.productId)
+          .map((item) => item.productId as string)
+      ),
+    ];
+    let products: any[] = [];
+    if (catalogProductIds.length > 0) {
+      const { data: fetchedProducts, error: productsError } = await supabaseAdmin
+        .from("tinge_products")
+        .select("id, title, variants, material")
+        .in("id", catalogProductIds);
 
-    if (productsError) {
-      console.error("Error fetching products:", productsError);
-      throw new Error("Failed to fetch products");
+      if (productsError) {
+        console.error("Error fetching products:", productsError);
+        throw new Error("Failed to fetch products");
+      }
+      products = fetchedProducts || [];
     }
-    
-    const productMap = new Map(products?.map((p) => [p.id, p.title]) || []);
-    
-    // Validate that sizes and colors exist in product variants,
-    // and collect fulfillment partners used in this order
-    const fulfillmentPartners = new Set<string>();
+
+    // Fetch custom art requests if present
+    const customArtIds = [
+      ...new Set(
+        orderData.lineItems
+          .filter((item) => item.customArtRequestId)
+          .map((item) => item.customArtRequestId as string)
+      ),
+    ];
+    let customArtRows: any[] = [];
+    if (customArtIds.length > 0) {
+      const { data: fetchedCustom, error: customErr } = await supabaseAdmin
+        .from("tinge_custom_art_requests")
+        .select("id, title, material, size, original_image_url, mockup_image_url, neon_text")
+        .in("id", customArtIds);
+      if (customErr) {
+        console.error("Error fetching custom art requests:", customErr);
+        throw new Error("Failed to fetch custom art requests");
+      }
+      customArtRows = fetchedCustom || [];
+    }
+
+    const productMap = new Map(products.map((p) => [p.id, p.title]));
+    const productMaterialMap = new Map(products.map((p) => [p.id, p.material || null]));
+    const customArtMap = new Map(customArtRows.map((c) => [c.id, c]));
 
     for (const item of orderData.lineItems) {
-      const product = products?.find((p) => p.id === item.productId);
+      if (item.customArtRequestId) {
+        const customRow = customArtMap.get(item.customArtRequestId);
+        if (!customRow) {
+          return res.status(400).json({
+            success: false,
+            message: `Custom art request not found: ${item.customArtRequestId}`,
+          });
+        }
+        continue;
+      }
+
+      const product = products.find((p) => p.id === item.productId);
       if (!product) {
         return res.status(400).json({
           success: false,
@@ -404,34 +448,6 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
           message: `Size ${item.size} is not available for product ${product.title}. Available sizes: ${availableSizes.join(', ')}`,
         });
       }
-      
-      if (product.color != null && product.color !== '' && item.color !== product.color) {
-        return res.status(400).json({
-          success: false,
-          message: `Color ${item.color} does not match product ${product.title} (${product.color}).`,
-        });
-      }
-
-      // Track fulfillment partner for this product, if any
-      if (product.fulfillment_partner) {
-        fulfillmentPartners.add(product.fulfillment_partner);
-      }
-    }
-
-    // Decide auto-wired fulfillment partner for the order:
-    // - If all items share the same non-null partner, auto-set that on the order
-    // - If there are multiple partners or none, leave null so admin can choose manually
-    let orderFulfillmentPartner: string | null = null;
-    if (fulfillmentPartners.size === 1) {
-      orderFulfillmentPartner = Array.from(fulfillmentPartners)[0];
-      console.log(
-        `[ORDER] [${new Date().toISOString()}] Auto-wired fulfillment partner for order ${orderNumber}:`,
-        orderFulfillmentPartner
-      );
-    } else if (fulfillmentPartners.size > 1) {
-      console.log(
-        `[ORDER] [${new Date().toISOString()}] Multiple fulfillment partners detected in order ${orderNumber}; leaving order.fulfillment_partner null for manual selection`
-      );
     }
 
     // Step 3.5: Derive tax and subtotal from total amount for reporting/analytics
@@ -482,7 +498,7 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
 
     // Step 4: Create order in database
     const { data: order, error: orderError } = await supabaseAdmin
-      .from("orders")
+      .from("tinge_orders")
       .insert({
         order_number: orderNumber,
         user_id: userId, // Reference to users table
@@ -498,8 +514,6 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
         total_amount: Math.round(totalAmountFromClient),
         payment_status: "pending", // Always start as pending, will be updated after payment verification
         gateway: orderData.gateway,
-        // Auto-wired fulfillment partner based on products in the order (may be null)
-        fulfillment_partner: orderFulfillmentPartner,
       })
       .select()
       .single();
@@ -521,12 +535,31 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
     // Step 3: Create order items in database
     console.log(`[ORDER] [${new Date().toISOString()}] Step 6: Creating order items (Count: ${orderData.lineItems.length})`);
     const orderItemsData = orderData.lineItems.map((item) => {
+      if (item.customArtRequestId) {
+        const customRow = customArtMap.get(item.customArtRequestId);
+        return {
+          order_id: order.id,
+          product_id: null,
+          custom_art_request_id: item.customArtRequestId,
+          custom_image_url: item.customImageUrl || customRow?.original_image_url || null,
+          mockup_image_url: item.mockupImageUrl || customRow?.mockup_image_url || null,
+          product_name:
+            item.productName ||
+            customRow?.title ||
+            `Custom ${(customRow?.material || item.material || 'Art').replace('_', ' ')}`,
+          size: item.size || customRow?.size || '',
+          material: item.material || customRow?.material || null,
+          quantity: item.quantity,
+          unit_price: item.price,
+          total_price: item.price * item.quantity,
+        };
+      }
       return {
         order_id: order.id,
         product_id: item.productId,
-        product_name: productMap.get(item.productId) || "Unknown Product",
+        product_name: productMap.get(item.productId as string) || "Unknown Product",
         size: normalizeSizeLabel(item.size || ""),
-        color: item.color,
+        material: productMaterialMap.get(item.productId as string) || null,
         quantity: item.quantity,
         unit_price: item.price,
         total_price: item.price * item.quantity,
@@ -534,15 +567,29 @@ router.post("/", async (req: Request, res: Response, next: NextFunction) => {
     });
 
     const { error: orderItemsError } = await supabaseAdmin
-      .from("order_items")
+      .from("tinge_order_items")
       .insert(orderItemsData);
 
     if (orderItemsError) {
       console.error(`[ORDER] [${new Date().toISOString()}] ❌ Error creating order items:`, orderItemsError);
       // Try to clean up the order
       console.log(`[ORDER] [${new Date().toISOString()}] Attempting to cleanup order: ${order.id}`);
-      await supabaseAdmin.from("orders").delete().eq("id", order.id);
+      await supabaseAdmin.from("tinge_orders").delete().eq("id", order.id);
       throw new Error("Failed to create order items");
+    }
+
+    // Link custom art requests to this order
+    if (customArtIds.length > 0) {
+      await supabaseAdmin
+        .from("tinge_custom_art_requests")
+        .update({
+          order_id: order.id,
+          order_number: order.order_number,
+          user_id: userId,
+          customer_email: orderUserEmail,
+          status: "ordered",
+        })
+        .in("id", customArtIds);
     }
 
     console.log(`[ORDER] [${new Date().toISOString()}] ✅ Order items created successfully`);
@@ -663,7 +710,7 @@ router.get(
       }
 
       const { data: order, error: orderError } = await supabaseAdmin
-        .from("orders")
+        .from("tinge_orders")
         .select("*")
         .eq("order_number", orderNumber)
         .single();
@@ -681,7 +728,7 @@ router.get(
       if (userId) {
         // Logged in user - check if order belongs to them
         const { data: user } = await supabaseAdmin
-          .from("users")
+          .from("tinge_users")
           .select("id")
           .eq("auth_user_id", userId)
           .single();
@@ -707,7 +754,7 @@ router.get(
 
       // Get order items
       const { data: orderItems, error: itemsError } = await supabaseAdmin
-        .from("order_items")
+        .from("tinge_order_items")
         .select("*")
         .eq("order_id", order.id);
 
@@ -719,7 +766,7 @@ router.get(
       let payment = null;
       if (order.payment_id) {
         const { data: paymentData } = await supabaseAdmin
-          .from("payments")
+          .from("tinge_payments")
           .select("*")
           .eq("id", order.payment_id)
           .single();
@@ -729,7 +776,7 @@ router.get(
 
       // Get user details
       const { data: user, error: userError } = await supabaseAdmin
-        .from("users")
+        .from("tinge_users")
         .select("*")
         .eq("id", order.user_id)
         .single();
@@ -787,7 +834,7 @@ router.get(
 
       // Fetch order directly from DB (source of truth)
       const { data: order, error: orderError } = await supabaseAdmin
-        .from("orders")
+        .from("tinge_orders")
         .select("*")
         .eq("order_number", orderNumber)
         .single();
@@ -808,7 +855,7 @@ router.get(
       } else if (authUserId) {
         // Logged in user - check if order belongs to them
         const { data: user } = await supabaseAdmin
-          .from("users")
+          .from("tinge_users")
           .select("id")
           .eq("auth_user_id", authUserId)
           .single();
@@ -846,7 +893,7 @@ router.get(
 
       // Fetch order items
       const { data: orderItems, error: itemsError } = await supabaseAdmin
-        .from("order_items")
+        .from("tinge_order_items")
         .select("*")
         .eq("order_id", order.id);
 
@@ -856,7 +903,7 @@ router.get(
 
       // Fetch shipping address if present (legacy per-order addresses table)
       const { data: addresses } = await supabaseAdmin
-        .from("addresses")
+        .from("tinge_addresses")
         .select("*")
         .eq("order_id", order.id)
         .eq("type", "shipping")
@@ -869,7 +916,7 @@ router.get(
       let userAddress: any = null;
       if (order.user_id) {
         const { data: user } = await supabaseAdmin
-          .from("users")
+          .from("tinge_users")
           .select(
             "first_name, last_name, phone, address1, address2, city, province, zip, country_code"
           )
@@ -1117,7 +1164,7 @@ router.get(
         // Variant (size/color)
         const variantParts: string[] = [];
         if (item.size) variantParts.push(`Size: ${item.size}`);
-        if (item.color) variantParts.push(`Color: ${item.color}`);
+        if (item.material) variantParts.push(`Material: ${item.material}`);
         const variantText = variantParts.join("\n");
 
         // Measure row height based on wrapped text
@@ -1303,7 +1350,7 @@ router.post("/lookup", async (req: Request, res: Response, next: NextFunction) =
 
     // Get order by order number
     const { data: order, error: orderError } = await supabaseAdmin
-      .from("orders")
+      .from("tinge_orders")
       .select("*")
       .eq("order_number", orderNumber)
       .single();
@@ -1325,7 +1372,7 @@ router.post("/lookup", async (req: Request, res: Response, next: NextFunction) =
 
     // Get order items
     const { data: orderItems, error: itemsError } = await supabaseAdmin
-      .from("order_items")
+      .from("tinge_order_items")
       .select("*")
       .eq("order_id", order.id);
 
@@ -1337,7 +1384,7 @@ router.post("/lookup", async (req: Request, res: Response, next: NextFunction) =
     let payment = null;
     if (order.payment_id) {
       const { data: paymentData } = await supabaseAdmin
-        .from("payments")
+        .from("tinge_payments")
         .select("*")
         .eq("id", order.payment_id)
         .single();
@@ -1347,7 +1394,7 @@ router.post("/lookup", async (req: Request, res: Response, next: NextFunction) =
 
     // Get user details
     const { data: userData } = await supabaseAdmin
-      .from("users")
+      .from("tinge_users")
       .select("*")
       .eq("id", order.user_id)
       .single();
@@ -1388,7 +1435,7 @@ router.put("/:orderNumber/status", authenticate, requireAdmin, async (req: Reque
 
     // Fetch the order first (needed for validation)
     const { data: order, error: orderError } = await supabaseAdmin
-      .from("orders")
+      .from("tinge_orders")
       .select("id, order_number, status")
       .eq("order_number", orderNumber)
       .single();
@@ -1425,7 +1472,7 @@ router.put("/:orderNumber/status", authenticate, requireAdmin, async (req: Reque
 
     // Get user name for audit log
     const { data: profile } = await supabaseAdmin
-      .from("user_profiles")
+      .from("tinge_user_profiles")
       .select("name")
       .eq("id", userId)
       .single();
@@ -1458,7 +1505,7 @@ router.put("/:orderNumber/status", authenticate, requireAdmin, async (req: Reque
 
     // Update order status and tracking info
     const { error: updateError } = await supabaseAdmin
-      .from("orders")
+      .from("tinge_orders")
       .update(updateData)
       .eq("id", order.id);
 
@@ -1482,7 +1529,7 @@ router.put("/:orderNumber/status", authenticate, requireAdmin, async (req: Reque
 
     // Create status history entry
     const { error: historyError } = await supabaseAdmin
-      .from("order_status_history")
+      .from("tinge_order_status_history")
       .insert({
         order_id: order.id,
         old_status: oldStatus,
@@ -1499,7 +1546,7 @@ router.put("/:orderNumber/status", authenticate, requireAdmin, async (req: Reque
 
     // Fetch updated order with full details for email
     const { data: updatedOrder } = await supabaseAdmin
-      .from("orders")
+      .from("tinge_orders")
       .select("id, order_number, status, shipping_partner, tracking_number, tracking_url, user_email, user_name, gateway")
       .eq("id", order.id)
       .single();
@@ -1509,7 +1556,7 @@ router.put("/:orderNumber/status", authenticate, requireAdmin, async (req: Reque
       try {
         // Fetch order items for email (especially important for "shipped" status)
         const { data: orderItems } = await supabaseAdmin
-          .from("order_items")
+          .from("tinge_order_items")
           .select("*")
           .eq("order_id", order.id);
 
@@ -1575,7 +1622,7 @@ router.put("/:orderNumber/fulfillment-partner", authenticate, requireAdmin, asyn
 
     // Fetch the order
     const { data: order, error: orderError } = await supabaseAdmin
-      .from("orders")
+      .from("tinge_orders")
       .select("id, order_number, fulfillment_partner")
       .eq("order_number", orderNumber)
       .single();
@@ -1589,7 +1636,7 @@ router.put("/:orderNumber/fulfillment-partner", authenticate, requireAdmin, asyn
 
     // Update fulfillment partner
     const { error: updateError } = await supabaseAdmin
-      .from("orders")
+      .from("tinge_orders")
       .update({ fulfillment_partner: fulfillment_partner || null })
       .eq("id", order.id);
 
@@ -1635,7 +1682,7 @@ router.put("/:orderNumber/partner-order-id", authenticate, requireAdmin, async (
 
     // Fetch the order
     const { data: order, error: orderError } = await supabaseAdmin
-      .from("orders")
+      .from("tinge_orders")
       .select("id, order_number, fulfillment_partner")
       .eq("order_number", orderNumber)
       .single();
@@ -1649,7 +1696,7 @@ router.put("/:orderNumber/partner-order-id", authenticate, requireAdmin, async (
 
     // Update partner order ID
     const { error: updateError } = await supabaseAdmin
-      .from("orders")
+      .from("tinge_orders")
       .update({ partner_order_id: partner_order_id ? partner_order_id.trim() : null })
       .eq("id", order.id);
 

@@ -51,7 +51,7 @@ router.post("/", optionalAuth, async (req: Request, res: Response, next: NextFun
     if (authReq.userId) {
       // Get user record for authenticated user
       const { data: user, error: userError } = await supabaseAdmin
-        .from("users")
+        .from("tinge_users")
         .select("id")
         .eq("auth_user_id", authReq.userId)
         .single();
@@ -76,13 +76,13 @@ router.post("/", optionalAuth, async (req: Request, res: Response, next: NextFun
 
     // Get order to verify ownership and get user_id
     const { data: order, error: orderError } = await supabaseAdmin
-      .from("orders")
+      .from("tinge_orders")
       .select(`
         id,
         user_id,
         user_email,
         status,
-        order_items!inner(product_id)
+        order_items:tinge_order_items!inner(product_id)
       `)
       .eq("id", order_id)
       .single();
@@ -136,7 +136,7 @@ router.post("/", optionalAuth, async (req: Request, res: Response, next: NextFun
 
     // Check if rating already exists (upsert)
     const { data: existingRating } = await supabaseAdmin
-      .from("product_ratings")
+      .from("tinge_product_ratings")
       .select("id")
       .eq("user_id", userId)
       .eq("product_id", product_id)
@@ -148,7 +148,7 @@ router.post("/", optionalAuth, async (req: Request, res: Response, next: NextFun
     if (existingRating) {
       // Update existing rating
       const { data, error } = await supabaseAdmin
-        .from("product_ratings")
+        .from("tinge_product_ratings")
         .update({ rating })
         .eq("id", existingRating.id)
         .select()
@@ -159,7 +159,7 @@ router.post("/", optionalAuth, async (req: Request, res: Response, next: NextFun
     } else {
       // Insert new rating
       const { data, error } = await supabaseAdmin
-        .from("product_ratings")
+        .from("tinge_product_ratings")
         .insert({
           user_id: userId,
           product_id,
@@ -204,7 +204,7 @@ router.get("/product/:productId", async (req: Request, res: Response, next: Next
 
     // Get product rating info
     const { data: product, error: productError } = await supabaseAdmin
-      .from("products")
+      .from("tinge_products")
       .select("rating, rating_count")
       .eq("id", productId)
       .single();
@@ -218,7 +218,7 @@ router.get("/product/:productId", async (req: Request, res: Response, next: Next
 
     // Get rating breakdown
     const { data: ratings, error: ratingsError } = await supabaseAdmin
-      .from("product_ratings")
+      .from("tinge_product_ratings")
       .select("rating")
       .eq("product_id", productId);
 
@@ -270,7 +270,7 @@ router.get("/order/:orderNumber", optionalAuth, async (req: Request, res: Respon
     if (authReq.userId) {
       // Get user record for authenticated user
       const { data: user, error: userError } = await supabaseAdmin
-        .from("users")
+        .from("tinge_users")
         .select("id")
         .eq("auth_user_id", authReq.userId)
         .single();
@@ -295,7 +295,7 @@ router.get("/order/:orderNumber", optionalAuth, async (req: Request, res: Respon
 
     // Get order
     const { data: order, error: orderError } = await supabaseAdmin
-      .from("orders")
+      .from("tinge_orders")
       .select("id, user_id, user_email")
       .eq("order_number", orderNumber)
       .single();
@@ -330,7 +330,7 @@ router.get("/order/:orderNumber", optionalAuth, async (req: Request, res: Respon
 
     // Get ratings for this order
     const { data: ratings, error: ratingsError } = await supabaseAdmin
-      .from("product_ratings")
+      .from("tinge_product_ratings")
       .select("*")
       .eq("order_id", order.id)
       .eq("user_id", userId);
@@ -363,7 +363,7 @@ router.get("/can-rate/:productId/:orderNumber", optionalAuth, async (req: Reques
     if (authReq.userId) {
       // Get user record for authenticated user
       const { data: user, error: userError } = await supabaseAdmin
-        .from("users")
+        .from("tinge_users")
         .select("id")
         .eq("auth_user_id", authReq.userId)
         .single();
@@ -390,13 +390,13 @@ router.get("/can-rate/:productId/:orderNumber", optionalAuth, async (req: Reques
 
     // Get order
     const { data: order, error: orderError } = await supabaseAdmin
-      .from("orders")
+      .from("tinge_orders")
       .select(`
         id,
         user_id,
         user_email,
         status,
-        order_items!inner(product_id)
+        order_items:tinge_order_items!inner(product_id)
       `)
       .eq("order_number", orderNumber)
       .single();
@@ -455,7 +455,7 @@ router.get("/can-rate/:productId/:orderNumber", optionalAuth, async (req: Reques
 
     // Check if already rated
     const { data: existingRating } = await supabaseAdmin
-      .from("product_ratings")
+      .from("tinge_product_ratings")
       .select("rating")
       .eq("user_id", userId)
       .eq("product_id", productId)

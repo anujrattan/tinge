@@ -57,11 +57,11 @@ export const BlogPostPage: React.FC = () => {
     };
   }, [slug]);
 
-  const title = post?.seo_title || (post ? `${post.title} – Luxe Threads Journal` : 'Article');
+  const title = post?.seo_title || (post ? `${post.title} – Tinge Journal` : 'Article');
   const description =
     post?.seo_description ||
     post?.excerpt ||
-    'Read this article from the Luxe Threads Journal for tips on style, printing, and custom apparel.';
+    'Read this article from the Tinge Journal for tips on wall art styling, print fidelity, and interior design.';
   const url = `${DEFAULT_SITE_URL}/blog/${slug || ''}`;
 
   const articleSchema = post

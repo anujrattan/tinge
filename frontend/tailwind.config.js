@@ -64,9 +64,11 @@ export default {
         'badge-sunset-end':   '#FFC371',
       },
       fontFamily: {
-        // DM Sans pairs cleanly with Playfair Display — warm, modern, readable at small sizes
-        sans: ['"DM Sans"', 'system-ui', 'sans-serif'],
-        display: ['Sora', 'sans-serif'],
+        // Geist (UI/body) + Playfair Display (editorial serif) + Geist Mono (spec labels)
+        sans: ['Geist', 'system-ui', 'sans-serif'],
+        display: ['Geist', 'system-ui', 'sans-serif'],
+        mono: ['"Geist Mono"', 'ui-monospace', 'monospace'],
+        'serif-display': ['"Playfair Display"', 'Georgia', 'serif'],
         playfair: ['"Playfair Display"', 'Georgia', 'serif'],
         grotesk: ['"Space Grotesk"', 'sans-serif'],
         oswald: ['Oswald', 'sans-serif'],
@@ -93,6 +95,19 @@ export default {
         float: {
           '0%, 100%': { transform: 'translateY(0px) scale(1)', opacity: '0.5' },
           '50%': { transform: 'translateY(-18px) scale(1.1)', opacity: '0.8' },
+        },
+        // Soft hero dust — stays faint; slight diagonal drift
+        dustFloat: {
+          '0%, 100%': { transform: 'translate(0, 0)', opacity: '0.12' },
+          '50%': { transform: 'translate(8px, -16px)', opacity: '0.32' },
+        },
+        dustFloatAlt: {
+          '0%, 100%': { transform: 'translate(0, 0)', opacity: '0.1' },
+          '50%': { transform: 'translate(-10px, -12px)', opacity: '0.28' },
+        },
+        dustBlob: {
+          '0%, 100%': { transform: 'translate(0, 0) scale(1)', opacity: '0.08' },
+          '50%': { transform: 'translate(12px, -20px) scale(1.08)', opacity: '0.16' },
         },
         flicker: {
           '0%, 89%, 91%, 93%, 95%, 100%': { opacity: '1' },
@@ -131,6 +146,9 @@ export default {
         slideInLeft: 'slideInLeft 0.3s ease-out forwards',
         dropdownIn: 'dropdownIn 0.2s ease-out forwards',
         float: 'float 7s ease-in-out infinite',
+        dustFloat: 'dustFloat 9s ease-in-out infinite',
+        dustFloatAlt: 'dustFloatAlt 11s ease-in-out infinite',
+        dustBlob: 'dustBlob 14s ease-in-out infinite',
         flicker: 'flicker 8s linear infinite',
         blink: 'blink 1s step-end infinite',
         cinematicZoom: 'cinematicZoom 25s ease-in-out infinite alternate',

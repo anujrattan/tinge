@@ -5,8 +5,6 @@
 import { config } from "../config/index.js";
 import { supabaseAdmin } from "./supabase.js";
 import { cache, getRedisClient } from "./redis.js";
-import { runPrintroveHeartbeat } from "./printrove/heartbeat.js";
-
 export type ServiceStatus = "ok" | "degraded" | "error" | "not_configured";
 
 export interface ServiceCheck {
@@ -71,18 +69,18 @@ const summarize = (checks: ServiceCheck[]) =>
 
 export async function checkSupabase(): Promise<ServiceCheck> {
   const startedAt = Date.now();
-  if (!config.supabase.url || !config.supabase.serviceRoleKey) {
+  if (!config.supabase.url || !config.supabase.secretKey) {
     return {
       name: "Supabase",
       status: "not_configured",
-      message: "SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY missing",
+      message: "SUPABASE_URL or SUPABASE_SECRET_KEY missing",
     };
   }
 
   try {
     const { count, error } = await withTimeout(
       supabaseAdmin
-        .from("categories")
+        .from("tinge_categories")
         .select("id", { count: "exact", head: true }),
       8000,
       "Supabase"
@@ -180,37 +178,6 @@ export function checkResend(): ServiceCheck {
   };
 }
 
-export async function checkPrintrove(): Promise<ServiceCheck> {
-  const startedAt = Date.now();
-  if (!config.printrove.email || !config.printrove.password) {
-    return {
-      name: "Printrove",
-      status: "not_configured",
-      message: "PRINTROVE_EMAIL / PRINTROVE_PASSWORD not set",
-    };
-  }
-
-  try {
-    const result = await withTimeout(runPrintroveHeartbeat(), 10000, "Printrove");
-    return {
-      name: "Printrove",
-      status: result.success ? "ok" : "error",
-      message: result.success
-        ? "API docs reachable"
-        : `HTTP ${result.status} ${result.statusText}`,
-      latency_ms: result.latency_ms,
-      details: { endpoint: result.endpoint },
-    };
-  } catch (error: any) {
-    return {
-      name: "Printrove",
-      status: "error",
-      message: error.message || "Printrove check failed",
-      latency_ms: Date.now() - startedAt,
-    };
-  }
-}
-
 export function checkApiServer(): ServiceCheck {
   return {
     name: "API Server",
@@ -224,10 +191,9 @@ export function checkApiServer(): ServiceCheck {
 }
 
 export async function getHealthReport(): Promise<HealthReport> {
-  const [supabase, redis, printrove] = await Promise.all([
+  const [supabase, redis] = await Promise.all([
     checkSupabase(),
     checkRedis(),
-    checkPrintrove(),
   ]);
 
   const services: ServiceCheck[] = [
@@ -236,7 +202,6 @@ export async function getHealthReport(): Promise<HealthReport> {
     redis,
     checkRazorpay(),
     checkResend(),
-    printrove,
   ];
 
   return {
@@ -257,7 +222,7 @@ export async function runCrudSmokeTests(): Promise<CrudTestResult[]> {
     const startedAt = Date.now();
     try {
       const { data, error } = await withTimeout(
-        supabaseAdmin.from("categories").select("id, name, slug").limit(5),
+        supabaseAdmin.from("tinge_categories").select("id, name, slug").limit(5),
         8000,
         "Categories read"
       );
@@ -284,7 +249,7 @@ export async function runCrudSmokeTests(): Promise<CrudTestResult[]> {
     try {
       const { data, error } = await withTimeout(
         supabaseAdmin
-          .from("products")
+          .from("tinge_products")
           .select("id, title, is_active")
           .eq("is_active", true)
           .limit(5),
@@ -313,7 +278,7 @@ export async function runCrudSmokeTests(): Promise<CrudTestResult[]> {
     const startedAt = Date.now();
     try {
       const { data, error } = await withTimeout(
-        supabaseAdmin.from("collections").select("id, name, slug").limit(5),
+        supabaseAdmin.from("tinge_collections").select("id, name, slug").limit(5),
         8000,
         "Collections read"
       );

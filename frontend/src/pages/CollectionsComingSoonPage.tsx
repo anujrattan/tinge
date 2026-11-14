@@ -10,8 +10,8 @@ export const CollectionsComingSoonPage: React.FC = () => {
   return (
     <div className="min-h-[70vh] flex flex-col items-center justify-center px-4 py-20">
       <SEOHead
-        title="Collections — Coming Soon | Tinge Clothing"
-        description="New collections are on the way. Stay tuned for curated drops and exclusive pieces."
+        title="Collections — Coming Soon | Tinge"
+        description="New metal wall art collections are on the way. Stay tuned for curated gallery drops."
       />
       <div className="max-w-xl mx-auto text-center">
         <div className="w-full max-w-sm mx-auto mb-6">
@@ -23,19 +23,19 @@ export const CollectionsComingSoonPage: React.FC = () => {
             aria-label="Coming soon animation"
           />
         </div>
-        <div className="h-px w-16 mx-auto mb-8 bg-gradient-to-r from-transparent via-purple-400/60 to-transparent" />
+        <div className="h-px w-16 mx-auto mb-8 bg-gradient-to-r from-transparent via-[#FF7A59]/60 to-transparent" />
         <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-brand-primary mb-4">
           Collections dropping soon
         </h1>
         <p className="text-brand-secondary text-lg sm:text-xl mb-10 max-w-md mx-auto">
-          We’re curating something special. New collections, limited runs, and exclusive pieces are on the way—stay tuned.
+          We’re curating something special. New gallery themes, limited artist runs, and ultra-vibrant metal posters are on the way.
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
             to="/categories"
             className={`${btnBase} bg-brand-accent text-white hover:bg-brand-accent-hover`}
           >
-            Shop current styles
+            Explore Metal Prints
           </Link>
           <Link
             to="/"

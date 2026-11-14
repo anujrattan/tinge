@@ -32,14 +32,12 @@ export const OrganizationSchema = {
   logo: `${DEFAULT_SITE_URL}/logo.png`,
   sameAs: [
     // Add social media links here
-    // 'https://www.facebook.com/luxethreads',
-    // 'https://www.instagram.com/luxethreads',
-    // 'https://twitter.com/luxethreads',
+    // 'https://www.instagram.com/tingeposters',
   ],
   contactPoint: {
     '@type': 'ContactPoint',
     contactType: 'Customer Service',
-    email: 'support@luxethreads.com',
+    email: 'support@tinge.in',
   },
 };
 

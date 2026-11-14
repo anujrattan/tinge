@@ -1,5 +1,5 @@
 /* Global styles */
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400&family=Sora:wght@400;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Oswald:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Space+Grotesk:wght@400;500;600;700&family=Oswald:wght@400;500;600;700&display=swap');
 
 /* Tailwind directives will be added by PostCSS */
 @tailwind base;
@@ -26,6 +26,8 @@
     --color-card-bg:      #FFFFFF; /* card background                        */
     --color-card-border:  #E5E7EB; /* neutral border                         */
     --color-hero-text:    #F7F3EA; /* warm cream — text over dark hero       */
+    --color-wall:         #F1EDE6; /* gallery wall behind artwork            */
+    --color-hairline:     rgba(30, 27, 34, 0.10);
   }
 
   /* ── Dark theme — warm espresso / charcoal ──────────────────────────── */
@@ -39,6 +41,8 @@
     --color-card-bg:      #231E1A; /* warm charcoal card background          */
     --color-card-border:  rgba(247, 243, 234, 0.08); /* subtle cream border  */
     --color-hero-text:    #F7F3EA; /* warm cream hero text                   */
+    --color-wall:         #221C17;
+    --color-hairline:     rgba(247, 243, 234, 0.10);
   }
 
   /* Plain white page background for light theme */
@@ -47,9 +51,28 @@
   }
 
   body {
-    font-family: 'DM Sans', system-ui, sans-serif;
+    font-family: 'Geist', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'ss01', 'cv11';
+  }
+}
+
+@layer utilities {
+  .bg-wall {
+    background-color: var(--color-wall);
+  }
+  .border-hairline {
+    border-color: var(--color-hairline);
+  }
+  .divide-hairline > * + * {
+    border-color: var(--color-hairline);
+  }
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 }
 
@@ -231,6 +254,114 @@
   animation-name: showcaseProgress;
   animation-timing-function: linear;
   animation-fill-mode: forwards;
+}
+
+/* Hero atmospheric dust — visible drift, still soft */
+@keyframes heroDustA {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.35;
+  }
+  50% {
+    transform: translate3d(14px, -36px, 0);
+    opacity: 0.85;
+  }
+}
+
+@keyframes heroDustB {
+  0%, 100% {
+    transform: translate3d(0, 0, 0);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translate3d(-18px, -28px, 0);
+    opacity: 0.8;
+  }
+}
+
+@keyframes heroDustC {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.25;
+  }
+  33% {
+    transform: translate3d(20px, -22px, 0) scale(1.15);
+    opacity: 0.7;
+  }
+  66% {
+    transform: translate3d(-12px, -40px, 0) scale(0.9);
+    opacity: 0.55;
+  }
+}
+
+@keyframes heroBlobDrift {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.18;
+  }
+  50% {
+    transform: translate3d(24px, -32px, 0) scale(1.12);
+    opacity: 0.34;
+  }
+}
+
+.hero-dust {
+  position: absolute;
+  border-radius: 9999px;
+  pointer-events: none;
+  will-change: transform, opacity;
+  background: radial-gradient(circle, rgba(255, 236, 210, 0.95) 0%, rgba(255, 180, 120, 0.55) 55%, transparent 75%);
+  box-shadow: 0 0 8px 2px rgba(255, 190, 130, 0.35);
+}
+
+.hero-dust--a {
+  animation: heroDustA 8s ease-in-out infinite;
+}
+
+.hero-dust--b {
+  animation: heroDustB 10s ease-in-out infinite;
+}
+
+.hero-dust--c {
+  animation: heroDustC 12s ease-in-out infinite;
+}
+
+.hero-blob {
+  position: absolute;
+  border-radius: 9999px;
+  pointer-events: none;
+  filter: blur(28px);
+  will-change: transform, opacity;
+  background: radial-gradient(circle, rgba(255, 170, 110, 0.55) 0%, transparent 70%);
+  animation: heroBlobDrift 16s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-dust,
+  .hero-dust--a,
+  .hero-dust--b,
+  .hero-dust--c,
+  .hero-blob,
+  .animate-cinematicZoom,
+  .animate-fadeIn,
+  .animate-blink,
+  .animate-riseIn,
+  .showcase-progress {
+    animation: none !important;
+  }
+
+  .hero-dust,
+  .hero-dust--a,
+  .hero-dust--b,
+  .hero-dust--c,
+  .hero-blob {
+    opacity: 0.4;
+  }
+
+  .animate-riseIn {
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 
 /* Shimmer sweep for loading skeletons */

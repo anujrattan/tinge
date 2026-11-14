@@ -9,7 +9,9 @@
     "dev:backend": "cd backend && npm run dev",
     "build": "npm run build:frontend && npm run build:backend",
     "build:frontend": "cd frontend && npm run build",
+    "build:frontend:worker": "cd frontend && VITE_API_BASE_URL=/api npm run build",
     "build:backend": "cd backend && npm run build",
+    "deploy": "npm run build:frontend:worker && wrangler deploy",
     "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
     "lint": "npm run lint:frontend && npm run lint:backend",
     "lint:frontend": "cd frontend && npm run lint",
@@ -17,7 +19,8 @@
     "clean": "rm -rf frontend/dist frontend/node_modules backend/dist backend/node_modules node_modules"
   },
   "devDependencies": {
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "wrangler": "^4.162.0"
   },
   "workspaces": [
     "frontend",

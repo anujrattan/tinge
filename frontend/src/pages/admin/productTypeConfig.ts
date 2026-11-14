@@ -1,30 +1,34 @@
-import type { ProductType } from '../../types';
-import { POSTER_SIZES } from '../../utils/sizeSystem';
+import type { ArtMaterial } from '../../types';
+import { ACP_CUTS } from '../../data/printTypes';
 
-export const PRODUCT_TYPE_OPTIONS: { value: ProductType; label: string }[] = [
-  { value: 'apparel', label: 'Apparel (tees & wearables)' },
-  { value: 'poster', label: 'Metal poster' },
+export const MATERIAL_OPTIONS: { value: ArtMaterial; label: string }[] = [
+  { value: 'framed_acp', label: 'Framed ACP' },
+  { value: 'canvas', label: 'Canvas' },
+  { value: 'sunboard', label: 'Sunboard' },
+  { value: 'neon', label: 'Neon' },
 ];
 
-export const DEFAULT_FULFILLMENT_BY_TYPE: Record<ProductType, string> = {
-  apparel: '',
-  poster: 'Qikink',
+export const MATERIAL_SIZE_PRESETS: Record<ArtMaterial, string[]> = {
+  framed_acp: ACP_CUTS.map((c) => c.size),
+  canvas: ['4 × 4 ft', '4 × 2 ft', '3 × 2 ft'],
+  sunboard: ['4 × 2 ft', '3 × 2 ft'],
+  neon: ['Custom — confirm before produce'],
 };
 
-export const POSTER_SIZE_LABELS: Record<string, string> = {
-  '8x11.7in': '8 × 11.7 in',
-  '11.7x15.7in': '11.7 × 15.7 in',
-};
+export const getSizesForMaterial = (material: ArtMaterial): string[] => [
+  ...(MATERIAL_SIZE_PRESETS[material] || []),
+];
 
-export const getPosterSizesForListing = (): string[] => [...POSTER_SIZES];
-
-export const posterSizesComplete = (sizes: string[]): boolean =>
-  POSTER_SIZES.every((s) =>
-    sizes.some((x) => String(x).trim().toLowerCase() === s.toLowerCase()),
-  );
-
-/** Product types that use per-size selling prices in variants.size_prices */
-export const SIZE_PRICING_PRODUCT_TYPES: ProductType[] = ['poster'];
-
-export const usesSizePricing = (productType: ProductType): boolean =>
-  SIZE_PRICING_PRODUCT_TYPES.includes(productType);
+/** @deprecated apparel removed — kept for any residual imports */
+export const PRODUCT_TYPE_OPTIONS = MATERIAL_OPTIONS;
+export const SIZE_PRICING_PRODUCT_TYPES: ArtMaterial[] = [
+  'framed_acp',
+  'canvas',
+  'sunboard',
+  'neon',
+];
+export const usesSizePricing = (_material: ArtMaterial): boolean => true;
+export const DEFAULT_FULFILLMENT_BY_TYPE: Record<string, string> = {};
+export const getPosterSizesForListing = (): string[] => getSizesForMaterial('framed_acp');
+export const posterSizesComplete = (): boolean => true;
+export const POSTER_SIZE_LABELS: Record<string, string> = {};

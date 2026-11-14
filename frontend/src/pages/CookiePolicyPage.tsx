@@ -47,7 +47,7 @@ export const CookiePolicyPage: React.FC = () => {
             <section className="mb-8">
               <h2 className="text-2xl font-bold text-brand-primary mb-4">2. Types of Cookies We Use</h2>
               <p className="text-brand-secondary leading-relaxed mb-4">
-                Tinge Clothing uses different types of cookies for various purposes:
+                Tinge uses different types of cookies for various purposes:
               </p>
 
               <div className="space-y-6">
@@ -243,8 +243,8 @@ export const CookiePolicyPage: React.FC = () => {
                 If you have any questions about our use of cookies, please contact us:
               </p>
               <div className="bg-white dark:bg-brand-bg p-6 rounded-lg border border-gray-200 dark:border-white/10">
-                <p className="text-brand-primary font-semibold mb-2">Tinge Clothing</p>
-                <p className="text-brand-secondary">Email: support@tingeclothing.com</p>
+                <p className="text-brand-primary font-semibold mb-2">Tinge</p>
+                <p className="text-brand-secondary">Email: support@tinge.in</p>
                 <p className="text-brand-secondary">Phone: +91-XXXXXXXXXX</p>
                 <p className="text-brand-secondary">Address: [To be updated upon registration]</p>
               </div>

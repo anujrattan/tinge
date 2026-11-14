@@ -1,67 +1,56 @@
-# Database Migrations
+# Database Migrations (Tinge art-only, shared Supabase)
 
-This directory contains SQL migration scripts for the Supabase database.
+All Tinge objects are prefixed with **`tinge_`** so they coexist with other apps (e.g. real estate) in the same project.
 
-**Recent features (2026):** For metal posters, category `product_type`, `complement_slugs`, and `color_profiles`, see **[docs/IMPLEMENTATION_NOTES.md](../../docs/IMPLEMENTATION_NOTES.md)** §2. Notable files: `024_create_color_profiles_table.sql`, `027_add_product_type_to_categories.sql`, `028_add_complement_slugs_to_categories.sql`. Per-size prices use `products.variants` JSON (`size_prices`) — no extra migration.
+We use underscores (`tinge_products`), not hyphens — PostgREST/Supabase embeds break on hyphenated table names.
 
-## Migration Files
+## Tables
 
-- `001_setup_product_variants_for_mockups.sql` - Sets up product_variants table with size, color, and mockup_images columns
-- `002_add_qikink_sku_to_product_variants.sql` - Adds qikink_sku column to product_variants table for Qikink integration
-- `003_create_orders_tables.sql` - Creates orders, order_items, addresses, and payments tables for order management
+| Table | Purpose |
+|--------|---------|
+| `tinge_categories` | Merchandising categories |
+| `tinge_collections` | Collections |
+| `tinge_products` | Artwork listings (`material` + size prices) |
+| `tinge_users` | Checkout / commerce users |
+| `tinge_user_profiles` | Auth-linked roles (`user` / `admin`) |
+| `tinge_user_addresses` | Saved addresses |
+| `tinge_orders` / `tinge_order_items` | Orders |
+| `tinge_addresses` | Per-order shipping snapshots |
+| `tinge_payments` | Razorpay / payment rows |
+| `tinge_order_sequences` | Order number sequences |
+| `tinge_order_status_history` | Status audit |
+| `tinge_wishlists` | Wishlists |
+| `tinge_product_ratings` | Ratings |
+| `tinge_newsletter_subscribers` | Newsletter |
+| `tinge_blog_posts` / `tinge_faq_items` | CMS |
+| `tinge_return_requests` / `tinge_return_status_history` | Returns |
 
-## How to Run Migrations
+RPCs / triggers: `tinge_get_next_order_sequence`, `tinge_handle_new_user`, `tinge_on_auth_user_created`, etc. — they do **not** replace other apps’ auth triggers.
 
-### Option 1: Using Supabase Dashboard (Recommended)
+## Shared Auth (`auth.users`)
 
-1. Go to your Supabase project dashboard
-2. Navigate to **SQL Editor**
-3. Copy and paste the contents of the migration file
-4. Click **Run** to execute the migration
-5. Repeat for each migration file in order
+One Auth project for multiple apps. Membership is **not** “email domain”; it is:
 
-### Option 2: Using Supabase CLI
+1. **`auth.users.raw_app_meta_data.apps`** — e.g. `["tinge"]` or `["tinge","realty"]` (set only via service role / Tinge API)
+2. **`tinge_user_profiles`** — row present ⇒ this Auth user is a Tinge user
 
-If you have Supabase CLI installed:
+`tinge_handle_new_user` only inserts a profile when `apps` contains `"tinge"`. Real-estate signups are ignored.
 
-```bash
-# Link to your project (if not already linked)
-supabase link --project-ref your-project-ref
+OTP (email / phone) is handled by Supabase Auth; Tinge tags membership after `verifyOtp`.
 
-# Run migrations
-supabase db push
+## Apply (shared project)
 
-# Or run specific migration
-supabase db execute -f 001_setup_product_variants_for_mockups.sql
-```
+1. Open **SQL Editor** on the shared Supabase project.
+2. Run in order:
+   - [`000_art_bootstrap.sql`](./000_art_bootstrap.sql)
+   - [`001_seed_art_demo.sql`](./001_seed_art_demo.sql) (optional)
+   - [`002_shared_auth_tinge_membership.sql`](./002_shared_auth_tinge_membership.sql) (if `000` was already applied before membership gating)
+3. Use **publishable + secret** API keys in `backend/.env`.
+4. For **email OTP**: Auth → Email templates → Magic Link include `{{ .Token }}`.
+5. For **phone OTP**: Auth → Providers → Phone + SMS provider (Twilio, etc.).
 
-### Option 3: Using psql or Database Client
+Code table map: [`backend/src/config/tables.ts`](../src/config/tables.ts).
 
-If you have direct database access:
+## Archive
 
-```bash
-# Connect to your Supabase database
-psql "postgresql://postgres:[YOUR-PASSWORD]@db.[YOUR-PROJECT-REF].supabase.co:5432/postgres"
-
-# Run migrations
-\i 001_setup_product_variants_for_mockups.sql
-```
-
-## Migration Order
-
-Always run migrations in numerical order:
-
-1. `001_setup_product_variants_for_mockups.sql` - Must run first (creates product_variants table structure)
-2. `002_add_qikink_sku_to_product_variants.sql` - Adds Qikink SKU column (requires product_variants table)
-3. `003_create_orders_tables.sql` - Creates order management tables (requires products and product_variants tables)
-
-## Order Management Tables
-
-The `003_create_orders_tables.sql` migration creates the following tables:
-
-- **orders** - Main order records with order numbers, status, and payment information
-- **order_items** - Individual items in each order
-- **addresses** - Shipping and billing addresses for orders
-- **payments** - Payment records (Razorpay integration ready)
-
-All tables include proper indexes, RLS policies, and foreign key constraints.
+Older unprefixed / apparel migrations: [`archive/`](./archive/). Do not apply those on the shared DB.

@@ -47,3 +47,13 @@ frontend/.vite/
 # Backend specific
 backend/dist/
 backend/.env
+
+# Cloudflare Workers
+.wrangler/
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+
+# Local agent / browser artifacts
+.playwright-mcp/
+.claude/

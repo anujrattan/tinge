@@ -13,39 +13,43 @@ export const FAQPage: React.FC = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
   const [faqs, setFaqs] = useState<{ question: string; answer: string }[]>([]);
 
-  // Static fallback FAQs (used if API is unavailable or empty)
+  // Static fallback FAQs for Tinge Metal Wall Art
   const fallbackFaqs = [
     {
-      question: 'What is your return policy?',
-      answer: `We offer a 30-day return policy on all items. Items must be unworn, unwashed, and in original packaging with tags attached. Returns are free for orders over ${formatCurrency(50, currency)}.`
+      question: 'What does Tinge actually print?',
+      answer: 'Four materials, all in our studio. Framed ACP is a UV print on an aluminium composite panel, then a frame. Canvas is a stretched canvas print. Sunboard is a lighter rigid panel without a frame. Neon is a sign, not a poster.'
     },
     {
-      question: 'How long does shipping take?',
-      answer: 'Standard shipping takes 5-7 business days. Express shipping (2-3 business days) is available at checkout. International shipping times vary by location.'
+      question: 'How do I choose a size?',
+      answer: 'You pick from the sizes we already cut. The ACP sheet is 12 ft by 4 ft. Statement is the full sheet. Pair, triptych, gallery, home, and desk sizes are the cuts that use the rest of that sheet. You cannot type your own width and height.'
     },
     {
-      question: 'Do you ship internationally?',
-      answer: 'Yes! We ship to most countries worldwide. Shipping costs and delivery times vary by location. You can see estimated shipping costs at checkout.'
+      question: 'Can I send my own design?',
+      answer: 'Yes. Choose the material and a listed size, then send the file. We print after the size is confirmed. The custom path uses the same sizes as the shop.'
+    },
+    {
+      question: 'Is a sunboard the same as a framed ACP?',
+      answer: 'No. Sunboard is the lighter, simpler panel. A framed ACP is the UV print plus a frame, and it is the piece that uses the 12 × 4 ft sheet. They are priced and packed differently.'
+    },
+    {
+      question: 'Do you sell cheap paper poster packs?',
+      answer: 'No. We do not sell 300 GSM paper posters in a tube. If you want the lower price, that is sunboard. If you want the finished wall piece, that is framed ACP.'
+    },
+    {
+      question: 'How long does shipping take across India?',
+      answer: 'All orders are custom printed and dispatched within 24–48 hours. Express delivery takes 2–3 business days for Tier 1 metro cities (Delhi NCR, Mumbai, Bengaluru, Hyderabad, Pune, Chennai, Kolkata) and 3–5 business days for the rest of India.'
+    },
+    {
+      question: 'What is your Safe Transit Guarantee?',
+      answer: 'We ship all posters in reinforced, crush-proof flat boxes. In the rare event of transit damage, simply send us a photo of the damaged piece within 48 hours of delivery, and we will dispatch a brand-new replacement immediately with zero return hassle.'
     },
     {
       question: 'What payment methods do you accept?',
-      answer: 'We accept all major credit cards (Visa, Mastercard, American Express), PayPal, Apple Pay, and Google Pay.'
+      answer: 'We support all major payment options: UPI (Google Pay, PhonePe, Paytm), Credit & Debit Cards, Net Banking, and Cash on Delivery (COD) for orders up to ₹2,500.'
     },
     {
-      question: 'How do I track my order?',
-      answer: 'Once your order ships, you\'ll receive a tracking number via email. You can use this to track your package on our website or the carrier\'s website.'
-    },
-    {
-      question: 'Can I modify or cancel my order?',
-      answer: 'Orders can be modified or cancelled within 1 hour of placement. After that, please contact our support team and we\'ll do our best to accommodate your request.'
-    },
-    {
-      question: 'What sizes do you offer?',
-      answer: 'We offer sizes S, M, L, XL for most apparel items. Some items may have different sizing - check the product page for specific size charts.'
-    },
-    {
-      question: 'Are your products ethically made?',
-      answer: 'Yes! We\'re committed to ethical manufacturing practices. All our products are made in facilities that meet strict labor and environmental standards.'
+      question: 'Can I send a Tinge print as a gift?',
+      answer: 'Yes. Enter the recipient’s address at checkout. The invoice is emailed to you, not packed as a price tag.'
     }
   ];
 
@@ -76,9 +80,9 @@ export const FAQPage: React.FC = () => {
 
   // SEO Data
   const seoData = {
-    title: 'Frequently Asked Questions - Luxe Threads',
-    description: 'Find answers to common questions about shipping, returns, sizing, payment methods, and more at Luxe Threads. Get help with your orders and product inquiries.',
-    keywords: 'FAQ, frequently asked questions, shipping, returns, sizing, payment, Luxe Threads help, customer support',
+    title: 'Frequently Asked Questions | Tinge',
+    description: 'What Tinge prints: framed ACP, canvas, sunboard, and neon. How sizes are cut from a 12 by 4 ft sheet, and how custom art works.',
+    keywords: 'Tinge FAQ, framed ACP print, sunboard vs canvas, custom wall art India, neon sign',
     type: 'website' as const,
     url: `${DEFAULT_SITE_URL}/faq`,
   };

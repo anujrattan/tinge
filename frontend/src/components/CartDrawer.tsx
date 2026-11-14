@@ -260,9 +260,9 @@ export const CartDrawer: React.FC = () => {
               {/* Product rows */}
               <ul className="px-4 pb-4 space-y-3">
                 {cart.map((item) => {
-                  const variantLabel = item.category_product_type === 'poster'
-                    ? `Size: ${item.selectedSize}`
-                    : `Size: ${item.selectedSize}${item.selectedColor ? ` · ${item.selectedColor}` : ''}`;
+                  const variantLabel = [item.material?.replace('_', ' '), item.selectedSize]
+                    .filter(Boolean)
+                    .join(' · ');
                   const lineTotal = item.price * item.quantity;
 
                   return (

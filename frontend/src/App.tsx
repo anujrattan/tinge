@@ -38,13 +38,14 @@ import { ShippingPage } from "./pages/ShippingPage";
 import { ReturnsPage } from "./pages/ReturnsPage";
 import { SizeGuidePage } from "./pages/SizeGuidePage";
 import { CustomDesignPage } from "./pages/CustomDesignPage";
+import { PrintTypesPage } from "./pages/PrintTypesPage";
 import { PrivacyPolicyPage } from "./pages/PrivacyPolicyPage";
 import { TermsOfServicePage } from "./pages/TermsOfServicePage";
 import { ReturnPolicyPage } from "./pages/ReturnPolicyPage";
 import { CookiePolicyPage } from "./pages/CookiePolicyPage";
 import { OrderSuccessPage } from "./pages/OrderSuccessPage";
+import { PaymentCallbackPage } from "./pages/PaymentCallbackPage";
 import { NotFoundPage } from "./pages/NotFoundPage";
-import { PrintroveTestPage } from "./pages/PrintroveTestPage";
 import { CookieConsentProvider, useCookieConsent } from "./context/CookieConsentContext";
 import { CookieConsent } from "./components/CookieConsent";
 import { AnalyticsProvider } from "./context/AnalyticsProvider";
@@ -79,7 +80,7 @@ const AppLayout: React.FC = () => {
   useEffect(() => {
     if (!trackingConsentGranted) return;
     const pagePath = location.pathname + location.search;
-    const pageTitle = document.title || `Luxe Threads - ${location.pathname.slice(1) || "Home"}`;
+    const pageTitle = document.title || `Tinge - ${location.pathname.slice(1) || "Home"}`;
     trackPageView({ path: pagePath, title: pageTitle });
   }, [location.pathname, location.search, trackingConsentGranted]);
 
@@ -89,6 +90,12 @@ const AppLayout: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col font-sans bg-brand-bg">
+      <a
+        href="#main"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[10000] focus:rounded-full focus:bg-white focus:px-4 focus:py-3 focus:text-sm focus:font-semibold focus:text-[#1C1917] focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-[#FF7A59]"
+      >
+        Skip to content
+      </a>
       <Toaster toasts={toasts} onClose={removeToast} />
       <CookieConsent />
       <CartDrawer />
@@ -97,7 +104,7 @@ const AppLayout: React.FC = () => {
         currentPage={currentPage}
         cartAnimationKey={cartAnimationKey}
       />
-      <main className="flex-grow pt-20 md:pt-24">
+      <main id="main" tabIndex={-1} className="flex-grow pt-20 md:pt-24 outline-none">
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/search" element={<SearchPage />} />
@@ -107,7 +114,7 @@ const AppLayout: React.FC = () => {
           <Route path="/product/:id" element={<ProductDetailPage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
-          <Route path="/payment-callback" element={<OrderSuccessPage />} />
+          <Route path="/payment-callback" element={<PaymentCallbackPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/auth" element={<AuthPage />} />
           <Route
@@ -132,6 +139,7 @@ const AppLayout: React.FC = () => {
           <Route path="/shipping" element={<ShippingPage />} />
           <Route path="/returns" element={<ReturnsPage />} />
           <Route path="/size-guide" element={<SizeGuidePage />} />
+          <Route path="/prints" element={<PrintTypesPage />} />
           <Route path="/custom-design" element={<CustomDesignPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           <Route path="/terms-of-service" element={<TermsOfServicePage />} />
@@ -141,6 +149,10 @@ const AppLayout: React.FC = () => {
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/orders" element={<OrdersPage />} />
           <Route
+            path="/order-details"
+            element={<OrderDetailsPage />}
+          />
+          <Route
             path="/order-details/:orderNumber"
             element={<OrderDetailsPage />}
           />
@@ -148,7 +160,6 @@ const AppLayout: React.FC = () => {
             path="/guest-order-lookup"
             element={<GuestOrderLookupPage />}
           />
-          <Route path="/pt" element={<PrintroveTestPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>

@@ -103,7 +103,6 @@ const transformCategory = (dbCategory: any) => ({
   imageUrl: dbCategory.image_url || dbCategory.imageUrl,
   isActive: dbCategory.is_active !== undefined ? dbCategory.is_active : true,
   complementSlugs: Array.isArray(dbCategory.complement_slugs) ? dbCategory.complement_slugs : [],
-  product_type: dbCategory.product_type === 'poster' ? 'poster' : 'apparel',
 });
 
 // Get all categories (public) - only returns active categories
@@ -121,7 +120,7 @@ router.get('/', async (req, res, next) => {
     
     // Cache miss - fetch from database
     const { data, error } = await supabase
-      .from('categories')
+      .from('tinge_categories')
       .select('*')
       .eq('is_active', true)
       .order('name', { ascending: true });
@@ -154,7 +153,7 @@ router.get('/admin/all', authenticateToken, requireAdmin, async (req: AuthReques
     
     // Cache miss - fetch from database
     const { data, error } = await supabase
-      .from('categories')
+      .from('tinge_categories')
       .select('*')
       .order('name', { ascending: true });
     
@@ -188,7 +187,7 @@ router.get('/:slug', async (req, res, next) => {
     
     // Cache miss - fetch from database
     const { data, error } = await supabase
-      .from('categories')
+      .from('tinge_categories')
       .select('*')
       .eq('slug', slug)
       .eq('is_active', true)
@@ -210,8 +209,7 @@ router.get('/:slug', async (req, res, next) => {
 // Create category (admin only)
 router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res, next) => {
   try {
-    const { name, slug, imageUrl, imageFile, complementSlugs, product_type } = req.body;
-    const resolvedProductType = product_type === 'poster' ? 'poster' : 'apparel';
+    const { name, slug, imageUrl, imageFile, complementSlugs } = req.body;
     
     let finalImageUrl: string;
     
@@ -254,11 +252,10 @@ router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res, 
       image_url: finalImageUrl,
       is_active: true, // New categories are active by default
       complement_slugs: Array.isArray(complementSlugs) ? complementSlugs : [],
-      product_type: resolvedProductType,
     };
     
     const { data, error } = await supabase
-      .from('categories')
+      .from('tinge_categories')
       .insert([categoryData])
       .select()
       .single();
@@ -280,12 +277,11 @@ router.post('/', authenticateToken, requireAdmin, async (req: AuthRequest, res, 
 router.put('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res, next) => {
   try {
     const { id } = req.params;
-    const { name, slug, imageUrl, imageFile, complementSlugs, product_type } = req.body;
-    const resolvedProductType = product_type === 'poster' ? 'poster' : 'apparel';
+    const { name, slug, imageUrl, imageFile, complementSlugs } = req.body;
     
     // Get existing category to check for old image
     const { data: existingCategory } = await supabase
-      .from('categories')
+      .from('tinge_categories')
       .select('image_url, slug')
       .eq('id', id)
       .single();
@@ -294,7 +290,6 @@ router.put('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res
     if (name) categoryData.name = name;
     if (slug) categoryData.slug = slug;
     if (Array.isArray(complementSlugs)) categoryData.complement_slugs = complementSlugs;
-    if (product_type !== undefined) categoryData.product_type = resolvedProductType;
     
     // Handle image URL or file upload
     if (imageFile && !imageUrl) {
@@ -350,7 +345,7 @@ router.put('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, res
     // If neither is provided, don't update the image
     
     const { data, error } = await supabase
-      .from('categories')
+      .from('tinge_categories')
       .update(categoryData)
       .eq('id', id)
       .select()
@@ -385,7 +380,7 @@ router.patch('/:id/toggle-active', authenticateToken, requireAdmin, async (req: 
     
     // Get current status
     const { data: category, error: fetchError } = await supabase
-      .from('categories')
+      .from('tinge_categories')
       .select('is_active')
       .eq('id', id)
       .single();
@@ -399,7 +394,7 @@ router.patch('/:id/toggle-active', authenticateToken, requireAdmin, async (req: 
     const newStatus = !category.is_active;
     
     const { data, error } = await supabase
-      .from('categories')
+      .from('tinge_categories')
       .update({ is_active: newStatus })
       .eq('id', id)
       .select()
@@ -425,7 +420,7 @@ router.delete('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, 
 
     // Prevent delete if category has products (would orphan them)
     const { count, error: countError } = await supabase
-      .from('products')
+      .from('tinge_products')
       .select('*', { count: 'exact', head: true })
       .eq('category_id', id);
 
@@ -438,14 +433,14 @@ router.delete('/:id', authenticateToken, requireAdmin, async (req: AuthRequest, 
 
     // Get category data (image URL and slug) before deleting
     const { data: category } = await supabase
-      .from('categories')
+      .from('tinge_categories')
       .select('image_url, slug')
       .eq('id', id)
       .single();
 
     // Delete from database
     const { error } = await supabase
-      .from('categories')
+      .from('tinge_categories')
       .delete()
       .eq('id', id);
 

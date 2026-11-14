@@ -53,12 +53,7 @@ export const ReturnDetailView: React.FC<ReturnDetailViewProps> = ({
   const [partnerFiled, setPartnerFiled] = useState(Boolean(returnRequest.partner_filed));
   const [manualRefundRef, setManualRefundRef] = useState(returnRequest.manual_refund_ref || '');
 
-  const partnerHint =
-    returnRequest.fulfillment_partner === 'Printrove'
-      ? 'Check Printrove Manage Returns / support for defect claims.'
-      : returnRequest.fulfillment_partner === 'Qikink'
-      ? 'Check Qikink Returns tab for RTO / defect claims.'
-      : 'Coordinate with fulfillment partner manually.';
+  const partnerHint = 'Process returns in-house from the studio.';
 
   const handleSave = async () => {
     const payload: Parameters<ReturnDetailViewProps['onSave']>[1] = {
@@ -121,7 +116,7 @@ export const ReturnDetailView: React.FC<ReturnDetailViewProps> = ({
           </div>
           <div>
             <p className="text-brand-secondary">Partner</p>
-            <p className="text-brand-primary font-medium">{returnRequest.fulfillment_partner || '—'}</p>
+            <p className="text-brand-primary font-medium">{'In-house'}</p>
           </div>
         </div>
 
@@ -134,13 +129,17 @@ export const ReturnDetailView: React.FC<ReturnDetailViewProps> = ({
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-brand-primary mb-1">Status</label>
-            <Select value={status} onChange={(e) => setStatus(e.target.value)}>
+            <select 
+              className="w-full rounded-lg border border-gray-300 dark:border-white/20 bg-white dark:bg-brand-surface px-3 py-2 text-sm text-brand-primary"
+              value={status} 
+              onChange={(e) => setStatus(e.target.value)}
+            >
               {STATUSES.map((s) => (
                 <option key={s} value={s}>
                   {s.replace(/_/g, ' ')}
                 </option>
               ))}
-            </Select>
+            </select>
           </div>
 
           {status === 'approved' && (

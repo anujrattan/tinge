@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Product, Collection } from "../types";
 import api from "../services/api";
 import { ProductCard } from "../components/ProductCard";
@@ -23,6 +23,7 @@ import {
 import { shuffleArray } from "../utils/shuffle";
 import { allocateExclusiveGrids } from "../utils/homepageProductAllocation";
 import { FeaturedArtCarousel } from "../components/FeaturedArtCarousel";
+import { PRINT_TYPES } from "../data/printTypes";
 
 const SECTION_SIZE = 8;
 /** Enough headroom for Best Sellers + New Arrivals after excluding featured IDs */
@@ -41,40 +42,54 @@ export const HomePage: React.FC = () => {
 
   useEffect(() => {
     const fetchFeatured = async () => {
-      const [collectionsData, curatedFeatured, bestSellers, arrivals] = await Promise.all([
-        api.getCollections(),
-        api.getFeaturedProducts(FEATURED_CAROUSEL_LIMIT),
-        api.getBestSellers(POOL_FETCH_LIMIT),
-        api.getNewArrivals(POOL_FETCH_LIMIT),
-      ]);
-      const visible = (collectionsData || []).filter((c) => c.isActive !== false);
-      setCollections(visible.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)));
-      setCollectionsLoading(false);
+      try {
+        const [collectionsResult, featuredResult, bestResult, arrivalsResult] =
+          await Promise.allSettled([
+            api.getCollections(),
+            api.getFeaturedProducts(FEATURED_CAROUSEL_LIMIT),
+            api.getBestSellers(POOL_FETCH_LIMIT),
+            api.getNewArrivals(POOL_FETCH_LIMIT),
+          ]);
 
-      const featured = curatedFeatured || [];
-      setFeaturedArt(featured);
+        const collectionsData =
+          collectionsResult.status === "fulfilled" ? collectionsResult.value : [];
+        const curatedFeatured =
+          featuredResult.status === "fulfilled" ? featuredResult.value : [];
+        const bestSellers =
+          bestResult.status === "fulfilled" ? bestResult.value : [];
+        const arrivals =
+          arrivalsResult.status === "fulfilled" ? arrivalsResult.value : [];
 
-      const grids = allocateExclusiveGrids(
-        shuffleArray(bestSellers || []),
-        shuffleArray(arrivals || []),
-        featured.map((p) => p.id),
-        SECTION_SIZE,
-      );
-      setFeaturedProducts(grids.bestSellers);
-      setNewArrivals(grids.newArrivals);
-      setHasMoreBestSellers(grids.hasMoreBestSellers);
-      setHasMoreNewArrivals(grids.hasMoreNewArrivals);
+        const visible = (collectionsData || []).filter((c) => c.isActive !== false);
+        setCollections(visible.sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0)));
+
+        const featured = curatedFeatured || [];
+        setFeaturedArt(featured);
+
+        const grids = allocateExclusiveGrids(
+          shuffleArray(bestSellers || []),
+          shuffleArray(arrivals || []),
+          featured.map((p) => p.id),
+          SECTION_SIZE,
+        );
+        setFeaturedProducts(grids.bestSellers);
+        setNewArrivals(grids.newArrivals);
+        setHasMoreBestSellers(grids.hasMoreBestSellers);
+        setHasMoreNewArrivals(grids.hasMoreNewArrivals);
+      } finally {
+        setCollectionsLoading(false);
+      }
     };
     fetchFeatured();
   }, []);
 
   // SEO Data
   const seoData = {
-    title: "Tinge Clothing — Art Prints & Accessories",
+    title: "Tinge — Framed ACP, Canvas, Sunboard, and Neon",
     description:
-      "Collect stories. Display what moves you. Shop curated art prints and adventure-inspired accessories from Tinge — made on demand, shipped across India.",
+      "Wall art printed in our studio. Framed UV prints on ACP, canvas, sunboard panels, and neon signs. Sizes are cut from a 12 by 4 ft sheet.",
     keywords:
-      "art prints, curated art, wall art, adventure accessories, collectible prints, high-quality prints, curated drops, Tinge Clothing",
+      "Tinge, framed ACP print, UV wall art, canvas print India, sunboard print, neon sign, custom wall art",
     type: "website" as const,
   };
 
@@ -95,11 +110,11 @@ export const HomePage: React.FC = () => {
 
             {/* ── Background image ─────────────────────────────────────────────── */}
             <picture>
-              <source media="(max-width: 767px)" srcSet="/Hero-Banner-Updated-Mobile.png" />
+              <source media="(max-width: 767px)" srcSet="/Hero-Art-Decor-Mobile.png" />
               <img
-                src="/Hero-Banner-Updated.png"
-                alt="Tinge art prints and accessories"
-                className="hero-banner-image absolute inset-0 w-full h-full object-cover object-top md:object-center animate-cinematicZoom"
+                src="/Hero-Art-Decor-Desktop.png"
+                alt="Curated art prints and home accessories from Tinge"
+                className="hero-banner-image absolute inset-0 w-full h-full object-cover object-center animate-cinematicZoom"
                 loading="eager"
                 decoding="async"
                 fetchPriority="high"
@@ -138,28 +153,72 @@ export const HomePage: React.FC = () => {
               className="absolute bottom-0 left-0 right-0 h-20 md:h-24 pointer-events-none bg-gradient-to-b from-transparent to-black/15"
             />
 
-            {/* ── Floating particles — desktop only ────────────────────────────── */}
-            <div className="hidden md:block" aria-hidden="true">
+            {/* ── Soft dust / blobs — drifting atmosphere across the hero ─────── */}
+            <div
+              className="absolute inset-0 z-[5] overflow-hidden pointer-events-none"
+              aria-hidden="true"
+            >
+              {/* Soft warm blobs */}
               {(
                 [
-                  { top: "18%", left: "6%",  size: 3, color: "rgba(255,153,102,0.55)", delay: "0s",   dur: "7s"   },
-                  { top: "42%", left: "12%", size: 2, color: "rgba(255,94,98,0.45)",   delay: "1.8s", dur: "9s"   },
-                  { top: "65%", left: "4%",  size: 4, color: "rgba(255,195,113,0.40)", delay: "3.2s", dur: "7.5s" },
-                  { top: "22%", left: "88%", size: 2, color: "rgba(255,153,102,0.50)", delay: "2.4s", dur: "8.5s" },
-                  { top: "55%", left: "92%", size: 3, color: "rgba(255,94,98,0.40)",   delay: "0.8s", dur: "6.5s" },
-                  { top: "78%", left: "28%", size: 2, color: "rgba(255,195,113,0.45)", delay: "4s",   dur: "8s"   },
-                  { top: "12%", left: "55%", size: 2, color: "rgba(255,153,102,0.30)", delay: "5s",   dur: "11s"  },
-                ] as { top: string; left: string; size: number; color: string; delay: string; dur: string }[]
+                  { top: "18%", left: "12%", size: 140, delay: "0s",   dur: "14s" },
+                  { top: "55%", left: "6%",  size: 110, delay: "2.5s", dur: "17s" },
+                  { top: "30%", left: "70%", size: 160, delay: "1s",   dur: "18s" },
+                  { top: "68%", left: "50%", size: 120, delay: "4s",   dur: "15s" },
+                ] as { top: string; left: string; size: number; delay: string; dur: string }[]
+              ).map((b, i) => (
+                <span
+                  key={`blob-${i}`}
+                  className="hero-blob hidden md:block"
+                  style={{
+                    top: b.top,
+                    left: b.left,
+                    width: b.size,
+                    height: b.size,
+                    animationDelay: b.delay,
+                    animationDuration: b.dur,
+                  }}
+                />
+              ))}
+
+              {/* Dust motes */}
+              {(
+                [
+                  { top: "16%", left: "10%", size: 5,  delay: "0s",   dur: "7s",  variant: "a" },
+                  { top: "26%", left: "24%", size: 3,  delay: "0.8s", dur: "9s",  variant: "b" },
+                  { top: "38%", left: "16%", size: 4,  delay: "1.6s", dur: "8s",  variant: "c" },
+                  { top: "52%", left: "28%", size: 3,  delay: "0.4s", dur: "10s", variant: "a" },
+                  { top: "64%", left: "14%", size: 5,  delay: "2.2s", dur: "7.5s", variant: "b" },
+                  { top: "74%", left: "32%", size: 3,  delay: "3s",   dur: "11s", variant: "c" },
+                  { top: "20%", left: "46%", size: 4,  delay: "1.1s", dur: "9s",  variant: "a" },
+                  { top: "44%", left: "52%", size: 3,  delay: "2.8s", dur: "8s",  variant: "b" },
+                  { top: "58%", left: "42%", size: 5,  delay: "0.6s", dur: "12s", variant: "c" },
+                  { top: "78%", left: "48%", size: 3,  delay: "3.5s", dur: "9.5s", variant: "a" },
+                  { top: "22%", left: "66%", size: 4,  delay: "1.9s", dur: "8.5s", variant: "b" },
+                  { top: "36%", left: "78%", size: 3,  delay: "0.3s", dur: "10s", variant: "c" },
+                  { top: "50%", left: "72%", size: 5,  delay: "2.5s", dur: "7s",  variant: "a" },
+                  { top: "66%", left: "86%", size: 4,  delay: "4s",   dur: "11s", variant: "b" },
+                  { top: "82%", left: "64%", size: 3,  delay: "1.4s", dur: "9s",  variant: "c" },
+                  { top: "12%", left: "88%", size: 4,  delay: "3.2s", dur: "8s",  variant: "a" },
+                  { top: "88%", left: "22%", size: 4,  delay: "2s",   dur: "10.5s", variant: "b" },
+                  { top: "30%", left: "36%", size: 3,  delay: "4.4s", dur: "7.5s", variant: "c" },
+                ] as {
+                  top: string;
+                  left: string;
+                  size: number;
+                  delay: string;
+                  dur: string;
+                  variant: "a" | "b" | "c";
+                }[]
               ).map((p, i) => (
                 <span
-                  key={i}
-                  className="absolute rounded-full pointer-events-none animate-float"
+                  key={`dust-${i}`}
+                  className={`hero-dust hero-dust--${p.variant}`}
                   style={{
                     top: p.top,
                     left: p.left,
                     width: p.size,
                     height: p.size,
-                    background: p.color,
                     animationDelay: p.delay,
                     animationDuration: p.dur,
                   }}
@@ -172,13 +231,13 @@ export const HomePage: React.FC = () => {
              * Mobile:  justify-end — block sits at the bottom of the image.
              * Desktop: justify-center — block floats in the left-center of the image.
              */}
-            <div className="relative h-full flex flex-col justify-end pb-10 px-5 md:pb-0 md:px-0 md:justify-center md:container md:mx-auto md:px-8 pt-24 md:pt-0">
+            <div className="relative z-10 h-full flex flex-col justify-end pb-10 px-5 md:pb-0 md:px-0 md:justify-center md:container md:mx-auto md:px-8 pt-24 md:pt-0">
               <div className="w-full md:max-w-3xl hero-copy-panel">
 
                 {/* Eyebrow */}
-                <p className="hero-eyebrow inline-flex items-center gap-3 text-[10px] md:text-xs font-bold uppercase tracking-[0.28em] mb-3 md:mb-4">
+                <p className="hero-eyebrow inline-flex items-center gap-3 text-xs md:text-sm font-bold uppercase tracking-[0.22em] mb-3 md:mb-4">
                   <span aria-hidden className="inline-block h-px w-8 md:w-12 bg-gradient-to-r from-[#FF9966] to-transparent" />
-                  Art Prints & Accessories
+                  Printed in our studio
                 </p>
 
                 {/* Headline */}
@@ -186,7 +245,7 @@ export const HomePage: React.FC = () => {
                   <span className="hero-headline-accent block">Collect Stories.</span>
                   <span className="block mt-1 md:mt-3 text-[1.85rem] sm:text-[2.25rem] md:text-6xl lg:text-7xl leading-[1.15]">
                     <RotatingText
-                      words={["Display What Moves You.", "Bring It Home."]}
+                      words={["Framed. On your wall.", "Or send your own art."]}
                       interval={3000}
                       typingSpeed={55}
                       className="hero-headline-rotate"
@@ -195,37 +254,34 @@ export const HomePage: React.FC = () => {
                 </h1>
 
                 {/* Subheading */}
-                <p className="hero-subtext mt-4 md:mt-6 text-sm sm:text-base md:text-xl max-w-sm md:max-w-xl leading-relaxed">
-                  Adventure doesn&apos;t end at the trail. Curated art on high-density,
-                  high-quality prints — made to give your room decor that extra oomph.
+                <p className="hero-subtext mt-4 md:mt-6 text-base md:text-xl max-w-sm md:max-w-xl leading-relaxed">
+                  UV print on ACP, then a frame. Canvas and sunboard when you want something lighter. Neon when the wall should light up. Every ACP size is cut from a 12 × 4 ft sheet.
                 </p>
 
                 {/* CTAs */}
                 <div className="mt-5 md:mt-10 flex flex-col sm:flex-row gap-3">
                   <button
-                    onClick={() => navigate("/collections")}
-                    className="w-full sm:w-auto min-h-[52px] px-8 py-3.5 rounded-full text-base font-bold tracking-wide transition-all duration-200 bg-[#FF7A59] hover:bg-[#FF5E62] text-[#FFF8EE] active:scale-[0.97] shadow-[0_4px_24px_rgba(0,0,0,0.35)]"
+                    onClick={() => navigate("/prints")}
+                    className="w-full sm:w-auto min-h-[52px] cursor-pointer px-8 py-3.5 rounded-full text-base font-bold tracking-wide transition-colors duration-200 bg-[#FF7A59] hover:bg-[#FF5E62] text-[#FFF8EE] shadow-[0_4px_24px_rgba(0,0,0,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#FF7A59]"
                   >
-                    Explore Art Prints
+                    See what we print
                   </button>
                   <button
-                    onClick={() => navigate("/categories")}
-                    className="w-full sm:w-auto min-h-[52px] px-8 py-3.5 rounded-full text-base font-bold tracking-wide transition-all duration-200 bg-[#1E1B22]/85 backdrop-blur-md border border-[#1E1B22]/30 text-[#F7F3EA] hover:bg-[#1E1B22] active:scale-[0.97] shadow-[0_4px_20px_rgba(0,0,0,0.25)]"
+                    onClick={() => navigate("/custom-design")}
+                    className="w-full sm:w-auto min-h-[52px] cursor-pointer px-8 py-3.5 rounded-full text-base font-bold tracking-wide transition-colors duration-200 bg-[#1E1B22]/85 backdrop-blur-md border border-[#1E1B22]/30 text-[#F7F3EA] hover:bg-[#1E1B22] shadow-[0_4px_20px_rgba(0,0,0,0.25)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#1E1B22]"
                   >
-                    Shop Accessories
+                    Use your own art
                   </button>
                 </div>
 
-                {/* Upcoming launch badge — apparel is the next drop, keep it visible */}
-                <div className="mt-5 md:mt-6 inline-flex items-center gap-2.5 rounded-full bg-[#1E1B22]/75 backdrop-blur-md border border-[#FFC371]/45 pl-3.5 pr-4 py-2 shadow-[0_4px_18px_rgba(0,0,0,0.35)]">
-                  <span className="relative flex h-2.5 w-2.5" aria-hidden>
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FFC371] opacity-70" />
-                    <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#FFC371]" />
+                {/* Value prop badge */}
+                <div className="mt-5 md:mt-6 inline-flex items-center gap-2.5 rounded-full bg-[#1E1B22]/75 backdrop-blur-md border border-[#FFC371]/45 px-4 py-2 shadow-[0_4px_18px_rgba(0,0,0,0.35)]">
+                  <span className="relative flex h-2.5 w-2.5 shrink-0" aria-hidden>
+                    <span className="animate-ping motion-reduce:animate-none absolute inline-flex h-full w-full rounded-full bg-[#FFC371] opacity-70" />
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#FFC371]" />
                   </span>
-                  <span className="text-xs sm:text-sm font-semibold tracking-wide text-[#FFE0B0]">
-                    Coming Soon
-                    <span className="mx-1.5 text-[#FFC371]/60">·</span>
-                    <span className="text-[#FFF8EE]">Tees &amp; Apparel Drops</span>
+                  <span className="text-sm font-medium tracking-wide text-[#FFE0B0]">
+                    Framed ACP arrives ready to hang. You choose the size. We do not take custom measurements.
                   </span>
                 </div>
 
@@ -235,11 +291,40 @@ export const HomePage: React.FC = () => {
           </div>
         </section>
 
+        <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8" aria-labelledby="materials-heading">
+          <div className="mb-8 max-w-2xl">
+            <p className="text-xs font-semibold text-[#FF7A59] uppercase tracking-[0.18em]">
+              What you are buying
+            </p>
+            <h2 id="materials-heading" className="font-playfair text-3xl md:text-4xl font-medium tracking-tight text-brand-primary mt-3">
+              Four materials. One studio.
+            </h2>
+            <p className="mt-3 text-base text-brand-secondary leading-relaxed">
+              Each card is one product. The artwork can be ours or yours. The material decides what arrives.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {PRINT_TYPES.map((type) => (
+              <Link
+                key={type.id}
+                to={`/prints#${type.id}`}
+                className="flex min-h-[48px] cursor-pointer flex-col rounded-2xl border border-gray-200 bg-white p-6 text-left transition-colors duration-200 hover:border-[#FF7A59]/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A59] focus-visible:ring-offset-2 dark:border-white/10 dark:bg-brand-surface"
+              >
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#FF7A59]">{type.tag}</p>
+                <h3 className="font-playfair text-2xl text-brand-primary mt-3">{type.name}</h3>
+                <p className="mt-3 text-base text-brand-secondary leading-relaxed">{type.summary}</p>
+                <p className="mt-4 text-sm font-medium text-brand-primary">{type.arrives}</p>
+                <span className="mt-5 text-sm font-semibold text-[#FF7A59]">See this material</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+
         {/* Shop by Collection */}
         <section className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-8 flex items-end justify-between">
             <div>
-              <span className="text-[11px] font-semibold text-[#FF7A59] uppercase tracking-[0.22em]">
+              <span className="text-xs font-semibold text-[#FF7A59] uppercase tracking-[0.18em]">
                 Curated drops
               </span>
               <h2 className="font-playfair text-3xl md:text-4xl font-medium tracking-tight text-brand-primary mt-2">
@@ -248,8 +333,8 @@ export const HomePage: React.FC = () => {
                   Collection
                 </span>
               </h2>
-              <p className="mt-2 text-brand-secondary leading-relaxed">
-                Curated art prints and accessories — each drop tells a story worth displaying.
+              <p className="mt-3 text-base text-brand-secondary leading-relaxed">
+                Small sets of wall art, grouped by one story.
               </p>
             </div>
             {collections.length > 0 && (
@@ -277,8 +362,7 @@ export const HomePage: React.FC = () => {
               {collections.map((collection) => (
                 <Card
                   key={collection.id}
-                  className="group overflow-hidden cursor-pointer hover:shadow-2xl transition-all duration-300 hover:scale-[1.02]"
-                  onClick={() => navigate(`/collections/${collection.slug}`)}
+                  className="group overflow-hidden transition-shadow duration-300 hover:shadow-2xl"
                 >
                   <div className="relative h-56 overflow-hidden">
                     {collection.imageUrl ? (
@@ -295,27 +379,29 @@ export const HomePage: React.FC = () => {
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent opacity-80 group-hover:opacity-100 transition-opacity duration-300" />
                     <div className="absolute bottom-0 left-0 right-0 p-5">
-                      <p className="text-xs uppercase tracking-[0.2em] text-white/70 mb-1">Collection</p>
-                      <h3 className="text-2xl font-display font-bold text-white">{collection.name}</h3>
+                      <p className="text-xs uppercase tracking-[0.16em] text-white/80 mb-1">Collection</p>
+                      <h3 className="text-2xl font-display font-bold text-white">
+                        <Link
+                          to={`/collections/${collection.slug}`}
+                          className="rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                        >
+                          {collection.name}
+                        </Link>
+                      </h3>
                     </div>
                   </div>
                   <div className="p-5 flex items-center justify-between gap-3">
-                    <p className="text-sm text-brand-secondary line-clamp-2">
+                    <p className="text-base text-brand-secondary line-clamp-2">
                       {collection.description ||
-                        "A curated set of prints and pieces built around one visual story."}
+                        "A short set of prints built around one visual story."}
                     </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="whitespace-nowrap"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/collections/${collection.slug}`);
-                      }}
+                    <Link
+                      to={`/collections/${collection.slug}`}
+                      className="inline-flex min-h-11 shrink-0 cursor-pointer items-center rounded-full border border-gray-300 px-4 text-sm font-semibold text-brand-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A59] focus-visible:ring-offset-2 dark:border-white/20"
                     >
                       View drop
-                      <ArrowRightIcon className="w-3 h-3 ml-1" />
-                    </Button>
+                      <ArrowRightIcon className="w-3 h-3 ml-1" aria-hidden="true" />
+                    </Link>
                   </div>
                 </Card>
               ))}
@@ -500,6 +586,31 @@ export const HomePage: React.FC = () => {
               </p>
             </div>
             <DesignPhilosophyJourney />
+          </div>
+        </section>
+
+        <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+          <div className="rounded-3xl border border-gray-200 bg-white px-6 py-10 md:px-12 md:py-14 dark:border-white/10 dark:bg-brand-surface">
+            <h2 className="font-playfair text-3xl md:text-4xl font-medium text-brand-primary max-w-xl">
+              Pick a material, then a size we already cut.
+            </h2>
+            <p className="mt-4 max-w-xl text-base leading-relaxed text-brand-secondary">
+              Listed designs are in the shop. Your own file uses the same sizes.
+            </p>
+            <div className="mt-8 flex flex-col sm:flex-row gap-3">
+              <Link
+                to="/prints"
+                className="inline-flex min-h-[52px] cursor-pointer items-center justify-center rounded-full bg-[#FF7A59] px-8 text-base font-bold text-[#FFF8EE] transition-colors duration-200 hover:bg-[#FF5E62] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1C1917] focus-visible:ring-offset-2"
+              >
+                See what we print
+              </Link>
+              <Link
+                to="/custom-design"
+                className="inline-flex min-h-[52px] cursor-pointer items-center justify-center rounded-full border border-gray-300 px-8 text-base font-bold text-brand-primary transition-colors duration-200 hover:border-[#FF7A59]/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A59] focus-visible:ring-offset-2 dark:border-white/20"
+              >
+                Use your own art
+              </Link>
+            </div>
           </div>
         </section>
 

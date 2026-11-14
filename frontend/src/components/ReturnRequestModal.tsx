@@ -151,7 +151,8 @@ export const ReturnRequestModal: React.FC<ReturnRequestModalProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-brand-primary mb-1">Item</label>
-            <Select
+            <select
+              className="w-full rounded-lg border border-gray-300 dark:border-white/20 bg-white dark:bg-brand-surface px-3 py-2 text-sm text-brand-primary"
               value={orderItemId}
               onChange={(e) => {
                 setOrderItemId(e.target.value);
@@ -167,26 +168,34 @@ export const ReturnRequestModal: React.FC<ReturnRequestModalProps> = ({
                   {item.color ? ` · ${item.color}` : ''}
                 </option>
               ))}
-            </Select>
+            </select>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-brand-primary mb-1">Request type</label>
-            <Select value={type} onChange={(e) => setType(e.target.value as 'refund' | 'exchange')}>
+            <select
+              className="w-full rounded-lg border border-gray-300 dark:border-white/20 bg-white dark:bg-brand-surface px-3 py-2 text-sm text-brand-primary"
+              value={type} 
+              onChange={(e) => setType(e.target.value as 'refund' | 'exchange')}
+            >
               <option value="refund">Refund</option>
               <option value="exchange">Exchange</option>
-            </Select>
+            </select>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-brand-primary mb-1">Reason</label>
-            <Select value={reason} onChange={(e) => setReason(e.target.value)}>
+            <select 
+              className="w-full rounded-lg border border-gray-300 dark:border-white/20 bg-white dark:bg-brand-surface px-3 py-2 text-sm text-brand-primary"
+              value={reason} 
+              onChange={(e) => setReason(e.target.value)}
+            >
               {REASONS.map((r) => (
                 <option key={r.value} value={r.value}>
                   {r.label}
                 </option>
               ))}
-            </Select>
+            </select>
           </div>
 
           {type === 'exchange' && (
@@ -204,7 +213,8 @@ export const ReturnRequestModal: React.FC<ReturnRequestModalProps> = ({
           {selectedItem && selectedItem.quantity > 1 && (
             <div>
               <label className="block text-sm font-medium text-brand-primary mb-1">Quantity</label>
-              <Select
+              <select
+                className="w-full rounded-lg border border-gray-300 dark:border-white/20 bg-white dark:bg-brand-surface px-3 py-2 text-sm text-brand-primary"
                 value={String(quantity)}
                 onChange={(e) => setQuantity(Number(e.target.value))}
               >
@@ -213,7 +223,7 @@ export const ReturnRequestModal: React.FC<ReturnRequestModalProps> = ({
                     {n}
                   </option>
                 ))}
-              </Select>
+              </select>
             </div>
           )}
 

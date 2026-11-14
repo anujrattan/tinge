@@ -57,7 +57,7 @@ router.post(
       // Verify order exists and is pending payment
       console.log(`[PAYMENT] [${new Date().toISOString()}] Step 3: Fetching order from database (Order ID: ${orderId})`);
       const { data: order, error: orderError } = await supabaseAdmin
-        .from("orders")
+        .from("tinge_orders")
         .select("id, order_number, total_amount, gateway, payment_status")
         .eq("id", orderId)
         .single();
@@ -97,8 +97,8 @@ router.post(
       // so retries don't generate new internal payment IDs/order IDs.
       console.log(`[PAYMENT] [${new Date().toISOString()}] Step 4: Checking existing payment record for this order`);
       const { data: existingPayment } = await supabaseAdmin
-        .from("payments")
-        .select("id, razorpay_order_id, amount, currency, status, gateway, created_at")
+        .from("tinge_payments")
+        .select("id, order_id, razorpay_order_id, amount, currency, status, gateway, created_at")
         .eq("order_id", orderId)
         .order("created_at", { ascending: false })
         .limit(1)
@@ -154,7 +154,7 @@ router.post(
         if (existingPayment) {
           console.log(`[PAYMENT] [${new Date().toISOString()}] Step 6: Updating existing payment record`);
           const { data: updatedPayment, error: updateError } = await supabaseAdmin
-            .from("payments")
+            .from("tinge_payments")
             .update({
               razorpay_order_id: razorpayOrderId,
               amount: amount,
@@ -178,7 +178,7 @@ router.post(
         } else {
           console.log(`[PAYMENT] [${new Date().toISOString()}] Step 6: Creating payment record in database`);
           const { data: createdPayment, error: paymentError } = await supabaseAdmin
-            .from("payments")
+            .from("tinge_payments")
             .insert({
               order_id: orderId,
               razorpay_order_id: razorpayOrderId,
@@ -317,7 +317,7 @@ router.post(
       // Get order details
       console.log(`[PAYMENT VERIFY] [${new Date().toISOString()}] Step 5: Fetching order from database (Order ID: ${orderId})`);
       const { data: order, error: orderError } = await supabaseAdmin
-        .from("orders")
+        .from("tinge_orders")
         .select("id, order_number, total_amount, payment_status")
         .eq("id", orderId)
         .single();
@@ -338,7 +338,7 @@ router.post(
       // Update payment record
       console.log(`[PAYMENT VERIFY] [${new Date().toISOString()}] Step 6: Updating payment record in database`);
       const { data: existingPayment, error: paymentLookupError } = await supabaseAdmin
-        .from("payments")
+        .from("tinge_payments")
         .select("id")
         .eq("order_id", orderId)
         .eq("razorpay_order_id", razorpayOrderId)
@@ -375,7 +375,7 @@ router.post(
         // Update existing payment
         console.log(`[PAYMENT VERIFY] [${new Date().toISOString()}] Step 7: Updating existing payment record`);
         const { data: payment, error: updateError } = await supabaseAdmin
-          .from("payments")
+          .from("tinge_payments")
           .update(paymentData)
           .eq("id", existingPayment.id)
           .select()
@@ -394,7 +394,7 @@ router.post(
         // Update order payment status
         console.log(`[PAYMENT VERIFY] [${new Date().toISOString()}] Step 8: Updating order payment status`);
         const { error: orderUpdateError } = await supabaseAdmin
-          .from("orders")
+          .from("tinge_orders")
           .update({
             payment_status: orderPaymentStatus,
             payment_id: payment.id,
@@ -427,7 +427,7 @@ router.post(
         // Create new payment record (shouldn't happen, but handle it)
         console.log(`[PAYMENT VERIFY] [${new Date().toISOString()}] Step 7: Creating new payment record (unexpected)`);
         const { data: payment, error: createError } = await supabaseAdmin
-          .from("payments")
+          .from("tinge_payments")
           .insert({
             order_id: orderId,
             razorpay_order_id: razorpayOrderId,
@@ -451,7 +451,7 @@ router.post(
         // Update order payment status
         console.log(`[PAYMENT VERIFY] [${new Date().toISOString()}] Step 8: Updating order payment status`);
         const { error: orderUpdateError } = await supabaseAdmin
-          .from("orders")
+          .from("tinge_orders")
           .update({
             payment_status: orderPaymentStatus,
             payment_id: payment.id,
@@ -523,7 +523,7 @@ async function verifyAndUpdatePayment(
     // Step 2: Look up our internal order_id using razorpay_order_id from payments table
     console.log(`[PAYMENT CALLBACK] [${new Date().toISOString()}] Step 2: Looking up payment record using razorpay_order_id: ${razorpayOrderId}`);
     const { data: payment, error: paymentError } = await supabaseAdmin
-      .from("payments")
+      .from("tinge_payments")
       .select("id, order_id, status")
       .eq("razorpay_order_id", razorpayOrderId)
       .single();
@@ -567,7 +567,7 @@ async function verifyAndUpdatePayment(
       };
 
       const { error: updateError } = await supabaseAdmin
-        .from("payments")
+        .from("tinge_payments")
         .update(paymentData)
         .eq("id", payment.id);
 
@@ -583,7 +583,7 @@ async function verifyAndUpdatePayment(
       // Step 6: Update order payment status
       console.log(`[PAYMENT CALLBACK] [${new Date().toISOString()}] Step 5: Updating order payment status`);
       const { error: orderUpdateError } = await supabaseAdmin
-        .from("orders")
+        .from("tinge_orders")
         .update({
           payment_status: orderPaymentStatus,
           payment_id: payment.id,
@@ -600,7 +600,7 @@ async function verifyAndUpdatePayment(
     // Step 7: Get order_number for redirect
     console.log(`[PAYMENT CALLBACK] [${new Date().toISOString()}] Step 6: Fetching order details`);
     const { data: order, error: orderError } = await supabaseAdmin
-      .from("orders")
+      .from("tinge_orders")
       .select("order_number, payment_status")
       .eq("id", orderId)
       .single();
@@ -732,7 +732,7 @@ router.post(
 
         // Find payment record
         const { data: paymentRecord } = await supabaseAdmin
-          .from("payments")
+          .from("tinge_payments")
           .select("id, order_id")
           .eq("razorpay_payment_id", razorpayPaymentId)
           .single();
@@ -740,7 +740,7 @@ router.post(
         if (paymentRecord) {
           // Update payment status
           await supabaseAdmin
-            .from("payments")
+            .from("tinge_payments")
             .update({
               status: "captured",
               payment_method: payment.method || null,
@@ -750,7 +750,7 @@ router.post(
 
           // Update order payment status
           await supabaseAdmin
-            .from("orders")
+            .from("tinge_orders")
             .update({
               payment_status: "paid",
               payment_id: paymentRecord.id,
@@ -767,7 +767,7 @@ router.post(
 
         // Find payment record
         const { data: paymentRecord } = await supabaseAdmin
-          .from("payments")
+          .from("tinge_payments")
           .select("id, order_id")
           .eq("razorpay_payment_id", razorpayPaymentId)
           .single();
@@ -775,7 +775,7 @@ router.post(
         if (paymentRecord) {
           // Update payment status
           await supabaseAdmin
-            .from("payments")
+            .from("tinge_payments")
             .update({
               status: "failed",
               updated_at: new Date().toISOString(),
@@ -784,7 +784,7 @@ router.post(
 
           // Update order payment status
           await supabaseAdmin
-            .from("orders")
+            .from("tinge_orders")
             .update({
               payment_status: "failed",
             })

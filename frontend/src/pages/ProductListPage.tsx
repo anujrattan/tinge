@@ -54,9 +54,9 @@ export const ProductListPage: React.FC = () => {
   
   // SEO Data
   const seoData = {
-    title: `${categoryName} - Premium Apparel | Luxe Threads`,
-    description: `Browse our collection of premium ${categoryName.toLowerCase()}. High-quality, designer ${categoryName.toLowerCase()} with free shipping on orders over ₹500.`,
-    keywords: `${categoryName}, premium ${categoryName.toLowerCase()}, luxury ${categoryName.toLowerCase()}, designer ${categoryName.toLowerCase()}, ${categoryName.toLowerCase()} online`,
+    title: `${categoryName} - Metal Art Prints | Tinge`,
+    description: `Browse ${categoryName} at Tinge. Framed ACP, canvas, and sunboard are printed in our studio.`,
+    keywords: `${categoryName}, ${categoryName.toLowerCase()} metal prints, metal wall art, aluminium prints, wall decor, Tinge`,
     type: 'website' as const,
     url: `${DEFAULT_SITE_URL}/category/${slug}`,
   };
@@ -79,12 +79,11 @@ export const ProductListPage: React.FC = () => {
   }, [products]);
 
   const availableColors = useMemo(() => {
-    const colors = new Set<string>();
-    products.forEach(product => {
-      const c = product.color;
-      if (c && String(c).trim()) colors.add(String(c).trim());
+    const materials = new Set<string>();
+    products.forEach((product) => {
+      if (product.material) materials.add(product.material);
     });
-    return Array.from(colors).sort();
+    return Array.from(materials).sort();
   }, [products]);
 
   // Filter and sort products
@@ -99,10 +98,9 @@ export const ProductListPage: React.FC = () => {
     }
 
     if (selectedColors.length > 0) {
-      filtered = filtered.filter(product => {
-        const c = product.color;
-        return c && selectedColors.includes(String(c).trim());
-      });
+      filtered = filtered.filter(
+        (product) => product.material && selectedColors.includes(product.material),
+      );
     }
 
     // Filter by price range

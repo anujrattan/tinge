@@ -17,7 +17,7 @@ export async function executePaymentRefund(options: {
   notes?: Record<string, string>;
 }): Promise<ExecuteRefundResult> {
   const { data: paymentRecord } = await supabaseAdmin
-    .from("payments")
+    .from("tinge_payments")
     .select("id, order_id, razorpay_payment_id, amount, status")
     .eq("razorpay_payment_id", options.razorpayPaymentId)
     .single();
@@ -43,7 +43,7 @@ export async function executePaymentRefund(options: {
   const paymentStatus = isPartial ? "partially_refunded" : "refunded";
 
   await supabaseAdmin
-    .from("payments")
+    .from("tinge_payments")
     .update({
       status: paymentStatus,
       updated_at: new Date().toISOString(),
@@ -51,7 +51,7 @@ export async function executePaymentRefund(options: {
     .eq("id", paymentRecord.id);
 
   await supabaseAdmin
-    .from("orders")
+    .from("tinge_orders")
     .update({
       payment_status: paymentStatus,
       updated_at: new Date().toISOString(),

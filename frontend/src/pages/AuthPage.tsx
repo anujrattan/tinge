@@ -52,10 +52,10 @@ export const AuthPage: React.FC = () => {
     <div className="min-h-[75vh] flex items-center justify-center bg-gradient-to-b from-white to-[#FAFAFA] dark:from-brand-bg dark:to-brand-surface py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center space-y-3">
-          <Link to="/" className="inline-flex justify-center mb-2" aria-label="Tinge Clothing home">
+          <Link to="/" className="inline-flex justify-center mb-2" aria-label="Tinge home">
             <img
               src={encodeURI('/Tinge Clothing - Logo - No background.png')}
-              alt="Tinge Clothing"
+              alt="Tinge"
               className="h-14 w-auto object-contain"
             />
           </Link>

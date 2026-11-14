@@ -24,7 +24,7 @@ const isValidHex = (hex: string) => /^#[0-9A-F]{6}$/.test(hex);
 
 async function loadColorProfilesFromDb(): Promise<ColorProfile[]> {
   const { data, error } = await supabaseAdmin
-    .from('color_profiles')
+    .from('tinge_color_profiles')
     .select('name,hex')
     .order('name', { ascending: true });
 
@@ -78,7 +78,7 @@ router.post(
       }
 
       const { data, error } = await supabaseAdmin
-        .from('color_profiles')
+        .from('tinge_color_profiles')
         .upsert(
           [{ name, hex }],
           {

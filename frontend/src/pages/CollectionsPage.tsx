@@ -39,20 +39,20 @@ export const CollectionsPage: React.FC = () => {
   return (
     <div className="animate-fadeIn pb-16">
       <SEOHead
-        title="Collections | Tinge Clothing"
-        description="Explore curated merchandise collections like The Streetwear Edit, The Essentials, and more."
+        title="Collections | Tinge — Curated Metal Art Prints"
+        description="Collections of Tinge designs. Choose framed ACP, canvas, or sunboard. Sizes come from the 12 by 4 ft sheet plan."
       />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-4">
         <div className="mb-12 text-left">
           <h1 className="text-3xl md:text-4xl font-display font-bold tracking-tight text-brand-primary mb-2">
             Shop By{" "}
-            <span className="bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#FF7A59] to-[#FFC371] bg-clip-text text-transparent">
               Collection
             </span>
           </h1>
           <p className="text-brand-secondary font-sans">
-            Explore our curated drops – each collection blends styles, colors, and fits across product types.
+            Explore our curated metal wall art drops — museum-grade aesthetic prints designed to transform any room.
           </p>
         </div>
       </div>

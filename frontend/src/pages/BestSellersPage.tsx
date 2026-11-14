@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import api from '../services/api';
 import { ProductShowcasePage } from '../components/ProductShowcasePage';
-import { TrendingUpIcon } from '../components/Icons';
+import { TrendingUpIcon } from '../components/icons';
 
 export const BestSellersPage: React.FC = () => {
   // API default limit is 8 (home strip only); request enough rows for a full grid.

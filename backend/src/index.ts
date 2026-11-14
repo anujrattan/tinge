@@ -2,7 +2,7 @@
  * Backend Server Entry Point
  */
 
-import { config } from "./config/index.js";
+import { config, logStartupChecklist } from "./config/index.js";
 import { app } from "./app.js";
 import { connectRedis } from "./services/redis.js";
 
@@ -28,4 +28,5 @@ app.listen(PORT, () => {
   } else {
     console.warn(`⚠️  Razorpay: Not configured — payment features disabled`);
   }
+  logStartupChecklist();
 });

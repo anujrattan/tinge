@@ -16,10 +16,10 @@ export interface SEOData {
   modifiedTime?: string;
 }
 
-export const DEFAULT_SITE_NAME = 'Luxe Threads';
-export const DEFAULT_SITE_URL = process.env.VITE_SITE_URL || 'https://luxethreads.com';
-export const DEFAULT_DESCRIPTION = 'Shop premium apparel and custom clothing at Luxe Threads. Designer t-shirts, luxury fashion, and print-on-demand apparel. Free shipping on orders over ₹500.';
-export const DEFAULT_KEYWORDS = 'premium apparel, luxury clothing, custom t-shirts, designer fashion, print on demand, luxury fashion online, custom clothing, designer t-shirts';
+export const DEFAULT_SITE_NAME = 'Tinge';
+export const DEFAULT_SITE_URL = (import.meta as any).env?.VITE_SITE_URL || 'https://tinge.in';
+export const DEFAULT_DESCRIPTION = 'Tinge prints wall art in-house: framed UV prints on ACP, canvas, sunboard, and neon. Sizes are cut from a 12 by 4 ft sheet. Pan-India delivery.';
+export const DEFAULT_KEYWORDS = 'Tinge, framed ACP print, UV wall art India, canvas print, sunboard print, neon sign, custom wall art, home decor India';
 export const DEFAULT_IMAGE = `${DEFAULT_SITE_URL}/og-image.jpg`;
 
 /**
@@ -54,7 +54,7 @@ export const truncateDescription = (description: string, maxLength: number = 160
  * Default SEO data
  */
 export const getDefaultSEO = (): SEOData => ({
-  title: generateTitle('Premium Apparel & Custom Clothing Online'),
+  title: generateTitle('Framed ACP, Canvas, Sunboard, and Neon'),
   description: DEFAULT_DESCRIPTION,
   keywords: DEFAULT_KEYWORDS,
   image: DEFAULT_IMAGE,

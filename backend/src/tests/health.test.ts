@@ -33,10 +33,6 @@ describe("Health API", () => {
     expect(res.status).toBe(401);
   });
 
-  it("POST /api/health/printrove-tests requires auth", async () => {
-    const res = await request(app).post("/api/health/printrove-tests");
-    expect(res.status).toBe(401);
-  });
 });
 
 describe("Health service (unit)", () => {

@@ -200,3 +200,71 @@ export const extractFilePathFromUrl = (url: string): string | null => {
   }
 };
 
+export const CUSTOM_ART_BUCKET = 'custom-art';
+
+let customBucketReady = false;
+
+export const ensureCustomArtBucket = async (): Promise<void> => {
+  if (customBucketReady) return;
+  const { data: buckets } = await supabaseAdmin.storage.listBuckets();
+  const exists = buckets?.some((b) => b.name === CUSTOM_ART_BUCKET || b.id === CUSTOM_ART_BUCKET);
+  if (!exists) {
+    const { error } = await supabaseAdmin.storage.createBucket(CUSTOM_ART_BUCKET, {
+      public: true,
+      fileSizeLimit: 25 * 1024 * 1024,
+      allowedMimeTypes: ['image/png', 'image/jpeg', 'image/webp', 'image/jpg'],
+    });
+    if (error && !error.message.toLowerCase().includes('already')) {
+      throw new Error(`Failed to ensure custom-art bucket: ${error.message}`);
+    }
+  }
+  customBucketReady = true;
+};
+
+export const uploadCustomArtFile = async (params: {
+  fileBuffer: Buffer;
+  folder: 'originals' | 'mockups' | 'enhanced';
+  fileNameHint: string;
+  contentType: string;
+}): Promise<{ publicUrl: string; storagePath: string }> => {
+  await ensureCustomArtBucket();
+
+  const ext =
+    params.contentType === 'image/png'
+      ? 'png'
+      : params.contentType === 'image/webp'
+        ? 'webp'
+        : 'jpg';
+  const safe = params.fileNameHint.replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 48);
+  const storagePath = `${params.folder}/${Date.now()}_${Math.random().toString(36).slice(2, 7)}_${safe}.${ext}`;
+
+  const { error } = await supabaseAdmin.storage
+    .from(CUSTOM_ART_BUCKET)
+    .upload(storagePath, params.fileBuffer, {
+      contentType: params.contentType,
+      upsert: false,
+    });
+
+  if (error) {
+    throw new Error(`Failed to upload custom art file: ${error.message}`);
+  }
+
+  const { data: urlData } = supabaseAdmin.storage.from(CUSTOM_ART_BUCKET).getPublicUrl(storagePath);
+  if (!urlData?.publicUrl) {
+    throw new Error('Failed to get public URL for custom art file');
+  }
+
+  return { publicUrl: urlData.publicUrl, storagePath };
+};
+
+export const downloadCustomArtFile = async (storagePath: string): Promise<Buffer> => {
+  await ensureCustomArtBucket();
+  const { data, error } = await supabaseAdmin.storage.from(CUSTOM_ART_BUCKET).download(storagePath);
+  if (error || !data) {
+    throw new Error(`Failed to download file from custom-art bucket: ${error?.message || 'unknown error'}`);
+  }
+  const ab = await data.arrayBuffer();
+  return Buffer.from(ab);
+};
+
+

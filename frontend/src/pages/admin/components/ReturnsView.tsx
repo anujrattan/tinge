@@ -32,7 +32,9 @@ export const ReturnsView: React.FC<ReturnsViewProps> = ({
     return (
       <div className="space-y-3">
         {[...Array(4)].map((_, i) => (
-          <Card key={i} className="p-4 animate-pulse h-20 bg-gray-100 dark:bg-white/5" />
+          <Card key={i} className="p-4 animate-pulse h-20 bg-gray-100 dark:bg-white/5">
+            <div />
+          </Card>
         ))}
       </div>
     );

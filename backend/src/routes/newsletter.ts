@@ -25,7 +25,7 @@ router.post("/subscribe", async (req: Request, res: Response, next: NextFunction
     }
 
     const { data: existing, error: lookupError } = await supabaseAdmin
-      .from("newsletter_subscribers")
+      .from("tinge_newsletter_subscribers")
       .select("id, is_active")
       .eq("email", email)
       .maybeSingle();
@@ -42,7 +42,7 @@ router.post("/subscribe", async (req: Request, res: Response, next: NextFunction
       }
 
       const { error: updateError } = await supabaseAdmin
-        .from("newsletter_subscribers")
+        .from("tinge_newsletter_subscribers")
         .update({
           is_active: true,
           unsubscribed_at: null,
@@ -61,7 +61,7 @@ router.post("/subscribe", async (req: Request, res: Response, next: NextFunction
     }
 
     const { data: inserted, error: insertError } = await supabaseAdmin
-      .from("newsletter_subscribers")
+      .from("tinge_newsletter_subscribers")
       .insert({
         email,
         source,

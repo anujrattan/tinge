@@ -21,10 +21,10 @@ import userRoutes from "./routes/users.js";
 import wishlistRoutes from "./routes/wishlists.js";
 import ratingsRoutes from "./routes/ratings.js";
 import colorRoutes from "./routes/colors.js";
-import printroveRoutes from "./routes/printrove.js";
 import healthRoutes from "./routes/health.js";
 import newsletterRoutes from "./routes/newsletter.js";
 import returnsRoutes from "./routes/returns.js";
+import customArtRoutes from "./routes/customArt.js";
 
 export function createApp() {
   const app = express();
@@ -56,12 +56,12 @@ export function createApp() {
   app.use("/api/wishlists", wishlistRoutes);
   app.use("/api/ratings", ratingsRoutes);
   app.use("/api/colors", colorRoutes);
-  app.use("/api/printrove", printroveRoutes);
   app.use("/api/analytics", analyticsRoutes);
   app.use("/api/blog", blogRoutes);
   app.use("/api/faqs", faqRoutes);
   app.use("/api/newsletter", newsletterRoutes);
   app.use("/api/returns", returnsRoutes);
+  app.use("/api/custom-art", customArtRoutes);
 
   app.use(notFound);
   app.use(errorHandler);

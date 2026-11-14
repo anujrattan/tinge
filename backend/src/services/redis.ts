@@ -1,59 +1,150 @@
 /**
  * Redis Client Service
- * 
- * Provides a singleton Redis client for caching
+ *
+ * Prefer Upstash REST on Cloudflare Workers (and when REST env is set).
+ * Fall back to ioredis TCP when REDIS_URL is available (local / Node hosts).
+ * Cache helpers no-op gracefully when neither backend is reachable.
  */
 
-import Redis from 'ioredis';
 import { config } from '../config/index.js';
 
-let redisClient: Redis | null = null;
-
-/**
- * Get or create Redis client instance
- */
-export const getRedisClient = (): Redis => {
-  if (!redisClient) {
-    const redisUrl = config.redis.url || 'redis://localhost:6379';
-    
-    redisClient = new Redis(redisUrl, {
-      retryStrategy: (times) => {
-        const delay = Math.min(times * 50, 2000);
-        return delay;
-      },
-      maxRetriesPerRequest: 3,
-      enableOfflineQueue: false,
-      lazyConnect: true, // Don't connect immediately
-    });
-
-    redisClient.on('error', (error) => {
-      console.error('❌ Redis connection error:', error);
-    });
-
-    redisClient.on('connect', () => {
-      console.log('✅ Redis connected');
-    });
-
-    redisClient.on('ready', () => {
-      console.log('✅ Redis ready');
-    });
-  }
-
-  return redisClient;
+type RedisLike = {
+  get: (key: string) => Promise<string | null>;
+  set: (key: string, value: string) => Promise<unknown>;
+  setex: (key: string, expiry: number, value: string) => Promise<unknown>;
+  del: (key: string) => Promise<unknown>;
+  exists: (key: string) => Promise<number>;
+  ping: () => Promise<string>;
+  quit: () => Promise<void>;
+  on?: (event: string, handler: (...args: unknown[]) => void) => void;
 };
 
+let redisClient: RedisLike | null = null;
+let redisMode: 'upstash' | 'ioredis' | 'none' = 'none';
+
+function upstashConfig() {
+  const url = process.env.UPSTASH_REDIS_REST_URL?.trim();
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
+  if (!url || !token) return null;
+  return { url: url.replace(/\/$/, ''), token };
+}
+
+function createUpstashClient(url: string, token: string): RedisLike {
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  };
+
+  async function run<T>(...cmd: (string | number)[]): Promise<T> {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(cmd),
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new Error(`Upstash ${res.status}: ${text || res.statusText}`);
+    }
+    const body = (await res.json()) as { result?: T };
+    return body.result as T;
+  }
+
+  return {
+    async get(key: string) {
+      const result = await run<string | null>('GET', key);
+      return result ?? null;
+    },
+    async set(key: string, value: string) {
+      return run('SET', key, value);
+    },
+    async setex(key: string, expiry: number, value: string) {
+      return run('SET', key, value, 'EX', expiry);
+    },
+    async del(key: string) {
+      return run('DEL', key);
+    },
+    async exists(key: string) {
+      const result = await run<number>('EXISTS', key);
+      return result ?? 0;
+    },
+    async ping() {
+      await run('PING');
+      return 'PONG';
+    },
+    async quit() {},
+  };
+}
+
 /**
- * Connect to Redis (ioredis connects automatically, but we can trigger it)
+ * Get or create Redis client instance (Upstash REST or ioredis).
+ */
+export const getRedisClient = (): RedisLike => {
+  if (redisClient) return redisClient;
+
+  const upstash = upstashConfig();
+  if (upstash) {
+    redisClient = createUpstashClient(upstash.url, upstash.token);
+    redisMode = 'upstash';
+    return redisClient;
+  }
+
+  // Lazy-load ioredis only when TCP URL is configured (not available / needed on Workers).
+  throw new Error(
+    'No Redis backend configured. Set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN, or REDIS_URL for ioredis.'
+  );
+};
+
+async function tryInitIoredis(): Promise<RedisLike | null> {
+  const redisUrl = config.redis.url;
+  if (!redisUrl) return null;
+  try {
+    const { default: Redis } = await import('ioredis');
+    const client = new Redis(redisUrl, {
+      retryStrategy: (times) => Math.min(times * 50, 2000),
+      maxRetriesPerRequest: 3,
+      enableOfflineQueue: false,
+      lazyConnect: true,
+    });
+    client.on('error', (error: Error) => {
+      console.error('❌ Redis connection error:', error);
+    });
+    client.on('connect', () => console.log('✅ Redis connected'));
+    client.on('ready', () => console.log('✅ Redis ready'));
+    return client as unknown as RedisLike;
+  } catch (error: any) {
+    console.warn('⚠️  ioredis unavailable:', error?.message ?? error);
+    return null;
+  }
+}
+
+/**
+ * Connect to Redis (Upstash REST preferred; ioredis TCP fallback).
  */
 export const connectRedis = async (): Promise<void> => {
   try {
-    const client = getRedisClient();
-    // ioredis connects automatically, but we can ping to verify connection
+    const upstash = upstashConfig();
+    if (upstash) {
+      redisClient = createUpstashClient(upstash.url, upstash.token);
+      redisMode = 'upstash';
+      await redisClient.ping();
+      console.log('✅ Upstash Redis (REST) connection verified');
+      return;
+    }
+
+    const client = await tryInitIoredis();
+    if (!client) {
+      redisMode = 'none';
+      console.warn('⚠️  Redis not configured — continuing without cache');
+      return;
+    }
+    redisClient = client;
+    redisMode = 'ioredis';
     await client.ping();
     console.log('✅ Redis connection verified');
   } catch (error: any) {
+    redisMode = 'none';
+    redisClient = null;
     console.warn('⚠️  Redis connection failed, continuing without cache:', error.message);
-    // Don't throw - allow app to continue without Redis
   }
 };
 
@@ -64,19 +155,20 @@ export const closeRedis = async (): Promise<void> => {
   if (redisClient) {
     await redisClient.quit();
     redisClient = null;
+    redisMode = 'none';
   }
 };
+
+export const getRedisMode = () => redisMode;
 
 /**
  * Cache helper functions
  */
 export const cache = {
-  /**
-   * Get value from cache (as string)
-   */
   async get(key: string): Promise<string | null> {
     try {
-      const client = getRedisClient();
+      if (!redisClient && redisMode === 'none') return null;
+      const client = redisClient ?? getRedisClient();
       return await client.get(key);
     } catch (error) {
       console.error(`Redis get error for key ${key}:`, error);
@@ -84,9 +176,6 @@ export const cache = {
     }
   },
 
-  /**
-   * Get JSON value from cache
-   */
   async getJSON<T>(key: string): Promise<T | null> {
     try {
       const value = await this.get(key);
@@ -98,12 +187,10 @@ export const cache = {
     }
   },
 
-  /**
-   * Set value in cache with optional expiration (in seconds)
-   */
   async set(key: string, value: string, expiry?: number): Promise<void> {
     try {
-      const client = getRedisClient();
+      if (!redisClient && redisMode === 'none') return;
+      const client = redisClient ?? getRedisClient();
       if (expiry) {
         await client.setex(key, expiry, value);
       } else {
@@ -114,9 +201,6 @@ export const cache = {
     }
   },
 
-  /**
-   * Set JSON value in cache with optional expiration (in seconds)
-   */
   async setJSON(key: string, value: any, expiry?: number): Promise<void> {
     try {
       await this.set(key, JSON.stringify(value), expiry);
@@ -125,24 +209,20 @@ export const cache = {
     }
   },
 
-  /**
-   * Delete key from cache
-   */
   async del(key: string): Promise<void> {
     try {
-      const client = getRedisClient();
+      if (!redisClient && redisMode === 'none') return;
+      const client = redisClient ?? getRedisClient();
       await client.del(key);
     } catch (error) {
       console.error(`Redis del error for key ${key}:`, error);
     }
   },
 
-  /**
-   * Check if key exists
-   */
   async exists(key: string): Promise<boolean> {
     try {
-      const client = getRedisClient();
+      if (!redisClient && redisMode === 'none') return false;
+      const client = redisClient ?? getRedisClient();
       const result = await client.exists(key);
       return result === 1;
     } catch (error) {
@@ -164,4 +244,3 @@ export const cacheKeys = {
   category: (slug: string) => `category:${slug}`,
   colorProfiles: 'colors:profiles',
 };
-

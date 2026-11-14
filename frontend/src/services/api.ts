@@ -329,9 +329,13 @@ const api = {
       
       // Map cart items to line items format expected by backend
       const lineItems = items.map((item: any) => ({
-        productId: item.id,
+        productId: item.customArtRequestId ? null : item.id,
+        customArtRequestId: item.customArtRequestId || undefined,
+        productName: item.customArtRequestId ? (item.title || item.name) : undefined,
+        customImageUrl: item.customImageUrl || undefined,
+        mockupImageUrl: item.mockupImageUrl || undefined,
         size: item.selectedSize,
-        color: item.selectedColor,
+        material: item.material,
         quantity: item.quantity,
         price: item.price, // Unit price
       }));
@@ -843,6 +847,97 @@ const api = {
     }>;
   }> => {
     return apiCall('/health/run-tests', { method: 'POST' });
+  },
+
+  // Custom Art ("Your Art")
+  uploadCustomArtFile: async (payload: {
+    image: string;
+    kind: 'originals' | 'mockups';
+    fileName?: string;
+  }): Promise<{ success: boolean; url: string; storagePath: string }> => {
+    return apiCall('/custom-art/upload', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  createCustomArtRequest: async (payload: {
+    material: 'framed_acp' | 'canvas' | 'sunboard' | 'neon';
+    size: string;
+    neonText?: string;
+    title?: string;
+    unitPrice: number;
+    originalImageUrl?: string;
+    originalStoragePath?: string;
+    mockupImageUrl?: string;
+    mockupStoragePath?: string;
+    status?: string;
+  }): Promise<{ success: boolean; request: any }> => {
+    return apiCall('/custom-art', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  getAdminCustomArtRequests: async (status?: string): Promise<{
+    success: boolean;
+    requests: any[];
+    providers: {
+      openrouterConfigured: boolean;
+      openrouterModel: string;
+      falConfigured: boolean;
+      studioLocalAvailable: boolean;
+    };
+  }> => {
+    const qs = status && status !== 'all' ? `?status=${encodeURIComponent(status)}` : '';
+    return apiCall(`/custom-art/admin${qs}`);
+  },
+
+  enhanceCustomArt: async (
+    id: string,
+    payload: {
+      action: 'upscale_2x' | 'upscale_4x' | 'clean' | 'print_prep';
+      provider?: 'auto' | 'openrouter' | 'fal' | 'studio_local';
+      prompt?: string;
+    },
+  ): Promise<{ success: boolean; request: any; dimensions?: { width?: number; height?: number } }> => {
+    return apiCall(`/custom-art/${id}/enhance`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  updateCustomArtRequest: async (
+    id: string,
+    payload: { status?: string; admin_notes?: string },
+  ): Promise<{ success: boolean; request: any }> => {
+    return apiCall(`/custom-art/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+  },
+
+  downloadCustomArtAsset: async (id: string, variant: 'enhanced' | 'original' | 'mockup' = 'enhanced') => {
+    const token = authService.getToken();
+    const res = await fetch(`${API_BASE_URL}/custom-art/${id}/download?variant=${variant}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ message: 'Download failed' }));
+      throw new Error(err.message || 'Download failed');
+    }
+    const blob = await res.blob();
+    const disp = res.headers.get('Content-Disposition') || '';
+    const match = disp.match(/filename="([^"]+)"/);
+    const filename = match ? match[1] : `tinge-${id}-${variant}.png`;
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
   },
 };
 

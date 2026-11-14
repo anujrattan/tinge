@@ -7,11 +7,43 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { generateToken } from '../utils/jwt.js';
 import { supabaseAdmin, supabaseAnon } from '../services/supabase.js';
+import { ensureTingeMembership, hasTingeApp, TINGE_APP_ID } from '../services/tingeAuth.js';
 import { config } from '../config/index.js';
 import jwt from 'jsonwebtoken';
 import * as wishlistCache from '../services/wishlistCache.js';
 
 const router = Router();
+
+async function issueTingeSession(
+  user: { id: string; email?: string | null; phone?: string | null; app_metadata?: Record<string, unknown>; user_metadata?: Record<string, unknown> },
+  opts?: { name?: string; email?: string; guestSessionId?: string }
+) {
+  const profile = await ensureTingeMembership(user, {
+    name: opts?.name,
+    email: opts?.email || user.email || undefined,
+  });
+
+  if (opts?.guestSessionId) {
+    await mergeGuestWishlistOnAuth(user.id, opts.guestSessionId);
+  }
+
+  const email = profile.email || user.email || opts?.email || '';
+  const token = generateToken({
+    userId: user.id,
+    email,
+    role: profile.role || 'user',
+  });
+
+  return {
+    token,
+    user: {
+      id: user.id,
+      email,
+      name: profile.name || opts?.name || email.split('@')[0] || 'User',
+      role: profile.role || 'user',
+    },
+  };
+}
 
 /**
  * Helper: Merge guest wishlist to user on login/signup
@@ -31,7 +63,7 @@ async function mergeGuestWishlistOnAuth(userId: string, guestSessionId?: string)
     
     // Get user record from users table
     const { data: user, error: userError } = await supabaseAdmin
-      .from("users")
+      .from("tinge_users")
       .select("id")
       .eq("auth_user_id", userId)
       .single();
@@ -43,7 +75,7 @@ async function mergeGuestWishlistOnAuth(userId: string, guestSessionId?: string)
     
     // Get existing user wishlist from DB
     const { data: existingWishlist } = await supabaseAdmin
-      .from("wishlists")
+      .from("tinge_wishlists")
       .select("product_id")
       .eq("user_id", user.id);
     
@@ -60,7 +92,7 @@ async function mergeGuestWishlistOnAuth(userId: string, guestSessionId?: string)
       }));
       
       await supabaseAdmin
-        .from("wishlists")
+        .from("tinge_wishlists")
         .insert(insertData);
     }
     
@@ -96,130 +128,90 @@ router.post('/signup', async (req: Request, res: Response, next: NextFunction) =
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
     
-    // Create user in Supabase Auth
+    // Create user in shared Auth, tagged for Tinge only
     const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
       email_confirm: true,
+      app_metadata: {
+        apps: [TINGE_APP_ID],
+      },
       user_metadata: {
         name: name || email.split('@')[0],
       },
     });
-    
-    if (authError) {
-      if (authError.message.includes('already registered')) {
-        return res.status(409).json({ error: 'Email already registered' });
+
+    // Same email already exists (e.g. real-estate account): verify password and join Tinge
+    if (authError?.message?.toLowerCase().includes('already')) {
+      const { data: signedIn, error: signInError } = await supabaseAnon.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (signInError || !signedIn.user) {
+        return res.status(409).json({
+          error: 'Email already registered. Sign in with that password to join Tinge, or reset it.',
+          code: 'EMAIL_EXISTS',
+        });
       }
+
+      const session = await issueTingeSession(signedIn.user, {
+        name,
+        email,
+        guestSessionId: req.headers['x-guest-session-id'] as string | undefined,
+      });
+      return res.status(200).json({ ...session, joinedExistingAuth: true });
+    }
+
+    if (authError) {
       return res.status(400).json({ error: authError.message || 'Failed to create account' });
     }
-    
+
     if (!authData.user) {
       return res.status(500).json({ error: 'Failed to create user' });
     }
-    
-    // Ensure user_profiles record exists (create if trigger didn't fire)
-    const { data: existingProfile } = await supabaseAdmin
-      .from('user_profiles')
-      .select('role, name')
-      .eq('id', authData.user.id)
-      .single();
-    
-    let userRole = 'user';
-    let profileName = name || email.split('@')[0];
-    
-    if (!existingProfile) {
-      // Create user_profiles record manually if trigger didn't create it
-      const { data: newProfile, error: profileError } = await supabaseAdmin
-        .from('user_profiles')
-        .insert({
-          id: authData.user.id,
-          email: authData.user.email || email,
-          name: profileName,
-          role: 'user',
-        })
-        .select('role, name')
-        .single();
-      
-      if (profileError) {
-        console.error('Error creating user_profile:', profileError);
-        // Continue anyway - role defaults to 'user'
-      } else if (newProfile) {
-        userRole = newProfile.role;
-        profileName = newProfile.name || profileName;
-      }
-    } else {
-      userRole = existingProfile.role;
-      profileName = existingProfile.name || profileName;
-    }
-    
-    // Create or update user record in users table
+
+    const profileName = name || email.split('@')[0];
+    const session = await issueTingeSession(authData.user, {
+      name: profileName,
+      email,
+      guestSessionId: req.headers['x-guest-session-id'] as string | undefined,
+    });
+
+    // Commerce user row (checkout may fill address later)
     const { data: existingUser } = await supabaseAdmin
-      .from('users')
+      .from('tinge_users')
       .select('id')
       .eq('auth_user_id', authData.user.id)
-      .single();
-    
+      .maybeSingle();
+
     if (!existingUser) {
-      // Try to find by email
       const { data: userByEmail } = await supabaseAdmin
-        .from('users')
+        .from('tinge_users')
         .select('id')
         .eq('email', email)
-        .single();
-      
+        .maybeSingle();
+
       if (!userByEmail) {
-        // Create minimal user record (will be updated during checkout)
-        await supabaseAdmin
-          .from('users')
-          .insert({
-            auth_user_id: authData.user.id,
-            email: email,
-            first_name: name ? name.split(' ')[0] : profileName.split(' ')[0],
-            last_name: name && name.split(' ').length > 1 ? name.split(' ').slice(1).join(' ') : '',
-            address1: '', // Will be filled during checkout
-            city: '',
-            zip: '',
-            country_code: 'IN',
-            type: 'shipping',
-          });
+        await supabaseAdmin.from('tinge_users').insert({
+          auth_user_id: authData.user.id,
+          email,
+          first_name: profileName.split(' ')[0],
+          last_name: profileName.split(' ').slice(1).join(' ') || '',
+          address1: '',
+          city: '',
+          zip: '',
+          country_code: 'IN',
+          type: 'shipping',
+        });
       } else {
-        // Update existing user record to link auth_user_id
         await supabaseAdmin
-          .from('users')
+          .from('tinge_users')
           .update({ auth_user_id: authData.user.id })
           .eq('id', userByEmail.id);
       }
     }
-    
-    // Get profile from database (should exist now)
-    const { data: profile } = await supabaseAdmin
-      .from('user_profiles')
-      .select('role, name')
-      .eq('id', authData.user.id)
-      .single();
-    
-    // Generate JWT token
-    const token = generateToken({
-      userId: authData.user.id,
-      email: authData.user.email,
-      role: userRole,
-    });
-    
-    // Merge guest wishlist if present (for new signups)
-    const guestSessionId = req.headers['x-guest-session-id'] as string;
-    if (guestSessionId) {
-      await mergeGuestWishlistOnAuth(authData.user.id, guestSessionId);
-    }
-    
-    res.status(201).json({
-      token,
-      user: {
-        id: authData.user.id,
-        email: authData.user.email,
-        name: profile?.name || profileName,
-        role: userRole,
-      },
-    });
+
+    res.status(201).json(session);
   } catch (error: any) {
     next(error);
   }
@@ -250,38 +242,115 @@ router.post('/login', async (req: Request, res: Response, next: NextFunction) =>
     if (!authData.user) {
       return res.status(401).json({ error: 'Authentication failed' });
     }
-    
-    // Fetch user role from database
+
     const { data: profile } = await supabaseAdmin
-      .from('user_profiles')
-      .select('role, name')
+      .from('tinge_user_profiles')
+      .select('id')
       .eq('id', authData.user.id)
-      .single();
-    
-    const userRole = profile?.role || 'user';
-    
-    // Generate JWT token
-    const token = generateToken({
-      userId: authData.user.id,
-      email: authData.user.email,
-      role: userRole,
-    });
-    
-    // Merge guest wishlist if present
-    const guestSessionId = req.headers['x-guest-session-id'] as string;
-    if (guestSessionId) {
-      await mergeGuestWishlistOnAuth(authData.user.id, guestSessionId);
+      .maybeSingle();
+
+    // Password ok for shared Auth, but not a Tinge member yet
+    if (!profile && !hasTingeApp(authData.user)) {
+      return res.status(403).json({
+        error: 'This email is registered for another app. Sign up on Tinge to link it.',
+        code: 'NOT_TINGE_USER',
+      });
     }
-    
-    res.json({
-      token,
-      user: {
-        id: authData.user.id,
-        email: authData.user.email,
-        name: profile?.name || authData.user.user_metadata?.name || email.split('@')[0],
-        role: userRole,
-      },
+
+    const session = await issueTingeSession(authData.user, {
+      email,
+      guestSessionId: req.headers['x-guest-session-id'] as string | undefined,
     });
+    res.json(session);
+  } catch (error: any) {
+    next(error);
+  }
+});
+
+/**
+ * Send email or phone OTP (Supabase Auth).
+ * Email OTP: enable via Auth email template using {{ .Token }}.
+ * Phone OTP: enable Phone provider + SMS (Twilio / MessageBird / etc.) in Supabase dashboard.
+ */
+router.post('/otp/send', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { email, phone } = req.body as { email?: string; phone?: string };
+
+    if ((!email && !phone) || (email && phone)) {
+      return res.status(400).json({ error: 'Provide exactly one of email or phone' });
+    }
+
+    if (email) {
+      const { error } = await supabaseAnon.auth.signInWithOtp({
+        email: email.trim().toLowerCase(),
+        options: {
+          shouldCreateUser: true,
+          data: { name: email.split('@')[0] },
+        },
+      });
+      if (error) {
+        return res.status(400).json({ error: error.message || 'Failed to send email OTP' });
+      }
+      return res.json({ ok: true, channel: 'email', message: 'OTP sent if the address is valid' });
+    }
+
+    const normalized = String(phone).replace(/\s+/g, '');
+    if (!/^\+[1-9]\d{7,14}$/.test(normalized)) {
+      return res.status(400).json({
+        error: 'Phone must be E.164 (e.g. +9198XXXXXXXX)',
+      });
+    }
+
+    const { error } = await supabaseAnon.auth.signInWithOtp({
+      phone: normalized,
+      options: { shouldCreateUser: true },
+    });
+    if (error) {
+      return res.status(400).json({
+        error: error.message || 'Failed to send SMS OTP (is Phone auth + SMS provider configured?)',
+      });
+    }
+    return res.json({ ok: true, channel: 'sms', message: 'OTP sent if the number is valid' });
+  } catch (error: any) {
+    next(error);
+  }
+});
+
+/**
+ * Verify email/phone OTP, tag Tinge membership, return app JWT.
+ */
+router.post('/otp/verify', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { email, phone, token, name } = req.body as {
+      email?: string;
+      phone?: string;
+      token?: string;
+      name?: string;
+    };
+
+    if (!token || String(token).length < 4) {
+      return res.status(400).json({ error: 'OTP token is required' });
+    }
+    if ((!email && !phone) || (email && phone)) {
+      return res.status(400).json({ error: 'Provide exactly one of email or phone' });
+    }
+
+    const verifyPayload = email
+      ? { email: email.trim().toLowerCase(), token: String(token), type: 'email' as const }
+      : { phone: String(phone).replace(/\s+/g, ''), token: String(token), type: 'sms' as const };
+
+    const { data, error } = await supabaseAnon.auth.verifyOtp(verifyPayload);
+    if (error || !data.user) {
+      return res.status(401).json({ error: error?.message || 'Invalid or expired OTP' });
+    }
+
+    const session = await issueTingeSession(data.user, {
+      name,
+      email: email?.trim().toLowerCase(),
+      guestSessionId: req.headers['x-guest-session-id'] as string | undefined,
+    });
+
+    res.json(session);
   } catch (error: any) {
     next(error);
   }
@@ -309,25 +378,20 @@ router.get('/me', async (req: Request, res: Response, next: NextFunction) => {
       
       // Fetch fresh user data from database
       const { data: profile } = await supabaseAdmin
-        .from('user_profiles')
+        .from('tinge_user_profiles')
         .select('role, name, email')
         .eq('id', decoded.userId)
         .single();
       
-      if (profile) {
-        return res.json({
-          id: decoded.userId,
-          email: profile.email || decoded.email,
-          name: profile.name || decoded.email?.split('@')[0],
-          role: profile.role,
-        });
+      if (!profile) {
+        return res.status(403).json({ error: 'Not a Tinge user', code: 'NOT_TINGE_USER' });
       }
-      
-      // Fallback to decoded token data
+
       return res.json({
         id: decoded.userId,
-        email: decoded.email,
-        role: decoded.role,
+        email: profile.email || decoded.email,
+        name: profile.name || decoded.email?.split('@')[0],
+        role: profile.role,
       });
     } catch (jwtError) {
       return res.status(401).json({ error: 'Invalid token' });

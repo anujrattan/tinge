@@ -1,87 +1,125 @@
-/**
- * Backend Configuration
- */
+// Backend configuration with Zod env validation and startup checklist logger
 
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import { existsSync } from "fs";
+import { EnvSchema, type Env } from "./schema.js";
 
-// Get the directory of the current module
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// On Cloudflare Workers, secrets/vars populate process.env — skip local .env files.
+const runningOnWorkers =
+  typeof (globalThis as { WebSocketPair?: unknown }).WebSocketPair !== "undefined";
 
-// Determine the backend root directory (2 levels up from src/config)
-const backendRoot = join(__dirname, "../..");
-const envLocalPath = join(backendRoot, ".env");
-
-// Load environment variables from .env file in backend directory
-if (existsSync(envLocalPath)) {
-  dotenv.config({ path: envLocalPath });
-} else {
-  // Fallback: try current working directory (for development)
-  dotenv.config({ path: ".env" });
+try {
+  if (!runningOnWorkers) {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+    const backendRoot = join(__dirname, "../..");
+    const envPath = join(backendRoot, ".env");
+    if (existsSync(envPath)) {
+      dotenv.config({ path: envPath });
+    } else {
+      dotenv.config();
+    }
+  }
+} catch {
+  // dotenv / fs may be unavailable in some edge contexts
 }
 
+let env: Env;
+try {
+  env = EnvSchema.parse(process.env);
+} catch (e) {
+  console.error("❌ Environment validation failed:\n", e);
+  if (!runningOnWorkers) {
+    process.exit(1);
+  }
+  throw e;
+}
+
+const publishableKey =
+  env.SUPABASE_PUBLISHABLE_KEY || env.SUPABASE_ANON_KEY || "";
+const secretKey =
+  env.SUPABASE_SECRET_KEY || env.SUPABASE_SERVICE_ROLE_KEY || "";
+
+const usingLegacyPublishable = !env.SUPABASE_PUBLISHABLE_KEY && !!env.SUPABASE_ANON_KEY;
+const usingLegacySecret = !env.SUPABASE_SECRET_KEY && !!env.SUPABASE_SERVICE_ROLE_KEY;
+
 export const config = {
-  port: parseInt(process.env.PORT || "3001", 10),
-  nodeEnv: process.env.NODE_ENV || "development",
-  apiBaseUrl: process.env.API_BASE_URL || "http://localhost:3001/api",
-
-  // Supabase configuration
+  port: env.PORT,
+  nodeEnv: env.NODE_ENV,
+  apiBaseUrl: env.VITE_API_BASE_URL ?? `http://localhost:${env.PORT}/api`,
   supabase: {
-    url: process.env.SUPABASE_URL || "",
-    anonKey: process.env.SUPABASE_ANON_KEY || "",
-    serviceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
+    url: env.SUPABASE_URL,
+    /** Low-privilege key for public/RLS-scoped clients (publishable, or legacy anon). */
+    publishableKey,
+    /** Elevated key for backend (secret, or legacy service_role). Bypasses RLS. */
+    secretKey,
+    /** @deprecated Use publishableKey */
+    anonKey: publishableKey,
+    /** @deprecated Use secretKey */
+    serviceRoleKey: secretKey,
+    usingLegacyKeys: usingLegacyPublishable || usingLegacySecret,
   },
-
-  // JWT configuration
   jwt: {
-    secret: process.env.JWT_SECRET || "your-secret-key-change-in-production",
-    expiresIn: process.env.JWT_EXPIRES_IN || "30m", // 30 minutes session timeout
+    secret: env.JWT_SECRET,
+    expiresIn: process.env.JWT_EXPIRES_IN ?? "30m",
   },
-
-  // CORS configuration
   cors: {
-    origin: process.env.CORS_ORIGIN || "http://localhost:3000",
-    credentials: true,
+    origin: env.CORS_ORIGIN,
+    credentials: env.CORS_CREDENTIALS,
   },
-
-  // Frontend URL
-  frontendUrl: process.env.FRONTEND_URL || "http://localhost:3000",
-
-  // Redis configuration (Upstash: rediss://default:...@....upstash.io:6379)
+  frontendUrl: process.env.FRONTEND_URL ?? "http://localhost:3000",
   redis: {
-    url: process.env.REDIS_URL || "redis://localhost:6379",
+    url: env.REDIS_URL ?? "",
+    upstashRestUrl: process.env.UPSTASH_REDIS_REST_URL ?? "",
+    upstashRestToken: process.env.UPSTASH_REDIS_REST_TOKEN ?? "",
   },
-
-  // Printrove API configuration
   printrove: {
-    baseUrl: process.env.PRINTROVE_BASE_URL || "https://api.printrove.com",
-    email: process.env.PRINTROVE_EMAIL || "rattan.anuj@gmail.com",
-    password: process.env.PRINTROVE_PASSWORD || "Nov@2025",
+    baseUrl: process.env.PRINTROVE_BASE_URL ?? "",
+    email: process.env.PRINTROVE_EMAIL ?? "",
+    password: process.env.PRINTROVE_PASSWORD ?? "",
   },
-
-  // Razorpay configuration
   razorpay: {
-    keyId:
-      process.env.RAZORPAY_KEY_ID ||
-      process.env.RAZORPAY_TEST_API_KEY_ID ||
-      process.env.RAZORPAY_TEST_API_KEY ||
-      "",
-    keySecret:
-      process.env.RAZORPAY_KEY_SECRET ||
-      process.env.RAZORPAY_TEST_API_KEY_SECRET ||
-      "",
-    webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET || "",
+    keyId: env.RAZORPAY_KEY_ID ?? "",
+    keySecret: env.RAZORPAY_KEY_SECRET ?? "",
+    webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET ?? "",
   },
-
-  // Resend email configuration
   resend: {
-    apiKey: process.env.RESEND_API_KEY || "",
-    // For testing, you can use Resend's default onboarding sender
-    // or set RESEND_FROM_EMAIL in your .env to a verified sender.
-    fromEmail: process.env.RESEND_FROM_EMAIL || "onboarding@resend.dev",
-    adminEmail: process.env.RESEND_ADMIN_EMAIL || "",
+    apiKey: env.RESEND_API_KEY ?? "",
+    fromEmail: process.env.RESEND_FROM_EMAIL ?? "onboarding@resend.dev",
+    adminEmail: process.env.RESEND_ADMIN_EMAIL ?? "",
   },
+  ai: {
+    openrouterApiKey: env.OPENROUTER_API_KEY ?? "",
+    openrouterImageModel: env.OPENROUTER_IMAGE_MODEL ?? "black-forest-labs/flux.2-klein-4b",
+    falKey: env.FAL_KEY ?? "",
+  },
+} as const;
+
+export const logStartupChecklist = () => {
+  console.log("\n🚀 Startup Checklist (all ✅):");
+  const keys = Object.keys(env) as (keyof typeof env)[];
+  keys.forEach((k) => {
+    const present = process.env[k] !== undefined && process.env[k] !== "";
+    console.log(`✅ ${k}: ${present ? "found" : "missing"}`);
+  });
+
+  if (config.supabase.usingLegacyKeys) {
+    console.warn(
+      "\n⚠️  Supabase is using legacy anon/service_role JWT keys.",
+    );
+    console.warn(
+      "   Prefer SUPABASE_PUBLISHABLE_KEY (sb_publishable_…) and SUPABASE_SECRET_KEY (sb_secret_…).",
+    );
+    console.warn(
+      "   Guide: https://supabase.com/docs/guides/getting-started/migrating-to-new-api-keys\n",
+    );
+  } else {
+    console.log("✅ Supabase: publishable + secret API keys");
+  }
+
+  console.log(`\n🌐 Frontend URL: ${config.frontendUrl}`);
+  console.log(`⚙️ Backend listening on http://localhost:${config.port}`);
+  console.log("\nAll checks passed. Server is ready.\n");
 };

@@ -55,9 +55,9 @@ export const CollectionDetailPage: React.FC = () => {
     .replace(/\b\w/g, (l) => l.toUpperCase());
 
   const seoData = {
-    title: `${collectionName} Collection - Luxe Threads`,
-    description: `Shop the ${collectionName} collection – a curated mix of fits, colors and textures across tees, hoodies, bottoms and more.`,
-    keywords: `${collectionName} collection, curated drop, streetwear collection, luxe threads`,
+    title: `${collectionName} Collection - Tinge Metal Art`,
+    description: `Shop the ${collectionName} collection. Tinge prints framed ACP, canvas, and sunboard in-house.`,
+    keywords: `${collectionName} collection, curated metal art, wall art collection, gallery wall, Tinge`,
     type: "website" as const,
     url: `${DEFAULT_SITE_URL}/collections/${slug}`,
   };
@@ -79,12 +79,11 @@ export const CollectionDetailPage: React.FC = () => {
   }, [products]);
 
   const availableColors = useMemo(() => {
-    const colors = new Set<string>();
+    const materials = new Set<string>();
     products.forEach((product) => {
-      const c = product.color;
-      if (c && String(c).trim()) colors.add(String(c).trim());
+      if (product.material) materials.add(product.material);
     });
-    return Array.from(colors).sort();
+    return Array.from(materials).sort();
   }, [products]);
 
   const filteredProducts = useMemo(() => {
@@ -97,10 +96,9 @@ export const CollectionDetailPage: React.FC = () => {
     }
 
     if (selectedColors.length > 0) {
-      filtered = filtered.filter((product) => {
-        const c = product.color;
-        return c && selectedColors.includes(String(c).trim());
-      });
+      filtered = filtered.filter(
+        (product) => product.material && selectedColors.includes(product.material),
+      );
     }
 
     filtered = filtered.filter((product) => {

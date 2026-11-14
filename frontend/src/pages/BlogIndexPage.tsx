@@ -39,14 +39,14 @@ export const BlogIndexPage: React.FC = () => {
     };
   }, []);
 
-  const seoTitle = 'Luxe Threads Journal – Guides, Style Tips & Print-on-Demand Insights';
+  const seoTitle = 'Tinge Journal – Wall Art Styling, Interior Inspo & Framing Guides';
   const seoDescription =
-    'Read Luxe Threads articles on style tips, product guides, print-on-demand insights, and how to get the most out of your custom apparel.';
+    'Read Tinge articles on wall art, print materials, and how to size a piece for a room.';
 
   const blogListSchema = {
     '@context': 'https://schema.org',
     '@type': 'Blog',
-    name: 'Luxe Threads Journal',
+    name: 'Tinge Journal',
     url: `${DEFAULT_SITE_URL}/blog`,
     blogPost: posts.map((post) => ({
       '@type': 'BlogPosting',
@@ -64,7 +64,7 @@ export const BlogIndexPage: React.FC = () => {
         description={seoDescription}
         type="article"
         url={`${DEFAULT_SITE_URL}/blog`}
-        keywords="blog, articles, style guide, print on demand, Luxe Threads"
+        keywords="blog, wall art guide, metal prints, home decor, interior styling, Tinge"
       />
       <StructuredData data={blogListSchema} />
 
@@ -73,10 +73,10 @@ export const BlogIndexPage: React.FC = () => {
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-3xl mx-auto">
               <h1 className="text-4xl md:text-5xl font-display font-bold tracking-tight text-brand-primary">
-                Luxe Threads Journal
+                Tinge Journal
               </h1>
               <p className="mt-4 text-lg text-brand-secondary">
-                Deep dives on style, printing, and making the most of your Luxe Threads store.
+                Interior styling guides, metal wall art inspiration, and design deep dives.
               </p>
             </div>
           </div>

@@ -1,146 +1,266 @@
 import React from 'react';
-import { TruckIcon, ClockIcon, GlobeIcon, PackageIcon } from '../components/icons';
-import { formatCurrency } from '../utils/currency';
-import { useApp } from '../context/AppContext';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '../components/ui';
+import { SEOHead } from '../components/SEOHead';
+import {
+  TruckIcon,
+  ClockIcon,
+  PackageIcon,
+  ShieldIcon,
+  CheckCircleIcon,
+  ArrowRightIcon,
+  SparklesIcon,
+} from '../components/icons';
 
 export const ShippingPage: React.FC = () => {
-  const { currency } = useApp();
-  const shippingOptions = [
+  const navigate = useNavigate();
+
+  const shippingTiers = [
     {
-      icon: <TruckIcon className="w-8 h-8 text-brand-accent" />,
-      title: 'Standard Shipping',
-      duration: '5-7 Business Days',
-      price: formatCurrency(5.99, currency),
-      freeThreshold: `Free on orders over ${formatCurrency(50, currency)}`,
-      description: 'Our standard shipping option delivers your order safely and securely.'
+      icon: <TruckIcon className="w-8 h-8 text-[#FF7A59]" />,
+      title: 'Standard Express Delivery',
+      duration: '3–5 Business Days',
+      price: '₹99',
+      freeThreshold: 'FREE on orders over ₹999',
+      description: 'Dispatched via trusted courier partners (Delhivery, Bluedart, Xpressbees) with live SMS & WhatsApp tracking.',
+      badge: 'Most Popular',
     },
     {
-      icon: <ClockIcon className="w-8 h-8 text-brand-accent" />,
-      title: 'Express Shipping',
-      duration: '2-3 Business Days',
-      price: formatCurrency(14.99, currency),
-      freeThreshold: `Free on orders over ${formatCurrency(100, currency)}`,
-      description: 'Need it faster? Express shipping gets your order to you quickly.'
+      icon: <ClockIcon className="w-8 h-8 text-[#5DA9E9]" />,
+      title: 'Metro Fast-Track',
+      duration: '2–3 Business Days',
+      price: '₹99 (Free > ₹999)',
+      freeThreshold: 'Applicable to Tier 1 Metro Cities',
+      description: 'Direct air express dispatch for Delhi NCR, Mumbai, Bengaluru, Hyderabad, Chennai, Kolkata, and Pune.',
+      badge: 'Metro Express',
     },
     {
-      icon: <GlobeIcon className="w-8 h-8 text-brand-accent" />,
-      title: 'International Shipping',
-      duration: '7-14 Business Days',
-      price: 'Varies by location',
-      freeThreshold: `Free on orders over ${formatCurrency(150, currency)}`,
-      description: 'We ship worldwide! International orders may be subject to customs fees.'
-    }
+      icon: <ShieldIcon className="w-8 h-8 text-[#FFC371]" />,
+      title: 'Cash on Delivery (COD)',
+      duration: '3–5 Business Days',
+      price: '₹50 COD Handling Fee',
+      freeThreshold: 'Available for orders up to ₹2,500',
+      description: 'Pay cash or UPI at your doorstep. We recommend Prepaid/UPI for fastest one-click dispatch and zero handling fee.',
+      badge: 'Doorstep Pay',
+    },
   ];
 
-  const trackingInfo = [
+  const trackingSteps = [
     {
-      step: '1',
-      title: 'Order Placed',
-      description: 'You\'ll receive an order confirmation email immediately after placing your order.'
+      step: '01',
+      title: 'Order Confirmed',
+      desc: 'Instant confirmation sent to your email and WhatsApp with order summary.',
     },
     {
-      step: '2',
-      title: 'Order Processing',
-      description: 'We prepare your order for shipment within 1-2 business days.'
+      step: '02',
+      title: 'Print & Quality Check',
+      desc: 'We print the material you ordered in the studio and check it before it leaves.',
     },
     {
-      step: '3',
-      title: 'Order Shipped',
-      description: 'You\'ll receive a shipping confirmation email with your tracking number.'
+      step: '03',
+      title: 'Crush-Proof Packaging',
+      desc: 'Panels and framed pieces ship flat. The packing matches the material.',
     },
     {
-      step: '4',
-      title: 'Out for Delivery',
-      description: 'Your order is on its way! Track it using the provided tracking number.'
-    }
+      step: '04',
+      title: 'Express Doorstep Delivery',
+      desc: 'Live tracking link sent via SMS/WhatsApp so you can follow your package in real-time.',
+    },
   ];
 
   return (
     <div className="animate-fadeIn pb-16">
+      <SEOHead
+        title="Shipping & Delivery Policy | Tinge Metal Wall Art"
+        description="Fast, reliable Pan-India shipping for Tinge metal posters. Free express delivery on orders over ₹999 with reinforced crush-proof packaging."
+        keywords="Tinge shipping, metal poster delivery India, art print shipping India, free shipping wall art, Delhivery art prints"
+      />
+
       {/* Hero Section */}
-      <section className="relative bg-brand-surface/30 py-16">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-3xl mx-auto">
-            <div className="flex justify-center mb-4">
-              <TruckIcon className="w-12 h-12 text-brand-accent" />
-            </div>
-            <h1 className="text-4xl md:text-5xl font-display font-bold tracking-tight text-brand-primary">
-              Shipping Information
-            </h1>
-            <p className="mt-4 text-lg text-brand-secondary">
-              Everything you need to know about shipping, delivery times, and tracking your order.
-            </p>
+      <section className="relative overflow-hidden bg-brand-surface border-b border-white/10">
+        <div className="absolute inset-0 bg-gradient-to-b from-[#FF7A59]/10 via-transparent to-transparent pointer-events-none" />
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24 text-center max-w-3xl relative z-10">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#FF7A59]/30 bg-[#FF7A59]/10 text-xs font-semibold text-[#FF7A59] uppercase tracking-wider mb-6">
+            <TruckIcon className="w-3.5 h-3.5" />
+            Pan-India Delivery
           </div>
+          <h1 className="font-playfair text-4xl sm:text-5xl font-medium tracking-tight text-brand-primary">
+            Shipping & Delivery Policy
+          </h1>
+          <p className="mt-4 text-base sm:text-lg text-brand-secondary leading-relaxed font-sans max-w-2xl mx-auto">
+            Delivering museum-grade metal art safely to 19,000+ pincodes across India with reinforced flat-pack protection.
+          </p>
         </div>
       </section>
 
       {/* Shipping Options */}
-      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <h2 className="text-2xl md:text-3xl font-display font-bold text-brand-primary mb-8 text-center">
-          Shipping Options
-        </h2>
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-14">
+        <div className="text-center max-w-xl mx-auto mb-12">
+          <span className="text-xs font-semibold text-[#FF7A59] uppercase tracking-widest">
+            Transparent Pricing
+          </span>
+          <h2 className="font-playfair text-3xl font-medium text-brand-primary mt-1">
+            Shipping Rates & Timelines
+          </h2>
+          <p className="text-sm text-brand-secondary mt-2">
+            All prices are in Indian Rupees (INR) and include GST.
+          </p>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
-          {shippingOptions.map((option, index) => (
+          {shippingTiers.map((tier, index) => (
             <div
               key={index}
-              className="bg-brand-surface rounded-xl border border-white/10 p-6 hover:border-brand-accent/50 transition-colors"
+              className="relative bg-white dark:bg-brand-surface rounded-2xl border border-gray-200 dark:border-white/10 p-6 sm:p-7 hover:border-[#FF7A59]/40 transition-all duration-300 shadow-sm flex flex-col justify-between"
             >
-              <div className="flex justify-center mb-4">{option.icon}</div>
-              <h3 className="text-xl font-display font-semibold text-brand-primary mb-2 text-center">
-                {option.title}
-              </h3>
-              <div className="text-center mb-4">
-                <p className="text-2xl font-bold text-brand-accent mb-1">{option.price}</p>
-                <p className="text-sm text-brand-secondary">{option.duration}</p>
-                <p className="text-xs text-brand-secondary mt-2">{option.freeThreshold}</p>
+              {tier.badge && (
+                <div className="absolute top-4 right-4 text-[10px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full bg-brand-accent/10 text-brand-accent border border-brand-accent/20">
+                  {tier.badge}
+                </div>
+              )}
+              <div>
+                <div className="p-3 rounded-xl bg-brand-bg border border-white/10 w-fit mb-4">
+                  {tier.icon}
+                </div>
+                <h3 className="font-playfair text-xl font-semibold text-brand-primary mb-1">
+                  {tier.title}
+                </h3>
+                <p className="text-sm font-medium text-brand-secondary mb-4">{tier.duration}</p>
+                <div className="border-t border-gray-100 dark:border-white/10 pt-4 mb-4">
+                  <p className="text-2xl font-bold font-playfair text-brand-primary">{tier.price}</p>
+                  <p className="text-xs font-medium text-[#FF7A59] mt-1">{tier.freeThreshold}</p>
+                </div>
+                <p className="text-sm text-brand-secondary leading-relaxed font-sans">{tier.description}</p>
               </div>
-              <p className="text-sm text-brand-secondary text-center">{option.description}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Tracking Process */}
-      <section className="bg-brand-surface/50 py-12">
+      {/* Transit Safety & Packaging Guarantee */}
+      <section className="bg-brand-surface/60 border-y border-white/10 py-14">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-2xl md:text-3xl font-display font-bold text-brand-primary mb-8 text-center">
-            Order Tracking
-          </h2>
-          <div className="max-w-4xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              {trackingInfo.map((info, index) => (
-                <div key={index} className="text-center">
-                  <div className="w-12 h-12 rounded-full bg-brand-accent text-white font-bold text-lg flex items-center justify-center mx-auto mb-4">
-                    {info.step}
-                  </div>
-                  <h3 className="font-semibold text-brand-primary mb-2">{info.title}</h3>
-                  <p className="text-sm text-brand-secondary">{info.description}</p>
+          <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8 items-center">
+            <div>
+              <span className="text-xs font-semibold text-[#FF7A59] uppercase tracking-widest">
+                Safe Arrival Promise
+              </span>
+              <h2 className="font-playfair text-3xl font-medium text-brand-primary mt-2">
+                Engineered Packaging for Fragile-Free Transit
+              </h2>
+              <p className="text-sm text-brand-secondary leading-relaxed mt-3">
+                Metal prints are rigid and durable, but we take zero chances. Every order is packed inside heavy-duty multi-layer corrugated boxes with high-density corner guards.
+              </p>
+              <div className="mt-6 space-y-3">
+                <div className="flex items-start gap-3">
+                  <CheckCircleIcon className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                  <p className="text-sm text-brand-primary">
+                    <strong>100% Free Replacement:</strong> Any dent or scratch reported within 48 hours gets an instant remake.
+                  </p>
                 </div>
-              ))}
+                <div className="flex items-start gap-3">
+                  <CheckCircleIcon className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                  <p className="text-sm text-brand-primary">
+                    <strong>The material you ordered:</strong> a framed ACP, a canvas, a sunboard, or a neon sign. They are not packed as the same object.
+                  </p>
+                </div>
+                <div className="flex items-start gap-3">
+                  <CheckCircleIcon className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                  <p className="text-sm text-brand-primary">
+                    <strong>Weatherproof Seal:</strong> Sealed in anti-static moisture-resistant sleeves.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 rounded-2xl bg-brand-bg border border-white/10 space-y-4">
+              <h3 className="font-playfair text-lg font-semibold text-brand-primary flex items-center gap-2">
+                <PackageIcon className="w-5 h-5 text-[#FF7A59]" />
+                What's Inside Every Tinge Box?
+              </h3>
+              <ul className="space-y-2.5 text-sm text-brand-secondary">
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#FF7A59]" />
+                  The print you chose: framed ACP, canvas, sunboard, or neon
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#FF7A59]" />
+                  A frame, when the order is a framed ACP
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#FF7A59]" />
+                  Packing matched to that material, flat for panels and framed pieces
+                </li>
+              </ul>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Additional Info */}
-      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="max-w-3xl mx-auto space-y-6">
-          <div className="bg-brand-surface rounded-xl border border-white/10 p-6">
-            <h3 className="text-xl font-display font-semibold text-brand-primary mb-3 flex items-center gap-2">
-              <PackageIcon className="w-6 h-6 text-brand-accent" />
-              Important Notes
-            </h3>
-            <ul className="space-y-2 text-brand-secondary">
-              <li>• Orders placed before 2 PM EST ship the same day (Monday-Friday)</li>
-              <li>• Weekend orders ship on the next business day</li>
-              <li>• Delivery times are estimates and may vary due to carrier delays</li>
-              <li>• International orders may be subject to customs duties and taxes</li>
-              <li>• Signature may be required for high-value orders</li>
-            </ul>
-          </div>
+      {/* Tracking Process */}
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="text-center max-w-xl mx-auto mb-12">
+          <span className="text-xs font-semibold text-[#FF7A59] uppercase tracking-widest">
+            Transparency
+          </span>
+          <h2 className="font-playfair text-3xl font-medium text-brand-primary mt-1">
+            How Your Order Travels
+          </h2>
+          <p className="text-sm text-brand-secondary mt-2">
+            Real-time updates delivered straight to your SMS and WhatsApp.
+          </p>
         </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+          {trackingSteps.map((info, index) => (
+            <div
+              key={index}
+              className="p-6 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-brand-surface/40 flex flex-col justify-between space-y-3"
+            >
+              <div className="text-3xl font-playfair font-bold text-[#FF7A59]/40">
+                {info.step}
+              </div>
+              <div>
+                <h3 className="font-playfair text-base font-semibold text-brand-primary mb-1">
+                  {info.title}
+                </h3>
+                <p className="text-xs text-brand-secondary leading-relaxed font-sans">
+                  {info.desc}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Important FAQs / Delivery Notes */}
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-3xl mx-auto bg-brand-surface rounded-2xl border border-white/10 p-6 sm:p-8 space-y-4">
+          <h3 className="font-playfair text-xl font-semibold text-brand-primary flex items-center gap-2">
+            <SparklesIcon className="w-5 h-5 text-[#FF7A59]" />
+            Festive Season Shipping & Delivery Notes
+          </h3>
+          <ul className="space-y-2.5 text-sm text-brand-secondary leading-relaxed">
+            <li>• <strong>Festive Gifting Deadline:</strong> We recommend placing Diwali & holiday gift orders at least 5 business days in advance to account for courier peak volumes.</li>
+            <li>• <strong>Production Dispatch:</strong> All orders are custom crafted and dispatched within 24–48 hours from our fulfillment hub.</li>
+            <li>• <strong>Serviceable Areas:</strong> We cover all states and Union Territories across India (including J&K and North-East).</li>
+            <li>• <strong>Address Corrections:</strong> If you need to modify your shipping address, please reach out within 3 hours of placing your order.</li>
+          </ul>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="container mx-auto px-4 sm:px-6 lg:px-8 text-center pt-10">
+        <Button
+          onClick={() => navigate('/categories')}
+          className="px-8 py-3.5 bg-brand-accent hover:bg-brand-accent-hover text-white rounded-xl font-medium shadow-md inline-flex items-center gap-2"
+        >
+          Explore Collections
+          <ArrowRightIcon className="w-4 h-4" />
+        </Button>
       </section>
     </div>
   );
 };
+
 

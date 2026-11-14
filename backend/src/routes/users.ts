@@ -57,7 +57,7 @@ router.get("/profile", authenticate, async (req: Request, res: Response, next: N
 
     // Get user profile from user_profiles
     const { data: profile, error: profileError } = await supabaseAdmin
-      .from("user_profiles")
+      .from("tinge_user_profiles")
       .select("id, email, name, role")
       .eq("id", userId)
       .single();
@@ -71,14 +71,14 @@ router.get("/profile", authenticate, async (req: Request, res: Response, next: N
 
     // Get user record from users table (for basic info)
     const { data: user, error: userError } = await supabaseAdmin
-      .from("users")
+      .from("tinge_users")
       .select("*")
       .eq("auth_user_id", userId)
       .single();
 
     // Get all addresses from user_addresses
     const { data: addresses, error: addressesError } = await supabaseAdmin
-      .from("user_addresses")
+      .from("tinge_user_addresses")
       .select("*")
       .eq("user_id", user?.id || "")
       .order("is_primary", { ascending: false })
@@ -89,7 +89,7 @@ router.get("/profile", authenticate, async (req: Request, res: Response, next: N
     if (user && (!addresses || addresses.length === 0) && user.address1) {
       // Create primary address from user record
       const { data: newAddress } = await supabaseAdmin
-        .from("user_addresses")
+        .from("tinge_user_addresses")
         .insert({
           user_id: user.id,
           label: "Default",
@@ -139,7 +139,7 @@ router.get("/orders", authenticate, async (req: Request, res: Response, next: Ne
 
     // Get user record from users table
     const { data: user, error: userError } = await supabaseAdmin
-      .from("users")
+      .from("tinge_users")
       .select("id")
       .eq("auth_user_id", userId)
       .single();
@@ -159,7 +159,7 @@ router.get("/orders", authenticate, async (req: Request, res: Response, next: Ne
 
     // Get all orders for this user
     const { data: orders, error: ordersError } = await supabaseAdmin
-      .from("orders")
+      .from("tinge_orders")
       .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
@@ -172,7 +172,7 @@ router.get("/orders", authenticate, async (req: Request, res: Response, next: Ne
     const ordersWithItems = await Promise.all(
       (orders || []).map(async (order: any) => {
         const { data: orderItems } = await supabaseAdmin
-          .from("order_items")
+          .from("tinge_order_items")
           .select("*")
           .eq("order_id", order.id);
 
@@ -204,7 +204,7 @@ router.post("/addresses", authenticate, async (req: Request, res: Response, next
 
     // Get user record from users table
     const { data: user, error: userError } = await supabaseAdmin
-      .from("users")
+      .from("tinge_users")
       .select("id")
       .eq("auth_user_id", userId)
       .single();
@@ -242,14 +242,14 @@ router.post("/addresses", authenticate, async (req: Request, res: Response, next
     // If setting as primary, unset other primary addresses
     if (is_primary) {
       await supabaseAdmin
-        .from("user_addresses")
+        .from("tinge_user_addresses")
         .update({ is_primary: false })
         .eq("user_id", user.id);
     }
 
     // Create address
     const { data: address, error: addressError } = await supabaseAdmin
-      .from("user_addresses")
+      .from("tinge_user_addresses")
       .insert({
         user_id: user.id,
         label: label || null,
@@ -295,7 +295,7 @@ router.put("/addresses/:addressId", authenticate, async (req: Request, res: Resp
 
     // Get user record
     const { data: user, error: userError } = await supabaseAdmin
-      .from("users")
+      .from("tinge_users")
       .select("id")
       .eq("auth_user_id", userId)
       .single();
@@ -309,7 +309,7 @@ router.put("/addresses/:addressId", authenticate, async (req: Request, res: Resp
 
     // Verify address belongs to user
     const { data: existingAddress, error: checkError } = await supabaseAdmin
-      .from("user_addresses")
+      .from("tinge_user_addresses")
       .select("id, user_id")
       .eq("id", addressId)
       .single();
@@ -353,14 +353,14 @@ router.put("/addresses/:addressId", authenticate, async (req: Request, res: Resp
     // If setting as primary, unset other primary addresses
     if (is_primary === true) {
       await supabaseAdmin
-        .from("user_addresses")
+        .from("tinge_user_addresses")
         .update({ is_primary: false })
         .eq("user_id", user.id)
         .neq("id", addressId);
     }
 
     const { data: address, error: updateError } = await supabaseAdmin
-      .from("user_addresses")
+      .from("tinge_user_addresses")
       .update(updateData)
       .eq("id", addressId)
       .select()
@@ -393,7 +393,7 @@ router.delete("/addresses/:addressId", authenticate, async (req: Request, res: R
 
     // Get user record
     const { data: user, error: userError } = await supabaseAdmin
-      .from("users")
+      .from("tinge_users")
       .select("id")
       .eq("auth_user_id", userId)
       .single();
@@ -407,7 +407,7 @@ router.delete("/addresses/:addressId", authenticate, async (req: Request, res: R
 
     // Verify address belongs to user
     const { data: existingAddress, error: checkError } = await supabaseAdmin
-      .from("user_addresses")
+      .from("tinge_user_addresses")
       .select("id, user_id")
       .eq("id", addressId)
       .single();
@@ -420,7 +420,7 @@ router.delete("/addresses/:addressId", authenticate, async (req: Request, res: R
     }
 
     const { error: deleteError } = await supabaseAdmin
-      .from("user_addresses")
+      .from("tinge_user_addresses")
       .delete()
       .eq("id", addressId);
 
@@ -451,7 +451,7 @@ router.put("/addresses/:addressId/set-primary", authenticate, async (req: Reques
 
     // Get user record
     const { data: user, error: userError } = await supabaseAdmin
-      .from("users")
+      .from("tinge_users")
       .select("id")
       .eq("auth_user_id", userId)
       .single();
@@ -465,7 +465,7 @@ router.put("/addresses/:addressId/set-primary", authenticate, async (req: Reques
 
     // Verify address belongs to user
     const { data: existingAddress, error: checkError } = await supabaseAdmin
-      .from("user_addresses")
+      .from("tinge_user_addresses")
       .select("id, user_id")
       .eq("id", addressId)
       .single();
@@ -479,14 +479,14 @@ router.put("/addresses/:addressId/set-primary", authenticate, async (req: Reques
 
     // Unset all other primary addresses
     await supabaseAdmin
-      .from("user_addresses")
+      .from("tinge_user_addresses")
       .update({ is_primary: false })
       .eq("user_id", user.id)
       .neq("id", addressId);
 
     // Set this address as primary
     const { data: address, error: updateError } = await supabaseAdmin
-      .from("user_addresses")
+      .from("tinge_user_addresses")
       .update({ is_primary: true })
       .eq("id", addressId)
       .select()

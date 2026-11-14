@@ -13,7 +13,7 @@ export interface Country {
 }
 
 export const countryCodes: Country[] = [
-  // India - Default for Tinge Clothing
+  // India - Default for Tinge
   { code: 'IN', name: 'India', dialCode: '+91', flag: '🇮🇳' },
   
   // Major E-commerce Markets

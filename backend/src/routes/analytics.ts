@@ -93,7 +93,7 @@ router.get(
         to: new Date(toIso).toString()
       });
       const { data: orders, error: ordersError } = await supabaseAdmin
-        .from("orders")
+        .from("tinge_orders")
         .select(
           "id, created_at, status, total_amount, subtotal, tax_amount, shipping_cost, cod_fee, gateway, fulfillment_partner"
         )
@@ -127,7 +127,7 @@ router.get(
       let orderItems: any[] = [];
       if (orderIds.length > 0) {
         const { data: items, error: itemsError } = await supabaseAdmin
-          .from("order_items")
+          .from("tinge_order_items")
           .select("order_id, product_id, product_name, quantity, total_price")
           .in("order_id", orderIds);
 
@@ -147,7 +147,7 @@ router.get(
 
       if (productIds.length > 0) {
         const { data: products, error: productsError } = await supabaseAdmin
-          .from("products")
+          .from("tinge_products")
           .select("id, title, category_id")
           .in("id", productIds);
 
@@ -170,7 +170,7 @@ router.get(
         if (categoryIds.length > 0) {
           const { data: categories, error: categoriesError } =
             await supabaseAdmin
-              .from("categories")
+              .from("tinge_categories")
               .select("id, name, slug")
               .in("id", categoryIds);
 

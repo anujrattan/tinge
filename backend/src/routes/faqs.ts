@@ -11,7 +11,7 @@ const router = Router();
 router.get("/", async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { data, error } = await supabaseAdmin
-      .from("faq_items")
+      .from("tinge_faq_items")
       .select("id, question, answer_markdown, category, sort_order")
       .eq("is_published", true)
       .order("category", { ascending: true })
@@ -42,7 +42,7 @@ router.get(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { data, error } = await supabaseAdmin
-        .from("faq_items")
+        .from("tinge_faq_items")
         .select("*")
         .order("category", { ascending: true })
         .order("sort_order", { ascending: true });
@@ -82,7 +82,7 @@ router.post(
       }
 
       const { data, error } = await supabaseAdmin
-        .from("faq_items")
+        .from("tinge_faq_items")
         .insert({
           question,
           answer_markdown,
@@ -122,7 +122,7 @@ router.put(
         req.body;
 
       const { data, error } = await supabaseAdmin
-        .from("faq_items")
+        .from("tinge_faq_items")
         .update({
           question,
           answer_markdown,
@@ -164,7 +164,7 @@ router.patch(
       const { id } = req.params;
 
       const { data: existing, error: fetchError } = await supabaseAdmin
-        .from("faq_items")
+        .from("tinge_faq_items")
         .select("id, is_published")
         .eq("id", id)
         .single();
@@ -179,7 +179,7 @@ router.patch(
       const newStatus = !existing.is_published;
 
       const { data, error } = await supabaseAdmin
-        .from("faq_items")
+        .from("tinge_faq_items")
         .update({
           is_published: newStatus,
         })

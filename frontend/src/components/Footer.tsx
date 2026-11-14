@@ -53,12 +53,12 @@ export const Footer: React.FC = () => {
             <Link
               to="/"
               className="inline-flex flex-shrink-0 hover:opacity-90 transition-opacity mb-4"
-              aria-label="Tinge Clothing home"
+              aria-label="Tinge home"
             >
               <div className="h-16 w-20 sm:h-16 sm:w-24 overflow-visible flex items-center justify-center">
                 <img
                   src={encodeURI("/Tinge Clothing - Logo - No background.png")}
-                  alt="Tinge Clothing Logo"
+                  alt="Tinge Logo"
                   className="h-full w-full object-cover"
                   loading="lazy"
                   decoding="async"
@@ -66,7 +66,7 @@ export const Footer: React.FC = () => {
               </div>
             </Link>
             <p className="text-sm max-w-xs leading-relaxed text-brand-secondary">
-              Your premium destination for quality clothing. Premium threads that match your energy.
+              Wall art printed in our studio: framed UV on ACP, canvas, sunboard, and neon. Sizes are cut from a 12 × 4 ft sheet.
             </p>
             <div className="flex items-center gap-3 mt-6">
                 <a href="#" className="w-9 h-9 flex items-center justify-center rounded-full bg-[#FF7A59] text-white hover:bg-[#FF5E62] transition-colors"><InstagramIcon className="w-5 h-5" /></a>
@@ -96,6 +96,14 @@ export const Footer: React.FC = () => {
                 </li>
                 <li className="flex items-center gap-1.5">
                   <Wand2Icon className="w-3.5 h-3.5 text-brand-secondary"/>
+                  <Link to="/prints" className="hover:text-brand-primary transition-colors cursor-pointer text-sm font-medium tracking-wide">Print types</Link>
+                </li>
+                <li className="flex items-center gap-1.5">
+                  <FlameIcon className="w-3.5 h-3.5 text-brand-secondary"/>
+                  <Link to="/custom-design" className="hover:text-brand-primary transition-colors cursor-pointer text-sm font-medium tracking-wide">Your art</Link>
+                </li>
+                <li className="flex items-center gap-1.5">
+                  <FlameIcon className="w-3.5 h-3.5 text-brand-secondary"/>
                   <Link to="/categories" className="hover:text-brand-primary transition-colors cursor-pointer text-sm font-medium tracking-wide">All Products</Link>
                 </li>
               </ul>
@@ -144,6 +152,14 @@ export const Footer: React.FC = () => {
               <li className="flex items-center gap-2">
                 <TagIcon className="w-4 h-4 text-brand-secondary"/>
                 <Link to="/sale" className="hover:text-brand-primary transition-colors cursor-pointer font-medium tracking-wide">Sale Items</Link>
+              </li>
+              <li className="flex items-center gap-2">
+                <Wand2Icon className="w-4 h-4 text-brand-secondary"/>
+                <Link to="/prints" className="hover:text-brand-primary transition-colors cursor-pointer font-medium tracking-wide">Print types</Link>
+              </li>
+              <li className="flex items-center gap-2">
+                <Wand2Icon className="w-4 h-4 text-brand-secondary"/>
+                <Link to="/custom-design" className="hover:text-brand-primary transition-colors cursor-pointer font-medium tracking-wide">Your art</Link>
               </li>
               <li className="flex items-center gap-2">
                 <Wand2Icon className="w-4 h-4 text-brand-secondary"/>
@@ -222,7 +238,7 @@ export const Footer: React.FC = () => {
 
         {/* Middle Divider & Links */}
         <div className="mt-16 border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center text-sm gap-4">
-          <p className="order-2 md:order-1 text-center md:text-left">&copy; {new Date().getFullYear()} Tinge Clothing. All rights reserved. <span className="inline-flex items-center gap-1">Made with <HeartIcon className="w-4 h-4 text-[#FF7A59] animate-heartbeat inline-block" /> for fashion lovers</span></p>
+          <p className="order-2 md:order-1 text-center md:text-left">&copy; {new Date().getFullYear()} Tinge. All rights reserved. <span className="inline-flex items-center gap-1">Made with ❤️ for art lovers</span></p>
           <div className="flex flex-wrap gap-4 order-1 md:order-2 justify-center">
             <Link to="/privacy-policy" className="hover:text-brand-primary transition-colors font-medium tracking-wide">Privacy Policy</Link>
             <Link to="/terms-of-service" className="hover:text-brand-primary transition-colors font-medium tracking-wide">Terms of Service</Link>

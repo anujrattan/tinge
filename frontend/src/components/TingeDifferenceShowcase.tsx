@@ -30,11 +30,11 @@ const ITEMS: ShowcaseItem[] = [
   {
     id: 'display',
     icon: Wand2Icon,
-    title: 'Made to Display',
-    tagline: 'Built for walls, desks, and daily carry',
+    title: 'Four real materials',
+    tagline: 'ACP, canvas, sunboard, neon',
     description:
-      'High-density materials, rich color reproduction, and finishes that hold up in real light and real rooms. These are pieces made to be looked at every day — not tucked in a drawer.',
-    highlights: ['Gallery-grade finish', 'Fade-resistant inks', 'Ready to hang'],
+      'A framed UV print on ACP is not a canvas, and a sunboard is not a paper poster. Neon is a sign. The page names the material before you pay, so the box matches what you ordered.',
+    highlights: ['Framed ACP', 'Canvas', 'Sunboard and neon'],
   },
   {
     id: 'drops',
@@ -48,21 +48,34 @@ const ITEMS: ShowcaseItem[] = [
   {
     id: 'demand',
     icon: RecycleIcon,
-    title: 'Made on Demand',
-    tagline: 'Printed when you order',
+    title: 'Cut to the sheet',
+    tagline: '12 × 4 ft, used up',
     description:
-      'Nothing sits in a warehouse waiting to be discounted or discarded. Every piece is produced after you order it — less waste, more intention, and a supply chain that matches how we think about art.',
-    highlights: ['Zero dead stock', 'Lower waste', 'Intentional by design'],
+      'The ACP sheet is 12 ft by 4 ft. The sizes we sell fill that sheet: one statement panel, a pair, a triptych, or smaller pieces. You pick a size from that list. You do not invent one.',
+    highlights: ['No custom measurements', 'Triptychs from one sheet', 'Smaller sizes use the offcut'],
   },
 ];
 
 export const TingeDifferenceShowcase: React.FC = () => {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
+  const [userPaused, setUserPaused] = useState(false);
+  const [hoverPaused, setHoverPaused] = useState(false);
   // Bumping this key restarts the progress-bar animation after a manual selection
   const [cycleKey, setCycleKey] = useState(0);
   const sectionRef = useRef<HTMLDivElement>(null);
   const [inView, setInView] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const apply = () => {
+      setReduceMotion(media.matches);
+      if (media.matches) setUserPaused(true);
+    };
+    apply();
+    media.addEventListener('change', apply);
+    return () => media.removeEventListener('change', apply);
+  }, []);
 
   // Only auto-cycle while the section is actually visible
   useEffect(() => {
@@ -80,18 +93,20 @@ export const TingeDifferenceShowcase: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    const isPaused = userPaused || hoverPaused || reduceMotion;
     if (isPaused || !inView) return;
     const timer = setInterval(() => {
       setActiveIndex((i) => (i + 1) % ITEMS.length);
     }, CYCLE_MS);
     return () => clearInterval(timer);
-  }, [isPaused, inView, cycleKey]);
+  }, [userPaused, hoverPaused, reduceMotion, inView, cycleKey]);
 
   const select = useCallback((index: number) => {
     setActiveIndex(index);
     setCycleKey((k) => k + 1);
   }, []);
 
+  const isPaused = userPaused || hoverPaused || reduceMotion;
   const active = ITEMS[activeIndex];
   const ActiveIcon = active.icon;
 
@@ -99,9 +114,25 @@ export const TingeDifferenceShowcase: React.FC = () => {
     <div
       ref={sectionRef}
       className="grid grid-cols-1 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] gap-6 lg:gap-10 items-stretch"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
+      onMouseEnter={() => setHoverPaused(true)}
+      onMouseLeave={() => setHoverPaused(false)}
+      onFocus={() => setHoverPaused(true)}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          setHoverPaused(false);
+        }
+      }}
     >
+      <div className="lg:col-span-2 flex justify-end">
+        <button
+          type="button"
+          onClick={() => setUserPaused((paused) => !paused)}
+          aria-pressed={userPaused}
+          className="min-h-11 cursor-pointer rounded-full border border-gray-200 px-4 text-sm font-semibold text-brand-primary transition-colors duration-200 hover:border-[#FF7A59]/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A59] focus-visible:ring-offset-2 dark:border-white/15"
+        >
+          {userPaused ? 'Play stories' : 'Pause stories'}
+        </button>
+      </div>
       {/* Left rail: the 4 points */}
       <div
         role="tablist"
@@ -117,9 +148,11 @@ export const TingeDifferenceShowcase: React.FC = () => {
               key={item.id}
               type="button"
               role="tab"
+              id={`difference-tab-${item.id}`}
               aria-selected={isActive}
+              aria-controls={`difference-panel-${item.id}`}
               onClick={() => select(index)}
-              className={`relative overflow-hidden rounded-xl border text-left px-3 py-3 lg:px-5 lg:py-4 transition-all duration-300 ${
+              className={`relative min-h-11 cursor-pointer overflow-hidden rounded-xl border text-left px-3 py-3 transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF7A59] focus-visible:ring-offset-2 lg:px-5 lg:py-4 ${
                 isActive
                   ? 'border-[#FF7A59]/40 bg-white dark:bg-white/[0.07] shadow-md shadow-[#FF7A59]/10'
                   : 'border-gray-200/70 dark:border-white/10 bg-white/50 dark:bg-white/[0.02] hover:border-[#FF7A59]/25 hover:bg-white dark:hover:bg-white/[0.05]'
@@ -133,7 +166,7 @@ export const TingeDifferenceShowcase: React.FC = () => {
                       : 'bg-[#FF7A59]/10 text-[#FF7A59]'
                   }`}
                 >
-                  <Icon className="w-[18px] h-[18px]" />
+                  <Icon className="w-[18px] h-[18px]" aria-hidden="true" />
                 </span>
                 <span className="min-w-0">
                   <span
@@ -157,7 +190,7 @@ export const TingeDifferenceShowcase: React.FC = () => {
                     className="showcase-progress block h-full bg-gradient-to-r from-[#FF7A59] to-[#FFC371]"
                     style={{
                       animationDuration: `${CYCLE_MS}ms`,
-                      animationPlayState: isPaused || !inView ? 'paused' : 'running',
+                      animationPlayState: isPaused || !inView || reduceMotion ? 'paused' : 'running',
                     }}
                   />
                 </span>
@@ -170,6 +203,8 @@ export const TingeDifferenceShowcase: React.FC = () => {
       {/* Right panel: detail for the active point */}
       <div
         role="tabpanel"
+        id={`difference-panel-${active.id}`}
+        aria-labelledby={`difference-tab-${active.id}`}
         key={active.id}
         className="relative overflow-hidden rounded-2xl border border-gray-200/70 dark:border-white/10 bg-white dark:bg-brand-surface/60 p-6 md:p-10 animate-fadeIn"
       >
@@ -188,10 +223,10 @@ export const TingeDifferenceShowcase: React.FC = () => {
         <div className="relative">
           <div className="flex items-center gap-4">
             <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-[#FF7A59] to-[#E85D3D] text-white shadow-lg shadow-[#FF7A59]/25">
-              <ActiveIcon className="w-5 h-5" />
+              <ActiveIcon className="w-5 h-5" aria-hidden="true" />
             </span>
             <div>
-              <p className="text-[11px] font-semibold text-[#FF7A59] uppercase tracking-[0.22em]">
+              <p className="text-xs font-semibold text-[#FF7A59] uppercase tracking-[0.18em]">
                 {active.tagline}
               </p>
               <h3 className="font-playfair text-2xl md:text-3xl font-medium text-brand-primary mt-0.5">

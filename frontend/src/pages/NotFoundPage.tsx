@@ -24,15 +24,15 @@ export const NotFoundPage: React.FC = () => {
           {/* Copy + actions */}
           <div className="relative z-10 w-full md:w-1/2 text-center md:text-left space-y-5">
             <p className="inline-flex items-center rounded-full border border-white/10 bg-black/20 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-brand-accent mb-1">
-              Lost in the threads
+              Lost in the gallery
             </p>
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold font-display text-brand-primary leading-tight">
-              404 – Page not stitched yet.
+              404 – Frame not found.
             </h1>
             <p className="text-sm md:text-base text-brand-secondary max-w-md mx-auto md:mx-0">
-              The link you followed might be broken, or the page may have been
-              removed from our latest collection. Let&apos;s get you back to
-              browsing something you&apos;ll love.
+              The link you followed might be broken, or the print may have been
+              moved from our catalog. Let&apos;s get you back to
+              discovering art for your walls.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start pt-2">

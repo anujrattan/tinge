@@ -1,7 +1,7 @@
 import React, { useCallback } from 'react';
 import api from '../services/api';
 import { ProductShowcasePage } from '../components/ProductShowcasePage';
-import { SparklesIcon } from '../components/Icons';
+import { SparklesIcon } from '../components/icons';
 
 export const FeaturedArtPage: React.FC = () => {
   const fetchProducts = useCallback(() => api.getFeaturedProducts(200), []);

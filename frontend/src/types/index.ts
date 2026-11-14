@@ -1,4 +1,7 @@
-export type ProductType = 'apparel' | 'poster';
+export type ArtMaterial = 'framed_acp' | 'canvas' | 'sunboard' | 'neon';
+
+/** @deprecated Use ArtMaterial — apparel removed for art-only store */
+export type ProductType = ArtMaterial;
 
 export interface Category {
   id: string;
@@ -8,7 +11,6 @@ export interface Category {
   isActive?: boolean;
   /** Slugs of categories to cross-sell when this category is in the cart */
   complementSlugs?: string[];
-  product_type?: ProductType;
 }
 
 export interface Collection {
@@ -28,10 +30,9 @@ export interface Product {
   collection_id?: string | null;
   title: string;
   description: string;
+  /** Fixed material for this listing (artwork is designed for this surface) */
+  material?: ArtMaterial;
   selling_price: number;
-  vendor_base_cost?: number;
-  vendor_shipping_cost?: number;
-  target_margin_percent?: number;
   discount_percentage?: number;
   on_sale?: boolean;
   sale_discount_percentage?: number;
@@ -47,49 +48,67 @@ export interface Product {
     /** Optional per-size selling prices (canonical size keys). */
     size_prices?: Record<string, number>;
   };
-  color?: string; // Single color per listing (name or hex)
+  /** Optional link for “also available as…” across materials */
+  design_family?: string | null;
   created_at?: string;
   updated_at?: string;
   // Legacy fields for backward compatibility (computed)
-  name?: string; // alias for title
-  price?: number; // computed: selling_price * (1 - discount_percentage/100) * (1 - sale_discount_percentage/100) if on_sale
-  originalPrice?: number; // alias for selling_price
-  imageUrl?: string; // alias for main_image_url
-  category?: string; // category slug (from join)
-  category_name?: string; // human-readable category name (from join)
-  category_slug?: string; // category slug used in URLs
-  tags?: string[]; // computed from usp_tag
-  reviewCount?: number; // alias for review_count
-  discount?: string; // computed: "Save $X" (cumulative discount)
+  name?: string;
+  price?: number;
+  originalPrice?: number;
+  imageUrl?: string;
+  category?: string;
+  category_name?: string;
+  category_slug?: string;
+  tags?: string[];
+  reviewCount?: number;
+  discount?: string;
   is_active?: boolean;
   /** Admin-curated Featured Art (homepage carousel + /featured-art) */
   is_featured?: boolean;
-  fulfillment_partner?: string | null;
-  partner_product_id?: string | null;
-  /** Per-size Printrove variant details. [{size, partner_variant_id, partner_sku}] */
-  partner_variants?: PartnerVariant[] | null;
-  size_chart_profile?: string | null;
-  design_family?: string | null;
-  category_product_type?: ProductType;
-}
-
-export interface PartnerVariant {
-  size: string;
-  partner_variant_id: string;
-  partner_sku: string;
-  /** Resolved front mockup image URL (e.g. from Printrove `data.variants[i].mockup.front_mockup`) */
-  mockup_front_url?: string | null;
-  /** Raw Printrove field when stored on the variant object */
-  front_mockup?: string | null;
 }
 
 export interface CartItem extends Product {
   quantity: number;
   selectedSize: string;
-  selectedColor: string;
+  /** Kept optional for cart persistence; unused for art listings */
+  selectedColor?: string;
+  /** Present when item was created via Your Art customizer */
+  customArtRequestId?: string;
+  customImageUrl?: string;
+  mockupImageUrl?: string;
 }
 
-export type Page = 
+export interface CustomArtRequest {
+  id: string;
+  user_id?: string | null;
+  auth_user_id?: string | null;
+  guest_session_id?: string | null;
+  customer_email?: string | null;
+  material: ArtMaterial;
+  size: string;
+  neon_text?: string | null;
+  title?: string | null;
+  unit_price: number;
+  original_image_url?: string | null;
+  original_storage_path?: string | null;
+  mockup_image_url?: string | null;
+  mockup_storage_path?: string | null;
+  enhanced_image_url?: string | null;
+  enhanced_storage_path?: string | null;
+  ai_provider?: string | null;
+  ai_action?: string | null;
+  ai_status: 'none' | 'processing' | 'ready' | 'failed';
+  ai_notes?: string | null;
+  order_id?: string | null;
+  order_number?: string | null;
+  status: 'draft' | 'in_cart' | 'ordered' | 'enhanced' | 'ready_for_print' | 'fulfilled' | 'cancelled';
+  admin_notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type Page =
   | { name: 'home' }
   | { name: 'categories' }
   | { name: 'category'; slug: string }
@@ -109,4 +128,3 @@ export type Page =
   | { name: 'returns' }
   | { name: 'size-guide' }
   | { name: 'custom-design' };
-

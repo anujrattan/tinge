@@ -44,8 +44,18 @@ export const normalizePosterSizeList = (sizes: string[]): string[] => {
   return POSTER_SIZES.filter((s) => found.has(s));
 };
 
-export const isPosterProduct = (product: Product): boolean =>
-  product.category_product_type === 'poster';
+/** Art listings always use size pricing / no apparel size chart. */
+export const isPosterProduct = (_product: Product): boolean => true;
+
+export const MATERIAL_LABELS: Record<string, string> = {
+  framed_acp: 'Framed ACP',
+  canvas: 'Canvas',
+  sunboard: 'Sunboard',
+  neon: 'Neon',
+};
+
+export const getMaterialLabel = (product: Product): string =>
+  MATERIAL_LABELS[product.material || ''] || product.material || 'Art print';
 
 export const normalizeSizeList = (sizes: string[]): string[] => {
   const unique = new Set<string>();
@@ -78,20 +88,16 @@ export const SIZE_CHART_DEFINITIONS: SizeChartDefinition[] = [
   },
 ];
 
-export const getSizeChartForProduct = (product: Product): SizeChartDefinition | null => {
-  if (isPosterProduct(product)) return null;
-
-  if (product.size_chart_profile) {
-    const explicit = SIZE_CHART_DEFINITIONS.find((chart) => chart.id === product.size_chart_profile);
-    if (explicit) return explicit;
-  }
+export const getSizeChartForProduct = (_product: Product): SizeChartDefinition | null => {
+  // Apparel size charts removed — art listings use named cuts only.
+  return null;
 
   const haystack = [
-    product.title,
-    product.name,
-    product.description,
-    product.category_name,
-    product.category,
+    _product.title,
+    _product.name,
+    _product.description,
+    _product.category_name,
+    _product.category,
   ]
     .filter(Boolean)
     .join(' ')

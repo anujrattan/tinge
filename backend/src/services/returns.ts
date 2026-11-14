@@ -58,7 +58,7 @@ export async function verifyOrderAccess(
   options: { userId?: string | null; email?: string | null; requireAdmin?: boolean; userRole?: string }
 ): Promise<{ order: any; hasAccess: boolean }> {
   const { data: order, error } = await supabaseAdmin
-    .from("orders")
+    .from("tinge_orders")
     .select("*")
     .eq("order_number", orderNumber)
     .single();
@@ -75,7 +75,7 @@ export async function verifyOrderAccess(
 
   if (options.userId) {
     const { data: user } = await supabaseAdmin
-      .from("users")
+      .from("tinge_users")
       .select("id")
       .eq("auth_user_id", options.userId)
       .single();
@@ -99,7 +99,7 @@ export async function checkReturnEligibility(orderId: string, orderItemId: strin
   reason?: string;
 }> {
   const { data: order } = await supabaseAdmin
-    .from("orders")
+    .from("tinge_orders")
     .select("id, status, delivered_at, updated_at")
     .eq("id", orderId)
     .single();
@@ -124,7 +124,7 @@ export async function checkReturnEligibility(orderId: string, orderItemId: strin
   }
 
   const { data: shippingAddress } = await supabaseAdmin
-    .from("addresses")
+    .from("tinge_addresses")
     .select("country_code")
     .eq("order_id", orderId)
     .eq("type", "shipping")
@@ -136,7 +136,7 @@ export async function checkReturnEligibility(orderId: string, orderItemId: strin
   }
 
   const { data: orderItem } = await supabaseAdmin
-    .from("order_items")
+    .from("tinge_order_items")
     .select("id, order_id, quantity")
     .eq("id", orderItemId)
     .eq("order_id", orderId)
@@ -147,7 +147,7 @@ export async function checkReturnEligibility(orderId: string, orderItemId: strin
   }
 
   const { data: openReturns } = await supabaseAdmin
-    .from("return_requests")
+    .from("tinge_return_requests")
     .select("id, quantity, status")
     .eq("order_item_id", orderItemId)
     .in("status", OPEN_RETURN_STATUSES);
@@ -167,7 +167,7 @@ export async function recordReturnStatusChange(
   changedByEmail: string,
   notes?: string | null
 ): Promise<void> {
-  await supabaseAdmin.from("return_status_history").insert({
+  await supabaseAdmin.from("tinge_return_status_history").insert({
     return_request_id: returnRequestId,
     old_status: oldStatus,
     new_status: newStatus,
@@ -208,7 +208,7 @@ export async function completeReturnRefund(
 
   if (order.gateway === "Prepaid") {
     const { data: payment } = await supabaseAdmin
-      .from("payments")
+      .from("tinge_payments")
       .select("razorpay_payment_id, status, amount")
       .eq("order_id", order.id)
       .order("created_at", { ascending: false })
@@ -232,7 +232,7 @@ export async function completeReturnRefund(
       throw new Error("Manual refund reference is required for COD orders");
     }
     await supabaseAdmin
-      .from("return_requests")
+      .from("tinge_return_requests")
       .update({
         manual_refund_ref: options.manualRefundRef.trim(),
         updated_at: new Date().toISOString(),
@@ -248,7 +248,6 @@ export function enrichReturnRow(row: any, order?: any, orderItem?: any) {
     ...row,
     order_number: order?.order_number,
     order_status: order?.status,
-    fulfillment_partner: order?.fulfillment_partner,
     gateway: order?.gateway,
     product_name: orderItem?.product_name,
     size: orderItem?.size,

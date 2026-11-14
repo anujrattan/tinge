@@ -13,25 +13,25 @@ const STEPS: Step[] = [
   {
     id: 'collect',
     icon: FlameIcon,
-    title: 'Collect',
-    description: 'Gather the journeys, sunsets, and scenes that shaped you.',
-    footnote: 'Start with what moves you',
+    title: 'Choose the material',
+    description: 'Framed ACP, canvas, sunboard, or neon. Each one arrives as a different object.',
+    footnote: 'The material is the product',
   },
   {
     id: 'display',
     icon: RocketIcon,
-    title: 'Display',
+    title: 'Pick a listed size',
     description:
-      'Turn memory into something you see every day — on your wall, in your space.',
-    footnote: 'Give it a place in your home',
+      'ACP sizes fill a 12 × 4 ft sheet. Your art uses the same list as ours.',
+    footnote: 'No typed width or height',
   },
   {
     id: 'bring-home',
     icon: Wand2Icon,
-    title: 'Bring It Home',
+    title: 'We print it here',
     description:
-      "Adventure doesn't end at the trail. Carry it with prints and accessories made to last.",
-    footnote: 'Live with it, every day',
+      'The press is in-house. A listed design ships as shown. A custom file is printed only after the size is confirmed.',
+    footnote: 'Made when you order',
   },
 ];
 
@@ -81,9 +81,9 @@ export const DesignPhilosophyJourney: React.FC = () => {
               {/* Step node */}
               <div className="relative z-10 flex h-20 w-20 items-center justify-center rounded-full border border-[#FF7A59]/25 bg-white dark:bg-brand-surface shadow-sm transition-all duration-500 group-hover:shadow-xl group-hover:shadow-[#FF7A59]/20 group-hover:border-[#FF7A59]/60 group-hover:-translate-y-1">
                 <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#FF7A59]/10 text-[#FF7A59] transition-all duration-500 group-hover:bg-gradient-to-br group-hover:from-[#FF7A59] group-hover:to-[#E85D3D] group-hover:text-white">
-                  <Icon className="w-6 h-6" />
+                  <Icon className="w-6 h-6" aria-hidden="true" />
                 </span>
-                <span className="absolute -top-1.5 -right-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-brand-primary text-white dark:bg-white dark:text-brand-bg text-[11px] font-bold shadow-md">
+                <span className="absolute -top-1.5 -right-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-[#FF7A59] to-[#E85D3D] text-white text-[11px] font-bold shadow-md shadow-[#FF7A59]/30">
                   {index + 1}
                 </span>
               </div>
@@ -102,9 +102,9 @@ export const DesignPhilosophyJourney: React.FC = () => {
               <p className="mt-3 text-sm md:text-base text-brand-secondary leading-relaxed max-w-xs">
                 {step.description}
               </p>
-              <p className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-[#FF7A59] opacity-0 translate-y-1 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
+              <p className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[#FF7A59]">
                 {step.footnote}
-                <ArrowRightIcon className="w-3.5 h-3.5" />
+                <ArrowRightIcon className="w-3.5 h-3.5" aria-hidden="true" />
               </p>
             </li>
           );

@@ -1,4 +1,4 @@
-# robots.txt for Luxe Threads
+# robots.txt for Tinge (Metal Wall Art)
 
 User-agent: *
 Allow: /
@@ -9,7 +9,7 @@ Disallow: /cart
 Disallow: /payment-callback
 
 # Sitemap location
-Sitemap: https://luxethreads.com/sitemap.xml
+Sitemap: https://tinge.in/sitemap.xml
 
 # Crawl-delay (optional, helps prevent server overload)
 Crawl-delay: 1
