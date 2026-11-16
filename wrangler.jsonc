@@ -1,6 +1,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "tinge",
+  "account_id": "4e320bbb0a17227a35672f23cb68be01",
   "main": "worker/index.ts",
   "compatibility_date": "2026-11-14",
   "compatibility_flags": ["nodejs_compat"],
@@ -20,7 +21,8 @@
     "VITE_API_BASE_URL": "/api"
   },
   "alias": {
-    "sharp": "./worker/shims/sharp.ts"
+    "sharp": "./worker/shims/sharp.ts",
+    "iconv-lite": "./worker/shims/iconv-lite.ts"
   },
   "observability": {
     "enabled": true

@@ -57,3 +57,5 @@ backend/.env
 # Local agent / browser artifacts
 .playwright-mcp/
 .claude/
+
+.wrangler-secrets.env
